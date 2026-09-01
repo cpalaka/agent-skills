@@ -140,8 +140,8 @@ it.** Backlog defines exactly three statuses (`To Do` / `In Progress` / `Done`),
 `Blocked` state, computes no blocked set, and prints no blocked marker in `task list --plain`;
 the field is echoed by `task view` and otherwise unread. So a dep edge records *intended
 sequencing* only — a task whose blockers are all open is fully claimable, and closing a blocker
-sets it `Done`, which **satisfies** dependents rather than severing them (measured on a project,
-2026-07-30: 96 edges already pointed at `Done` rows, 0 dangling). Two consequences.
+sets it `Done`, which **satisfies** dependents rather than severing them (measured 2026-07-30 on a project:
+96 edges already pointed at `Done` rows, 0 dangling). Two consequences.
 (a) Any "frontier = unblocked" or "this un-gates that" reasoning is a **convention the humans
 and agents must honour**, not something the tracker enforces — write the sequencing intent into
 the AC text where a session will read it. (b) A row that is **archived** rather than closed

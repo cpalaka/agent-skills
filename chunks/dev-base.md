@@ -3,8 +3,8 @@
 <!-- Codex does not expand the @ lines below: when a Codex AGENTS.md directs you here, read every
      listed child completely and resolve ~/.claude/chunks/<name> as ~/.codex/chunks/<name>. -->
 <!-- NOT here (they vary by Profile, and @import cannot be undone): the git-flow fork (git-flow-squash / git-flow-noff), backlog-core, and codegraph — a Profile imports exactly one fork + backlog-core explicitly, and codegraph only where a `.codegraph/` index actually exists. -->
-<!-- codegraph left the bundle 2026-07-25: it self-gates on `.codegraph/` and was inert in every
-     project but one, so every other session paid ~380 words to be told "ignore this
+<!-- codegraph left the bundle 2026-07-25: it self-gates on `.codegraph/` and was inert in all but
+     one project, so every other session paid ~380 words to be told "ignore this
      chunk entirely". Import it explicitly in a project once that project has an index. -->
 <!-- code-hygiene left the bundle 2026-08-08 (always-on audit). Its four rules — no hardcoded
      secrets, no debug logging in shipped code, declare top-level deps, ask when unsure and prefer

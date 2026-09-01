@@ -34,7 +34,7 @@ output is clean *and* the exit code is 0.
 
 **WHERE the gate runs is part of the gate.** A gate run in the same worktree that
 produced the artifacts is structurally blind to anything that only bites after a fresh
-checkout re-materializes them. Measured case (a project, 2026-07-17): the
+checkout re-materializes them. One case (measured 2026-07-17 on a project): the
 repo's `* text=auto eol=lf` rewrote CRLF source files to LF at commit time, so a
 size-compare asset sync re-copied them on every run of a fresh clone — while the
 worktree's own "re-run → copied=0" idempotency gate passed **honestly** and was still
