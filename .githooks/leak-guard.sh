@@ -12,10 +12,10 @@
 #     .githooks/leak-guard.sh scan
 #
 # Modes and their scope:
-#   pre-commit   staged content of added/modified files
+#   pre-commit   the staged content of added/modified files
 #   commit-msg   the commit message file (strips a Claude-Session trailer, warns, does not fail)
 #   pre-push     the tree at each pushed tip, every commit message in the pushed range, and
-#                every blob any commit in that range introduces (see scan_introduced_blobs)
+#                every blob any commit in that range introduces
 #   scan         every tracked file plus every untracked, non-ignored file
 #
 # Two pattern sources:
@@ -29,32 +29,53 @@
 # a TAB, then the one-line reason it is safe. Never a line number — those drift.
 #
 # Note on the built-in patterns: each writes one letter as a single-character class
-# (`/[U]sers/`), which matches the same text but keeps this file from matching itself. The
+# (`/[Uu]sers/`), which matches the same text but keeps this file from matching itself. The
 # guard scans its own source like any other file; that is deliberate.
+#
+# Three things this script is careful about, because each one produced a silent false green
+# during calibration and each would have let a leak through while reporting "clean":
+#
+#   * Content always comes from a BLOB ID, never from a path handed back to git. Paths with
+#     non-ASCII bytes come back quoted, `git show ":$path"` then fails, and a swallowed failure
+#     reads exactly like a clean file. Blob ids also sidestep submodules.
+#   * An identity file that exists but yields no patterns is a HARD error, not an empty list.
+#     Empty and unreadable both used to certify a tree clean.
+#   * `git diff-tree` on a merge commit prints nothing without `-m`, so an evil merge's blobs
+#     were invisible to the pushed-range scan.
 
 set -uo pipefail
+
+# Byte semantics, so \b, [[:space:]] and -i folding mean the same thing on every machine. The
+# sibling verifier in the private repo pins this for the same reason.
+export LC_ALL=C
 
 PROG=leak-guard
 
 # ---------------------------------------------------------------------------- built-in patterns
-# Extended regular expressions. Matched case-sensitively.
+# Extended regular expressions, matched case-sensitively — the path forms spell both cases
+# themselves rather than the whole list running with -i, because `[R]ationale:` is a capitalised
+# label and lowercase "rationale:" is ordinary prose.
 BUILTIN_PATTERNS=(
-	'/[U]sers/[A-Za-z0-9._-]+'
-	'/[h]ome/[A-Za-z0-9._-]+'
-	'~/[C]laude/'
+	'/[Uu]sers/[A-Za-z0-9._-]+'
+	'/[Hh]ome/[A-Za-z0-9._-]+'
+	'~/[Cc]laude/'
 	'[i]mprovements\.md'
 	'\[[i]mp:'
 	'[R]ationale:'
 	'\.[t]s\.net'
-	'[s]sh +[A-Za-z0-9._-]+@[A-Za-z0-9._-]+'
+	'[s]sh +(-[^ ]+ +|[^ @]+ +)*[A-Za-z0-9._-]+@[A-Za-z0-9._-]+'
 	'claude\.ai/code/[s]ession_'
 )
 
-# Paths never scanned, because their whole purpose is to hold the strings we look for.
-SELF_EXCLUDE=('.leak-guard-allow')
+# .leak-guard-allow necessarily contains the strings it exempts, so it cannot be matched like any
+# other file. It is NOT blanket-exempt: inside it, only the literals it itself lists are allowed.
+# A new marker smuggled into one of its comments still blocks.
+ALLOW_FILE_NAME='.leak-guard-allow'
 
 TRAILER_KEY='Claude-Session'
 ATTRIBUTION_SETTING='attribution.sessionUrl'
+ZERO_SHA='0000000000000000000000000000000000000000'
+GITLINK_MODE='160000'
 
 IDENTITY_FILE="${AGENT_SKILLS_IDENTITY_FILE:-$HOME/.config/agent-skills/identity-patterns}"
 
@@ -69,26 +90,36 @@ TMPDIR_LG="$(mktemp -d "${TMPDIR:-/tmp}/leak-guard.XXXXXX")" || die "cannot crea
 cleanup() { rm -rf "$TMPDIR_LG"; }
 trap cleanup EXIT
 
+HITS=0
+
+# Anything the guard cannot read is a hit, never a shrug. A scanner that skips what it cannot
+# open is a scanner that certifies whatever it failed on.
+unreadable() { # <label> <why>
+	printf '%s: BLOCKED  %s: %s\n' "$PROG" "$1" "$2" >&2
+	HITS=$((HITS + 1))
+}
+
 # ---------------------------------------------------------------------------- identity patterns
 IDENT_FILE_PRESENT=0
-IDENT_PATTERNS=()
 IDENT_ARGS=()
 
-# Both pattern sets are handed to grep as -e arguments, one invocation per set per file.
 BUILTIN_ARGS=()
 for _p in "${BUILTIN_PATTERNS[@]}"; do BUILTIN_ARGS+=(-e "$_p"); done
 unset _p
 
 load_identity_patterns() {
 	[ -e "$IDENTITY_FILE" ] || return 1
+	[ -r "$IDENTITY_FILE" ] || die "identity file exists but cannot be read: $IDENTITY_FILE"
 	local line
 	while IFS= read -r line; do
 		case "$line" in
 			'' | '#'*) continue ;;
 		esac
-		IDENT_PATTERNS+=("$line")
 		IDENT_ARGS+=(-e "$line")
 	done < "$IDENTITY_FILE"
+	# Present-but-empty is worse than absent: absent warns, empty used to read as "all clear".
+	[ "${#IDENT_ARGS[@]}" -gt 0 ] ||
+		die "identity file has no patterns: $IDENTITY_FILE. Refusing to run — an empty list matches nothing and would certify any tree clean."
 	IDENT_FILE_PRESENT=1
 	return 0
 }
@@ -106,15 +137,18 @@ announce_missing_identity() {
 }
 
 # ---------------------------------------------------------------------------- allowlist
-ALLOW_FILE="$REPO_ROOT/.leak-guard-allow"
+ALLOW_FILE="$REPO_ROOT/$ALLOW_FILE_NAME"
 ALLOW_ENTRIES="$TMPDIR_LG/allow"
+ALLOW_LITERALS="$TMPDIR_LG/allow_literals"
 : > "$ALLOW_ENTRIES"
+: > "$ALLOW_LITERALS"
+
 # Entry syntax: <path>:<literal><TAB><reason>
 #
 # The reason is on the entry's own line, deliberately. An earlier draft took it from the comment
-# line above, and its own calibration caught the hole: the file's header comment silently counted
+# line above, and its own calibration caught the hole: this file's header comment silently counted
 # as the reason for the first entry, so an unexplained exemption passed. A tab cannot appear in a
-# match — no built-in pattern matches one — so splitting on the first tab is unambiguous.
+# match — no pattern matches one — so splitting on the first tab is unambiguous.
 load_allowlist() {
 	[ -f "$ALLOW_FILE" ] || return 0
 	local tab line pair reason lineno=0
@@ -124,56 +158,43 @@ load_allowlist() {
 		case "$line" in
 			'' | '#'*) continue ;;
 			*"$tab"*) ;;
-			*) die ".leak-guard-allow line $lineno has no reason. An entry is <path>:<literal>, a TAB, then why it is safe: $line" ;;
+			*) die "$ALLOW_FILE_NAME line $lineno has no reason. An entry is <path>:<literal>, a TAB, then why it is safe: $line" ;;
 		esac
 		pair="${line%%"$tab"*}"
 		reason="${line#*"$tab"}"
 		case "$pair" in
 			*:*) ;;
-			*) die ".leak-guard-allow line $lineno is not a <path>:<literal> pair: $pair" ;;
+			*) die "$ALLOW_FILE_NAME line $lineno is not a <path>:<literal> pair: $pair" ;;
 		esac
 		case "$reason" in
 			*[![:space:]]*) ;;
-			*) die ".leak-guard-allow line $lineno has a blank reason: $pair" ;;
+			*) die "$ALLOW_FILE_NAME line $lineno has a blank reason: $pair" ;;
 		esac
 		printf '%s\n' "$pair" >> "$ALLOW_ENTRIES"
+		printf '%s\n' "${pair#*:}" >> "$ALLOW_LITERALS"
 	done < "$ALLOW_FILE"
 }
 
 is_allowed() { # <path-key> <literal>
-	grep -Fqx -- "$1:$2" "$ALLOW_ENTRIES" 2>/dev/null
-}
-
-SKIPPED=0
-is_self_excluded() { # <path-key>
-	local p
-	for p in "${SELF_EXCLUDE[@]}"; do
-		if [ "$1" = "$p" ]; then
-			SKIPPED=$((SKIPPED + 1))
-			warn "not matched against (it is the exemption list itself): $p"
-			return 0
-		fi
-	done
-	return 1
+	grep -Fqx -- "$1:$2" "$ALLOW_ENTRIES" 2>/dev/null && return 0
+	[ "$1" = "$ALLOW_FILE_NAME" ] || return 1
+	grep -Fqx -- "$2" "$ALLOW_LITERALS" 2>/dev/null
 }
 
 # ---------------------------------------------------------------------------- scanning
-HITS=0
-
 # scan_file <file-on-disk> <path-key> <label-for-report>
 scan_file() {
 	local file="$1" key="$2" label="$3"
-	is_self_excluded "$key" && return 0
 	[ -f "$file" ] || return 0
 
 	# One grep per pattern SET, not per pattern. An earlier draft looped a process substitution
 	# per pattern — forty per file — and bash 3.2 aborted (signal 6) on roughly one run in five.
-	# It failed closed, so no leak could have slipped through, but a gate that crashes is not a
-	# gate. Two invocations per file also happen to be far quicker.
+	# It failed closed, so nothing could have slipped through, but a gate that crashes is not a
+	# gate. Two invocations per file are also far quicker.
 	local hits="$TMPDIR_LG/hits"
 	: > "$hits"
 	grep -I -n -o -E "${BUILTIN_ARGS[@]}" "$file" >> "$hits" 2>/dev/null
-	if [ "$IDENT_FILE_PRESENT" -eq 1 ] && [ "${#IDENT_ARGS[@]}" -gt 0 ]; then
+	if [ "$IDENT_FILE_PRESENT" -eq 1 ]; then
 		grep -I -i -n -o -E "${IDENT_ARGS[@]}" "$file" >> "$hits" 2>/dev/null
 	fi
 
@@ -188,17 +209,55 @@ scan_file() {
 	done < "$hits"
 }
 
+# scan_blob <blob-id> <path-key> <label>
+scan_blob() {
+	local file="$TMPDIR_LG/blob.$1"
+	if [ ! -f "$file" ] && ! git cat-file blob "$1" > "$file" 2>/dev/null; then
+		rm -f "$file"   # the redirect created it; a cached empty file would read as a clean blob
+		unreadable "$3" "cannot read blob $1 — refusing to treat an unreadable object as clean"
+		return
+	fi
+	scan_file "$file" "$2" "$3"
+}
+
+# Reads git's NUL-delimited `--raw` output and scans the destination blob of every entry.
+# Sources: `git diff --cached --raw`, `git diff-tree --raw`. Blob ids rather than paths, so a
+# path with non-ASCII bytes (which git hands back quoted) cannot silently drop out.
+#
+# Sets RAW_N to the number of blobs scanned. Deliberately NOT a command substitution: that runs
+# in a subshell and every HITS increment inside would be discarded, which is the exact
+# report-clean-anyway failure this whole script exists to avoid.
+#
+# scan_raw_z <file-of-raw-z-output> <label-suffix> [<seen-file>]
+RAW_N=0
+scan_raw_z() {
+	local raw="$1" suffix="$2" seen="${3:-}"
+	local meta path dstmode dstsha status n=0
+	while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
+		set -- $meta
+		dstmode="$2" dstsha="$4" status="$5"
+		# A rename or copy carries a second path; the destination is the one that ships.
+		case "$status" in
+			R* | C*) IFS= read -r -d '' path || break ;;
+		esac
+		[ "$dstsha" = "$ZERO_SHA" ] && continue   # deletion
+		[ "$dstmode" = "$GITLINK_MODE" ] && continue   # submodule, not a blob
+		if [ -n "$seen" ]; then
+			grep -Fqx -- "$dstsha" "$seen" 2>/dev/null && continue
+			printf '%s\n' "$dstsha" >> "$seen"
+		fi
+		n=$((n + 1))
+		scan_blob "$dstsha" "$path" "$path$suffix"
+	done < "$raw"
+	RAW_N="$n"
+}
+
 # ---------------------------------------------------------------------------- modes
 mode_pre_commit() {
-	local path n=0
-	while IFS= read -r path; do
-		[ -n "$path" ] || continue
-		n=$((n + 1))
-		local blob="$TMPDIR_LG/staged.$n"
-		git show ":$path" > "$blob" 2>/dev/null || continue
-		scan_file "$blob" "$path" "$path"
-	done < <(git diff --cached --name-only --diff-filter=ACMR)
-	printf '%s: pre-commit scanned %d staged file(s)\n' "$PROG" "$n" >&2
+	local raw="$TMPDIR_LG/staged.raw"
+	git diff --cached --raw -z --abbrev=40 --diff-filter=ACMR > "$raw" || die "cannot read the index"
+	scan_raw_z "$raw" ''
+	printf '%s: pre-commit scanned %s staged file(s)\n' "$PROG" "$RAW_N" >&2
 }
 
 mode_commit_msg() {
@@ -217,73 +276,70 @@ mode_commit_msg() {
 	scan_file "$msgfile" 'commit-msg' 'commit message'
 }
 
+# scan_tree <commit-ish> <label-prefix>
+scan_tree() {
+	local rev="$1" prefix="$2" entries="$TMPDIR_LG/tree.$$" meta path type sha n=0
+	git ls-tree -r -z "$rev" > "$entries" || die "cannot read the tree at $rev"
+	while IFS= read -r -d '' meta; do
+		path="${meta#*	}"
+		set -- ${meta%%	*}
+		type="$2" sha="$3"
+		[ "$type" = blob ] || continue
+		n=$((n + 1))
+		scan_blob "$sha" "$path" "$prefix$path"
+	done < "$entries"
+	printf '%s: scanned %d file(s) in tree %s\n' "$PROG" "$n" "$prefix" >&2
+}
+
 # Every blob a commit introduces, scanned once each across the whole pushed range.
 #
 # The tip's tree is not enough. Publishing a repository publishes every reachable object, so a
 # marker added in one commit and deleted in the next still ships — the tip is clean and the blob
 # is still there. Demonstrated during this hook's own calibration, which is why it is here.
-# Deduplicated by blob id, so the overlap with the tip tree costs nothing.
-SEEN_BLOBS=''
-scan_introduced_blobs() { # <commit>
-	local sha="$1" blob path n=0
-	while IFS= read -r blob && IFS= read -r path; do
-		[ -n "$blob" ] || continue
-		case "$blob" in *[!0]*) ;; *) continue ;; esac # all-zero: a deletion
-		case "$SEEN_BLOBS" in *" $blob "*) continue ;; esac
-		SEEN_BLOBS="$SEEN_BLOBS $blob "
-		n=$((n + 1))
-		local file="$TMPDIR_LG/blob.$blob"
-		git cat-file blob "$blob" > "$file" 2>/dev/null || continue
-		scan_file "$file" "$path" "$path (introduced by ${sha:0:12})"
-	done < <(git diff-tree -r --root --no-commit-id --raw --abbrev=40 "$sha" |
-		awk '{ print $4; sub(/^[^\t]*\t/, ""); print }')
-	printf '%s: scanned %d new blob(s) from %s\n' "$PROG" "$n" "${sha:0:12}" >&2
-}
-
-# scan_tree <commit-ish> <label-prefix>
-scan_tree() {
-	local rev="$1" prefix="$2" path n=0
-	while IFS= read -r path; do
-		[ -n "$path" ] || continue
-		n=$((n + 1))
-		local blob="$TMPDIR_LG/tree.$n"
-		git show "$rev:$path" > "$blob" 2>/dev/null || continue
-		scan_file "$blob" "$path" "$prefix$path"
-	done < <(git ls-tree -r --name-only "$rev")
-	printf '%s: scanned %d file(s) in tree %s\n' "$PROG" "$n" "$prefix" >&2
+# `-m` matters as much: without it, `diff-tree` prints NOTHING for a merge commit, so an evil
+# merge's blobs are invisible. It emits one diff per parent, hence the dedup by blob id.
+scan_introduced_blobs() { # <commit> <seen-file>
+	local sha="$1" seen="$2" raw="$TMPDIR_LG/introduced.raw"
+	git diff-tree -m -r --root --no-commit-id --raw -z --abbrev=40 "$sha" > "$raw" ||
+		die "cannot read the diff of $sha"
+	scan_raw_z "$raw" " (introduced by ${sha:0:12})" "$seen"
+	printf '%s: scanned %s new blob(s) from %s\n' "$PROG" "$RAW_N" "${sha:0:12}" >&2
 }
 
 mode_pre_push() {
-	local zero='0000000000000000000000000000000000000000'
-	local local_ref local_sha remote_ref remote_sha
-	local seen=0
+	local local_ref local_sha remote_ref remote_sha seen="$TMPDIR_LG/seen"
+	: > "$seen"
+	local pushed=0
 	while read -r local_ref local_sha remote_ref remote_sha; do
 		[ -n "${local_sha:-}" ] || continue
-		case "$local_sha" in "$zero" | '') continue ;; esac
-		seen=$((seen + 1))
+		case "$local_sha" in "$ZERO_SHA" | '') continue ;; esac
+		pushed=$((pushed + 1))
 
 		scan_tree "$local_sha" "${local_ref}@"
 
-		local range_cmd sha n=0
-		case "$remote_sha" in
-			"$zero" | '') range_cmd="git rev-list $local_sha --not --remotes" ;;
-			*) range_cmd="git rev-list $remote_sha..$local_sha" ;;
+		local revs=(rev-list "$local_sha")
+		case "${remote_sha:-}" in
+			"$ZERO_SHA" | '') revs+=(--not --remotes) ;;
+			*) revs=(rev-list "$remote_sha..$local_sha") ;;
 		esac
+		local commits="$TMPDIR_LG/commits" sha
+		git "${revs[@]}" > "$commits" || die "cannot enumerate the pushed range"
+		n=0
 		while IFS= read -r sha; do
 			[ -n "$sha" ] || continue
 			n=$((n + 1))
-			local msg="$TMPDIR_LG/msg.$n"
+			local msg="$TMPDIR_LG/msg.$sha"
 			git log -1 --format=%B "$sha" > "$msg"
 			if grep -q "^${TRAILER_KEY}:" "$msg"; then
 				printf '%s: BLOCKED  commit %s carries a %s trailer\n' "$PROG" "${sha:0:12}" "$TRAILER_KEY" >&2
 				HITS=$((HITS + 1))
 			fi
 			scan_file "$msg" "commit:$sha" "message of ${sha:0:12}"
-			scan_introduced_blobs "$sha"
-		done < <($range_cmd)
+			scan_introduced_blobs "$sha" "$seen"
+		done < "$commits"
 		printf '%s: scanned %d commit message(s) for %s\n' "$PROG" "$n" "$local_ref" >&2
 	done
-	[ "$seen" -gt 0 ] || printf '%s: pre-push had no refs to check\n' "$PROG" >&2
+	[ "$pushed" -gt 0 ] || printf '%s: pre-push had no refs to check\n' "$PROG" >&2
 }
 
 mode_scan() {
@@ -291,13 +347,19 @@ mode_scan() {
 		announce_missing_identity
 		die "scan refuses to certify a tree without the identity list. Restore $IDENTITY_FILE, or point AGENT_SKILLS_IDENTITY_FILE at it."
 	fi
-	local path n=0
-	while IFS= read -r path; do
+	local paths="$TMPDIR_LG/paths" path n=0
+	{ git ls-files -z && git ls-files --others --exclude-standard -z; } > "$paths" ||
+		die "cannot enumerate the working tree"
+	while IFS= read -r -d '' path; do
 		[ -n "$path" ] || continue
 		n=$((n + 1))
+		if [ -f "$path" ] && [ ! -r "$path" ]; then
+			unreadable "$path" "cannot be read"
+			continue
+		fi
 		scan_file "$path" "$path" "$path"
-	done < <(git ls-files; git ls-files --others --exclude-standard)
-	printf '%s: walked %d file(s) in the working tree, matched %d of them\n' "$PROG" "$n" "$((n - SKIPPED))" >&2
+	done < "$paths"
+	printf '%s: scanned %d file(s) in the working tree\n' "$PROG" "$n" >&2
 }
 
 # ---------------------------------------------------------------------------- entry point
@@ -330,7 +392,7 @@ if [ "$HITS" -gt 0 ]; then
 	warn ""
 	warn "$HITS match(es). This content is not allowed in a public repository."
 	warn "Fix the lines above, or — if a match is genuinely fine — add a"
-	warn "<path>:<literal> pair to .leak-guard-allow with a reason. That is an owner decision."
+	warn "<path>:<literal> pair to $ALLOW_FILE_NAME with a reason. That is an owner decision."
 	exit 1
 fi
 
