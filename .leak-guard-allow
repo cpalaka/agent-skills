@@ -1,11 +1,14 @@
 # Exemptions for .githooks/leak-guard.sh.
 #
-# One `<path>:<literal>` pair per line — the repo-relative path, a colon, and the exact matched
-# text the guard reported. Never a line number: line numbers drift, the literal does not.
+# One entry per line:
 #
-# Every entry MUST be immediately preceded by a `#` line stating why it is safe. The guard
-# enforces that: an entry without a reason above it is a configuration error, not a pass.
+#     <path>:<literal><TAB><why it is safe>
+#
+# The path is repo-relative, the literal is the exact text the guard reported. Never a line
+# number: line numbers drift, the literal does not. The reason is required and lives on the
+# entry's own line -- an earlier design read it from the comment above and this file's own
+# header silently counted as the reason for the first entry.
 #
 # This file starts empty and should stay that way. An entry here is an owner decision made per
-# line, not a way to get a red scan green. The LICENSE needs no entry — the GitHub handle is not
+# line, not a way to turn a red scan green. The LICENSE needs no entry: the GitHub handle is not
 # one of the patterns.

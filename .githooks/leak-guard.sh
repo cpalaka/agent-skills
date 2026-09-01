@@ -14,7 +14,8 @@
 # Modes and their scope:
 #   pre-commit   staged content of added/modified files
 #   commit-msg   the commit message file (strips a Claude-Session trailer, warns, does not fail)
-#   pre-push     the tree at each pushed tip, plus every commit message in the pushed range
+#   pre-push     the tree at each pushed tip, every commit message in the pushed range, and
+#                every blob any commit in that range introduces (see scan_introduced_blobs)
 #   scan         every tracked file plus every untracked, non-ignored file
 #
 # Two pattern sources:
@@ -25,7 +26,7 @@
 #      the built-in list alone certifies nothing.
 #
 # Exemptions live in .leak-guard-allow at the repo root: one `<path>:<literal>` pair per line,
-# each immediately preceded by a `#` line giving the reason. Never a line number — those drift.
+# a TAB, then the one-line reason it is safe. Never a line number — those drift.
 #
 # Note on the built-in patterns: each writes one letter as a single-character class
 # (`/[U]sers/`), which matches the same text but keeps this file from matching itself. The
@@ -71,6 +72,13 @@ trap cleanup EXIT
 # ---------------------------------------------------------------------------- identity patterns
 IDENT_FILE_PRESENT=0
 IDENT_PATTERNS=()
+IDENT_ARGS=()
+
+# Both pattern sets are handed to grep as -e arguments, one invocation per set per file.
+BUILTIN_ARGS=()
+for _p in "${BUILTIN_PATTERNS[@]}"; do BUILTIN_ARGS+=(-e "$_p"); done
+unset _p
+
 load_identity_patterns() {
 	[ -e "$IDENTITY_FILE" ] || return 1
 	local line
@@ -79,6 +87,7 @@ load_identity_patterns() {
 			'' | '#'*) continue ;;
 		esac
 		IDENT_PATTERNS+=("$line")
+		IDENT_ARGS+=(-e "$line")
 	done < "$IDENTITY_FILE"
 	IDENT_FILE_PRESENT=1
 	return 0
@@ -100,30 +109,34 @@ announce_missing_identity() {
 ALLOW_FILE="$REPO_ROOT/.leak-guard-allow"
 ALLOW_ENTRIES="$TMPDIR_LG/allow"
 : > "$ALLOW_ENTRIES"
+# Entry syntax: <path>:<literal><TAB><reason>
+#
+# The reason is on the entry's own line, deliberately. An earlier draft took it from the comment
+# line above, and its own calibration caught the hole: the file's header comment silently counted
+# as the reason for the first entry, so an unexplained exemption passed. A tab cannot appear in a
+# match — no built-in pattern matches one — so splitting on the first tab is unambiguous.
 load_allowlist() {
 	[ -f "$ALLOW_FILE" ] || return 0
-	local line reason='' lineno=0
+	local tab line pair reason lineno=0
+	tab="$(printf '\t')"
 	while IFS= read -r line; do
 		lineno=$((lineno + 1))
 		case "$line" in
-			'')
-				reason=''
-				continue
-				;;
-			'#'*)
-				reason="$line"
-				continue
-				;;
+			'' | '#'*) continue ;;
+			*"$tab"*) ;;
+			*) die ".leak-guard-allow line $lineno has no reason. An entry is <path>:<literal>, a TAB, then why it is safe: $line" ;;
 		esac
-		if [ -z "$reason" ]; then
-			die ".leak-guard-allow line $lineno has no reason: every entry needs a '#' comment line directly above it"
-		fi
-		case "$line" in
+		pair="${line%%"$tab"*}"
+		reason="${line#*"$tab"}"
+		case "$pair" in
 			*:*) ;;
-			*) die ".leak-guard-allow line $lineno is not a <path>:<literal> pair: $line" ;;
+			*) die ".leak-guard-allow line $lineno is not a <path>:<literal> pair: $pair" ;;
 		esac
-		printf '%s\n' "$line" >> "$ALLOW_ENTRIES"
-		reason=''
+		case "$reason" in
+			*[![:space:]]*) ;;
+			*) die ".leak-guard-allow line $lineno has a blank reason: $pair" ;;
+		esac
+		printf '%s\n' "$pair" >> "$ALLOW_ENTRIES"
 	done < "$ALLOW_FILE"
 }
 
@@ -131,10 +144,15 @@ is_allowed() { # <path-key> <literal>
 	grep -Fqx -- "$1:$2" "$ALLOW_ENTRIES" 2>/dev/null
 }
 
+SKIPPED=0
 is_self_excluded() { # <path-key>
 	local p
 	for p in "${SELF_EXCLUDE[@]}"; do
-		[ "$1" = "$p" ] && return 0
+		if [ "$1" = "$p" ]; then
+			SKIPPED=$((SKIPPED + 1))
+			warn "not matched against (it is the exemption list itself): $p"
+			return 0
+		fi
 	done
 	return 1
 }
@@ -148,30 +166,26 @@ scan_file() {
 	is_self_excluded "$key" && return 0
 	[ -f "$file" ] || return 0
 
-	local pat out lineno literal
-	for pat in "${BUILTIN_PATTERNS[@]}"; do
-		while IFS= read -r out; do
-			[ -n "$out" ] || continue
-			lineno="${out%%:*}"
-			literal="${out#*:}"
-			is_allowed "$key" "$literal" && continue
-			printf '%s: BLOCKED  %s:%s: %s\n' "$PROG" "$label" "$lineno" "$literal" >&2
-			HITS=$((HITS + 1))
-		done < <(grep -I -n -o -E -- "$pat" "$file" 2>/dev/null)
-	done
-
-	if [ "$IDENT_FILE_PRESENT" -eq 1 ] && [ "${#IDENT_PATTERNS[@]}" -gt 0 ]; then
-		for pat in "${IDENT_PATTERNS[@]}"; do
-			while IFS= read -r out; do
-				[ -n "$out" ] || continue
-				lineno="${out%%:*}"
-				literal="${out#*:}"
-				is_allowed "$key" "$literal" && continue
-				printf '%s: BLOCKED  %s:%s: %s\n' "$PROG" "$label" "$lineno" "$literal" >&2
-				HITS=$((HITS + 1))
-			done < <(grep -I -i -n -o -E -- "$pat" "$file" 2>/dev/null)
-		done
+	# One grep per pattern SET, not per pattern. An earlier draft looped a process substitution
+	# per pattern — forty per file — and bash 3.2 aborted (signal 6) on roughly one run in five.
+	# It failed closed, so no leak could have slipped through, but a gate that crashes is not a
+	# gate. Two invocations per file also happen to be far quicker.
+	local hits="$TMPDIR_LG/hits"
+	: > "$hits"
+	grep -I -n -o -E "${BUILTIN_ARGS[@]}" "$file" >> "$hits" 2>/dev/null
+	if [ "$IDENT_FILE_PRESENT" -eq 1 ] && [ "${#IDENT_ARGS[@]}" -gt 0 ]; then
+		grep -I -i -n -o -E "${IDENT_ARGS[@]}" "$file" >> "$hits" 2>/dev/null
 	fi
+
+	local out lineno literal
+	while IFS= read -r out; do
+		[ -n "$out" ] || continue
+		lineno="${out%%:*}"
+		literal="${out#*:}"
+		is_allowed "$key" "$literal" && continue
+		printf '%s: BLOCKED  %s:%s: %s\n' "$PROG" "$label" "$lineno" "$literal" >&2
+		HITS=$((HITS + 1))
+	done < "$hits"
 }
 
 # ---------------------------------------------------------------------------- modes
@@ -201,6 +215,29 @@ mode_commit_msg() {
 	fi
 
 	scan_file "$msgfile" 'commit-msg' 'commit message'
+}
+
+# Every blob a commit introduces, scanned once each across the whole pushed range.
+#
+# The tip's tree is not enough. Publishing a repository publishes every reachable object, so a
+# marker added in one commit and deleted in the next still ships — the tip is clean and the blob
+# is still there. Demonstrated during this hook's own calibration, which is why it is here.
+# Deduplicated by blob id, so the overlap with the tip tree costs nothing.
+SEEN_BLOBS=''
+scan_introduced_blobs() { # <commit>
+	local sha="$1" blob path n=0
+	while IFS= read -r blob && IFS= read -r path; do
+		[ -n "$blob" ] || continue
+		case "$blob" in *[!0]*) ;; *) continue ;; esac # all-zero: a deletion
+		case "$SEEN_BLOBS" in *" $blob "*) continue ;; esac
+		SEEN_BLOBS="$SEEN_BLOBS $blob "
+		n=$((n + 1))
+		local file="$TMPDIR_LG/blob.$blob"
+		git cat-file blob "$blob" > "$file" 2>/dev/null || continue
+		scan_file "$file" "$path" "$path (introduced by ${sha:0:12})"
+	done < <(git diff-tree -r --root --no-commit-id --raw --abbrev=40 "$sha" |
+		awk '{ print $4; sub(/^[^\t]*\t/, ""); print }')
+	printf '%s: scanned %d new blob(s) from %s\n' "$PROG" "$n" "${sha:0:12}" >&2
 }
 
 # scan_tree <commit-ish> <label-prefix>
@@ -242,6 +279,7 @@ mode_pre_push() {
 				HITS=$((HITS + 1))
 			fi
 			scan_file "$msg" "commit:$sha" "message of ${sha:0:12}"
+			scan_introduced_blobs "$sha"
 		done < <($range_cmd)
 		printf '%s: scanned %d commit message(s) for %s\n' "$PROG" "$n" "$local_ref" >&2
 	done
@@ -259,7 +297,7 @@ mode_scan() {
 		n=$((n + 1))
 		scan_file "$path" "$path" "$path"
 	done < <(git ls-files; git ls-files --others --exclude-standard)
-	printf '%s: scanned %d file(s) in the working tree\n' "$PROG" "$n" >&2
+	printf '%s: walked %d file(s) in the working tree, matched %d of them\n' "$PROG" "$n" "$((n - SKIPPED))" >&2
 }
 
 # ---------------------------------------------------------------------------- entry point
