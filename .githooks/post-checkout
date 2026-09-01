@@ -1,0 +1,61 @@
+#!/bin/sh
+# post-checkout — warn when this working tree's skill bodies differ from the baseline ref.
+#
+# ~/.claude/skills and ~/.agents/skills symlink into this working tree, so branch state IS
+# skill state: landing on a ref whose skill bodies are older silently downgrades every skill
+# a Claude Code session loads. This hook makes that loud. It catches BRANCH SKEW only — it
+# diffs the post-checkout worktree, so it cannot see an uncommitted edit that was just
+# destroyed (a restore leaves the worktree equal to HEAD, and the diff comes up empty).
+#
+# Never fails a checkout: every path ends in exit 0.
+# Scope: the whole tree minus docs/ and unslop/eval/ (a minus-exclusions rule cannot silently
+# stop covering a skill added later, the way a hardcoded list can).
+# Hook arguments are deliberately ignored — the hook fires on every checkout and stays silent
+# unless a covered path actually differs.
+#
+# Keep in step with .githooks/post-merge; the bodies are identical below this header.
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -n "$root" ] || exit 0
+cd "$root" 2>/dev/null || exit 0
+
+if git rev-parse --verify --quiet refs/heads/main >/dev/null 2>&1; then
+	base=refs/heads/main
+	label=main
+elif git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null 2>&1; then
+	base=refs/remotes/origin/main
+	label=origin/main
+else
+	printf 'skill-store hook: no local main and no origin/main to compare against; skipped.\n' >&2
+	exit 0
+fi
+
+stat=$(git diff --numstat "$base" -- . ':(exclude)docs' ':(exclude)unslop/eval' 2>/dev/null) || exit 0
+[ -n "$stat" ] || exit 0
+
+printf '%s\n' "$stat" | awk -F'\t' -v label="$label" '
+BEGIN { max = 40 }
+{
+	n++
+	if (n <= max) {
+		if ($1 == "-") rows[n] = sprintf("    %-14s %s", "binary", $3)
+		else rows[n] = sprintf("    %-14s %s", "+" $1 " -" $2, $3)
+	}
+}
+END {
+	printf "\n"
+	printf "==============================================================================\n"
+	printf "  WARNING: live skill bodies in this working tree differ from %s\n", label
+	printf "==============================================================================\n"
+	printf "  ~/.claude/skills and ~/.agents/skills symlink into this tree. These paths\n"
+	printf "  are what every Claude Code session loads right now.\n\n"
+	for (i = 1; i <= n && i <= max; i++) printf "%s\n", rows[i]
+	if (n > max) printf "    ... and %d more\n", n - max
+	printf "\n  %d file(s) differ from %s (baseline ref used: %s).\n", n, label, label
+	printf "  This is branch skew. If it was not deliberate, get back on a tree that\n"
+	printf "  carries every live skill body.\n"
+	printf "==============================================================================\n\n"
+}
+' >&2
+
+exit 0

@@ -1,0 +1,12 @@
+.DS_Store
+docs/scratch/
+__pycache__/
+
+# Claude Code workspace plumbing — never publish.
+# `.claude/*` rather than `.claude/`: git will not descend into an ignored DIRECTORY, so a
+# negation beneath a `.claude/` pattern can never re-include anything. settings.json is tracked
+# on purpose — it carries this repo's attribution policy, which must hold on any machine.
+.claude/*
+!.claude/settings.json
+.superpowers/
+# CLAUDE.md is intentionally TRACKED (repo operating notes) — keep it mechanics-only, no secrets/private paths.
