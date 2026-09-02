@@ -22,7 +22,7 @@ but **not** `.git/objects` / `.git/refs`. So `git commit` succeeds under the san
 
 **Recover:** `git checkout -- <denied-file>` with the sandbox off, then redo the operation with
 the sandbox off. Read-only git (`status` / `log` / `diff`) is always safe — assess first, don't
-guess at the state. (Measured 2026-07-03.)
+guess at the state. (measured 2026-07-03)
 
 ## Background-job worktree isolation
 
@@ -38,7 +38,7 @@ refuses compound Bash (heredocs, `&&` chains, `agent-browser eval`, `for` loops)
 command at a time and Write throwaway scripts to a file.
 
 Merging back is the user's call; on an unmoved base it's `git merge --ff-only <branch>` from the
-main checkout after `ExitWorktree`. (Measured 2026-08-10.)
+main checkout after `ExitWorktree`. (measured 2026-08-10)
 
 ## A denial that reads as a bug in your own code
 
@@ -50,12 +50,12 @@ reads as a server bug on first look.
 
 Use `dangerouslyDisableSandbox` from the **first** attempt for any local-server launch; don't burn
 the sandboxed try. Curl/reads against an already-running server needed unsandboxed runs too, in
-practice. (Measured 2026-07-18 on a project.)
+practice. (measured 2026-07-18 on a project)
 
 The error string varies by runtime and none of them say "sandbox": Node/vite reports
 `Error: listen EPERM: operation not permitted ::1:5173` on `npm run dev`, Python reports
 `PermissionError: [Errno 1]`. Same denial, same fix. Build / test / typecheck / lint do **not**
-need the bypass — only the listen. (Measured 2026-06 on a project.)
+need the bypass — only the listen. (measured 2026-06 on a project)
 
 ## The bypass catalog — what actually needs `dangerouslyDisableSandbox`
 
@@ -79,22 +79,21 @@ trust store. It was recorded as a writes-only need until **2026-07-28**, when `g
 the verb.** Assume any `gh` call needs the bypass; any doc still saying "writes only" is wrong.
 
 **Plain `git` over HTTPS is NOT affected.** `git push` / `git fetch` use git's own TLS, not gh's
-keychain path — do not pre-emptively disable the sandbox for them. (Measured 2026-06-08.)
+keychain path — do not pre-emptively disable the sandbox for them. (measured 2026-06-08)
 
-**A worktree is the exception that catches people**, because the sandbox grants the main
+**A worktree is the exception**, because the sandbox grants the main
 `<repo>/.git` but not `<repo>/.git/worktrees/<name>/`. Anything touching `index.lock` or
 `FETCH_HEAD` under `worktrees/` hard-fails, including the `backlog` CLI's automatic
 `git fetch origin --prune`. Where worktrees are the normal working mode, that is every commit.
 
 ## Cosmetic denials — the operation SUCCEEDED, do not retry
 
-The counterpart to the catalog above, and the pair is the point: **read the payload line, not the
-`fatal:`.**
+The counterpart to the catalog above: **read the payload line, not the `fatal:`.**
 
 - **`fatal: failed to store: 100001`** on `git fetch` / `pull` / `push`. The transport worked; the
   denied write is git's credential-helper / commit-graph cache. Ground truth is the ref-update line
   (`f1540d8..6db63c0  main -> main`) or `Already up to date`; confirm with `git status -sb`. Do NOT
-  bypass — the op already ran, and a retry can double-apply. (Measured 2026-07-02.)
+  bypass — the op already ran, and a retry can double-apply. (measured 2026-07-02)
 - **`could not write config file .git/config: Operation not permitted`** on `git branch -d/-D` and
   other ref edits. The ref operation succeeds; only the optional config prune is blocked.
 - **zoxide's `chpwd` hook** can't write `~/Library/Application Support/zoxide/…`, and under zsh that
@@ -114,14 +113,14 @@ user `$TMPDIR` (`/var/folders/…`). **A file written by one is not visible to t
 failure wears the costume of a much scarier bug: a calibration that backs up a file, runs the
 sandbox-off test, restores, then verifies with a sandboxed `cmp` reports a *missing backup*, which
 reads exactly like "the restore never happened and a corrupted source is in the tree".
-(Measured 2026-08-01.)
+(measured 2026-08-01)
 
 **The worse form returns wrong content, not missing content.** `$TMPDIR` is also shared *between
 sessions*: a squash SHA written to `$TMPDIR/sq.txt` sandboxed and read back sandbox-off returned an
-unrelated session's leftover commit message, and the push died `fatal: invalid refspec`. It failed
-loudly only because a commit message cannot parse as a refspec — a stale file holding a plausible
-SHA would have pushed the wrong tree under a sign-off that never covered it.
-(Measured 2026-08-02.)
+unrelated session's leftover commit message, and the push died `fatal: invalid refspec '<that
+message>'`. It failed loudly only because a commit message cannot parse as a refspec — a stale file
+holding a plausible SHA would have pushed the wrong tree under a sign-off that never covered it
+(measured 2026-08-02).
 
 This directly qualifies the general "write the commit body to `$TMPDIR/f.txt` in its own call and
 `-F` it in the next" rule: correct for the heredoc problem it solves, unsafe the moment the two
@@ -136,7 +135,7 @@ call.
 documented loop workaround) `/dev/fd` is readable; handed to a command as a **path argument** it is
 not. So `diff <(git show REF:file) other` looks safe by analogy with the working form and fails at
 run time. Use tool-native forms (`git diff REF -- file`) or `$TMPDIR` files — subject to the
-`$TMPDIR` rule above. (Measured 2026-08-03.)
+`$TMPDIR` rule above. (measured 2026-08-03)
 
 ## Silent Bash traps — no denial, no error, wrong result
 
@@ -168,7 +167,7 @@ The sandbox or harness causes each of these, but none prints a denial.
   without `LC_ALL=C`, and `comm`/`join` must run under the SAME locale as the sort that fed
   them — mismatched collation silently misaligns.
 
-(Measured 2026-07-26, 07-29, 07-30, 08-02, 08-25, 08-30; each burned a real session.)
+(measured 2026-07-26, 07-29, 07-30, 08-02, 08-25, 08-30; each burned a real session)
 
 ## Not every hang is a denial
 
@@ -178,7 +177,7 @@ solid-colour page with a fresh `--user-data-dir` and the **sandbox off**. Don't 
 loop on it. The working SVG→PNG rasterizer is `qlmanage -t -s <size> -o <dir> file.svg` (output
 lands as `<name>.svg.png`); note it composites over **opaque white** while still reporting
 `hasAlpha: yes`, so verify transparency by decoding pixels, never by `sips -g hasAlpha`.
-(Measured 2026-08-25.)
+(measured 2026-08-25)
 
 ## Sandbox FALSE READS — the answer comes back clean and is wrong
 
@@ -187,24 +186,23 @@ These are worse than a denial, because a denial announces itself and these do no
 - **`ps -p` / `pgrep` cannot read the process list** under the sandbox (`sysmond service not
   found; Cannot get process list`). A `ps || echo dead` fallback then reports a **LIVE** process
   as dead. Re-check liveness with the sandbox **off** before declaring any process dead or
-  re-dispatching its work. **`kill -0 <pid>` fails the same way** — the measured probe table
-  covers all three, so switching probes does not escape it.
+  re-dispatching its work. **`kill -0 <pid>` fails the same way**, so switching probes does not escape it.
 
   **Remedy for a Monitor or heartbeat: watch output-file SIZE GROWTH instead** — reads are
   unrestricted, so this needs no bypass. Require N consecutive stable samples before declaring done,
-  and calibrate against a known-alive PID first. What caught the 2026-07-27 case was that "finished in
-  1 minute, 0 bytes stdout, 221 KB stderr" is *incoherent* — a plain "finished" would have passed,
-  and the recovery action (relaunch) would have clobbered two healthy running reviews.
+  and calibrate against a known-alive PID first. Read the numbers for incoherence: "finished in 1 minute,
+  0 bytes stdout, 221 KB stderr" fails where a plain "finished" would have passed, and the
+  recovery action would have clobbered healthy running work (measured 2026-07-27).
 - **`git status` / `git diff` can return a stale phantom-dirty view** at session start: files
   committed hours earlier showed as modified + untracked, then the same commands read clean minutes
   later. Root cause unproven; suspect a denied index-refresh write, so status is computed against a
   cold index. Before acting on a surprising dirty tree — **especially before committing what looks
   like "someone's uncommitted work"** — re-run it and reconcile against `git log` / `git ls-tree`.
 
-  This is the empirical half of the rule against destructive git recovery on a dirty tree that
-  isn't yours: the tree you are about to "recover" may not be dirty at all.
+  So never run destructive git recovery against a dirty tree that isn't yours: the tree you are
+  about to "recover" may not be dirty at all.
 
-(Both measured 2026-07-18 on a project.)
+(both measured 2026-07-18 on a project)
 
 ## Allowlist hygiene — keep destructive globs OUT
 
