@@ -26,11 +26,14 @@ GODOT="${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}"
 if [ ! -x "$GODOT" ]; then GODOT="$(command -v godot 2>/dev/null || true)"; fi
 { [ -n "${GODOT:-}" ] && [ -x "$GODOT" ]; } || { echo "FATAL: godot binary not found — set GODOT" >&2; exit 2; }
 TIMEOUT="${TEST_TIMEOUT:-30}"
+# Capture dir: the Claude Code sandbox denies /tmp but exports a writable $TMPDIR — a bare /tmp
+# here made every fixture FAIL for the wrong reason (measured 2026-09-02, selftest 2 BAD sandboxed).
+OUT_DIR="${TMPDIR:-/tmp}"
 
 # verdict <res://path> — echoes "PASS|FAIL|TIMEOUT <detail>"; returns 0 only on PASS.
 verdict() {
 	local res="$1" out code summary
-	out="/tmp/$(basename "$res").out"
+	out="$OUT_DIR/$(basename "$res").out"
 	perl -e 'alarm shift; exec @ARGV' "$TIMEOUT" "$GODOT" --headless --path . --script "$res" >"$out" 2>&1
 	code=$?
 	summary="$(grep -E '^[0-9]+/[0-9]+ checks passed, [0-9]+ failures$' "$out" | tail -1)"
@@ -95,7 +98,7 @@ for f in "${files[@]}"; do
 	name="$(basename "$f")"
 	if line="$(verdict "res://tests/$name")"; then pass_files=$((pass_files + 1)); else failed="$failed $name"; fi
 	printf '%-8s %-34s %s\n' "${line%% *}" "$name" "${line#* }"
-	s="$(grep -E '^[0-9]+/[0-9]+ checks passed' "/tmp/$name.out" 2>/dev/null | tail -1)"
+	s="$(grep -E '^[0-9]+/[0-9]+ checks passed' "$OUT_DIR/$name.out" 2>/dev/null | tail -1)"
 	if [ -n "$s" ]; then
 		sum_passed=$((sum_passed + ${s%%/*}))
 		rest="${s#*/}"; sum_total=$((sum_total + ${rest%% *}))
@@ -105,8 +108,8 @@ echo
 echo "files: $pass_files/$total_files passed; checks: $sum_passed/$sum_total"
 if [ -n "$failed" ]; then
 	for name in $failed; do
-		echo; echo "--- tail of /tmp/$name.out:"
-		tail -15 "/tmp/$name.out"
+		echo; echo "--- tail of $OUT_DIR/$name.out:"
+		tail -15 "$OUT_DIR/$name.out"
 	done
 	exit 1
 fi

@@ -22,7 +22,7 @@ fork: git-flow-squash       # The default (ADR-0002). git-flow-noff is the opt-i
 # tools/mcp/, so the recipe's lockfile-freeze runs before either tree is used.
 templates:
   # root
-  - { src: mcp.json,              dest: .mcp.json }                    # stamped; launches servers from the frozen tools/mcp tree (freeze runs first — see Bespoke)
+  - { src: mcp.json,              dest: .mcp.json }                    # stamped; launches the two npm servers from the frozen tools/mcp tree (freeze runs first — see Bespoke). No godot-ai entry: see step 4.4
   # per-project reference docs (docs/) — always copy, skip-if-exists unless refresh
   - { src: godot-mcp-guide.md,    dest: docs/godot-mcp-guide.md }
   - { src: asset-pipeline.md,     dest: docs/asset-pipeline.md }       # carries a {{WORKSPACE_ROOT}} token — engine step 3 asks for it
@@ -71,7 +71,8 @@ settings:                 # merged into .claude/settings.local.json by the engin
     - "mcp__godot-mcp__godot_input"
     - "mcp__godot-mcp__godot_runtime_state"
     - "mcp__godot-ai__*"
-  enabled_mcp_servers: [ godot-mcp, godot, godot-ai ]
+  enabled_mcp_servers: [ godot-mcp, godot ]   # godot-ai is NOT an .mcp.json server since 3.2.x — its dock registers
+                                            # a user-scope stdio entry in ~/.claude.json itself (recipe step 4.4)
 
 # Every knob string below that names the `godot-gotchas` skill carries its own two-root
 # existence test, because these strings are stamped into a project's CLAUDE.md and
@@ -173,7 +174,9 @@ live MCP tool reality / Blender API drift).
 ### 2. Verify target is a Godot project
 
 `test -f project.godot` — if absent, STOP and ask the user; do not create a Godot project
-from scratch (ask them to run Godot first).
+from scratch (ask them to run Godot first). If the directory is not yet a git repository and the
+user wants one, `git init -b main` — a bare `git init` yields `master` on this machine, and every
+sibling Godot repo is on `main`.
 
 ### 3. Install the in-engine addon (version-pinned to the server)
 
@@ -200,7 +203,8 @@ upstream package restructured the addon layout) — do not proceed to step 6.
 `godot-ai` (`hi-godot/godot-ai`, MIT) is the **primary writer** in the recommended setup
 (scene/node/script/property creation, `input_map_manage`, `script_patch`, `project_run`,
 `editor_screenshot`, `logs_read`). It writes most struct types correctly (why it is the writer)
-but is **not** universal: it omits `uid=` on first save (still live on godot-ai 3.1.3), and it
+but is **not** universal: it omits `uid=` on first save (still live on godot-ai 3.1.3; not
+re-probed on 3.2.4), and it
 has no Skeleton3D-bone and no AnimationTree authoring verbs (both re-probed, measured
 2026-08-08). Three once-live bridge quirks are fixed upstream — `Vector2i` (2.8.0+), the
 `input_map` list, and typed `Array[T]` — as is the `@tool` create gate, whose error names its own
@@ -210,29 +214,44 @@ no longer apply; otherwise skip that lookup and treat the notes here as the reco
 stays as the read/test complement. Skip this step only if the project writes through godot-mcp
 (not recommended — godot-mcp silently no-ops `Rect2`).
 
-1. **Vendor the addon (pinned + gitignored).** From a clone of `hi-godot/godot-ai`,
-   `git checkout v2.8.4` (the current baseline) **before copying**, then copy the
-   install-ready `addons/godot_ai/` (typically at `plugin/addons/godot_ai/`, not the repo
+1. **Vendor the addon (pinned + TRACKED).** From a clone of `hi-godot/godot-ai`,
+   `git checkout v3.2.4` (the current baseline — check `git ls-remote --tags` for newer; the
+   pin here is re-read against the fleet at each `audit-godot-parity` run) **before copying**,
+   then copy the install-ready `addons/godot_ai/` (at `plugin/addons/godot_ai/`, not the repo
    root; a `src/godot_ai` copy is NOT the one to vendor) into the project's `addons/`.
    **WHY the tag is the pin:** the vendored `plugin.cfg` version drives which Python MCP
-   server the dock fetches from PyPI via `uvx` (`uv` must be on PATH), and the `.mcp.json`
-   HTTP URL carries no version — so the checked-out tag pins BOTH addon and server, stopping
-   cross-project drift. **Gitignore the vendored copy** (append `/addons/godot_ai` to
-   `.gitignore`, exact-string dedup): it is third-party payload, decoupled from any local
-   clone. The plugin stays enabled via the committed `project.godot` `[editor_plugins]`; a
-   fresh clone re-vendors the same tag (record in the handoff, step 7).
+   server the dock fetches from PyPI via `uvx` (`uv` must be on PATH) — so the checked-out
+   tag pins BOTH addon and server, stopping cross-project drift. **Commit the vendored copy;
+   do NOT gitignore it.** The addon self-updates in-editor and rewrites `project.godot` and
+   `.mcp.json` on its own schedule (gotcha #116): an ignored copy drifts with no git trace
+   and the version recorded in CLAUDE.md rots silently (measured on one project: a silent
+   2.8.4 → 3.1.3 bump left 23 of 47 recorded godot-ai claims stale). Tracked, the drift
+   shows in `git status` and can be pinned by a test that asserts `plugin.cfg` equals the
+   version CLAUDE.md records. Record the vendored version in CLAUDE.md's godot-ai section.
 2. **Disable telemetry** (ON by default): set `GODOT_AI_DISABLE_TELEMETRY=true` before first
    launching the editor; the setting persists once written.
 3. **Enable the plugin** at Project → Project Settings → Plugins after opening the editor.
-4. The stamped `.mcp.json` and merged `settings.local.json` already carry the `godot-ai` HTTP
-   entry (`http://127.0.0.1:8000/mcp`), `mcp__godot-ai__*` allow, and `"godot-ai"` enabled
-   server. **The entry is INERT until the plugin is enabled AND the editor is running** — a
-   fresh clone shows godot-ai as a disconnected MCP server in `/mcp`; expected, not a bug.
+4. **The MCP client entry is written by the dock, at USER scope — not by this recipe.**
+   Since godot-ai 3.2.x the dock configures the client itself: on first enable it writes a
+   stdio entry into `~/.claude.json` (`uvx --from godot-ai==<plugin.cfg version> godot-ai
+   attach --port 8000 --ws-port 9500 --disable-telemetry`) and deletes any project-scope
+   `godot-ai` block from `.mcp.json` — which is why the stamped `mcp.json` carries none and
+   the `settings` delta lists only the two npm servers in `enabled_mcp_servers` (the
+   `mcp__godot-ai__*` allow stays; user-scope servers are not gated by
+   `enabledMcpjsonServers`). Verify after the first editor launch:
+   `python3 -c 'import json;print(json.load(open("$HOME/.claude.json"))["mcpServers"]["godot-ai"])'`.
+   Two consequences: (a) the pin now lives in that user-scope entry — bumping the vendored
+   tag without re-running the dock's client setup leaves the client on the old server;
+   (b) the entry **hardcodes 8000/9500** while the plugin itself walks ports on collision —
+   if the dock moves, re-run its client setup rather than hand-editing `~/.claude.json`.
+   The entry is INERT until the plugin is enabled AND the editor is running — a fresh session
+   shows godot-ai disconnected in `/mcp`; expected, not a bug.
 
-**If NOT using godot-ai:** remove the `godot-ai` block from `.mcp.json` and the
-`mcp__godot-ai__*` allow + `"godot-ai"` enabled-server entry from `settings.local.json`, to
-avoid a spurious connection error. (`uv` on PATH is a prerequisite when used — the dock
-auto-starts a uv-managed Python server on `:8000` + `:9500`.)
+**If NOT using godot-ai:** drop the `mcp__godot-ai__*` allow from `settings.local.json` and
+remove the user-scope `godot-ai` entry from `~/.claude.json` if a previous project's dock
+wrote one (it is machine-wide, so it will otherwise show as a failed server in every
+project). (`uv` on PATH is a prerequisite when used — the dock auto-starts a uv-managed
+Python server on `:8000` + `:9500`.)
 
 ### 5. Lockfile-freeze PAYLOAD (the engine mechanic, godot's package set)
 
@@ -316,8 +335,9 @@ Tell the user, in addition to the engine's external-includes-approval note:
    (integrity-verified against the committed lock) before the godot-mcp/minimal tools load,
    (b) import once — open the editor or `godot --headless --path . --import` — or
    `tests/run_tests.sh` false-FAILs `fixture_pass.gd` with `SCRIPT ERROR` (class cache empty),
-   and (c) if the project uses godot-ai, re-vendor `addons/godot_ai/` at the pinned tag
-   (the vendored copy is gitignored — step 4.1).
+   (`addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai MCP
+   client entry is user-scope in `~/.claude.json`, so a clone on a NEW machine gets it only
+   after the dock's first enable — step 4.4).
    `.mcp.json` changes only take effect after a Claude Code restart.
 5. If `~/.claude/settings.json` (user-level) doesn't already allow the godot-mcp tools, the
    user may get permission prompts — user-level perms are out of scope here (this profile sets
