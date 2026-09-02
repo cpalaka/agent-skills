@@ -1,9 +1,9 @@
 # Multi-Agent Policy — Claude Code mechanics reference
 
 The API-level detail behind the rules in `SKILL.md`. Read this when you are **writing or editing a
-workflow script**, or **dispatching an external vendor lens**; the rules themselves live in
-`SKILL.md` and are what govern. Nothing here relaxes anything there — this file only says *how* to
-express it.
+workflow script**, **dispatching an external vendor lens**, or **coordinating interactive child
+sessions in a terminal multiplexer**; the rules themselves live in `SKILL.md` and are what govern.
+Nothing here relaxes anything there — this file only says *how* to express it.
 
 Codex equivalents are noted where they exist; where they don't, the rule still holds and the
 mechanism is the host's own dispatch surface.
@@ -227,3 +227,146 @@ Two different files in the run's transcript dir, neither substituting for the ot
 |---|---|---|
 | `journal.jsonl` | each call's **return value** | drop reconciliation; diagnosing a thin result |
 | `agent-<id>.jsonl` | each agent's **spawn config** + raw turn stream | verifying `"model"` actually applied; fallback when no journal exists |
+
+## Coordinating interactive child sessions in a terminal multiplexer (herdr)
+
+A third orchestration shape beside workflows and the Agent tool: a **coordinator** session drives
+*interactive* child sessions in sibling panes, one ticket per child, each child writing its own
+closing note. Reach for it when the work is a chain of tickets committing to real repositories: each
+child is a full interactive session, so it can stop at a grant boundary and ask, its dialogs reach a
+human, and the user can resume that exact session afterwards. Measured on **herdr**, a terminal
+multiplexer that recognises coding agents in panes and exposes `idle` / `working` / `blocked` /
+`done` lifecycle states over a CLI; the procedure transfers to any multiplexer with those two
+properties. **herdr's
+own `--skill` output is the syntax authority and tracks the installed binary — nothing below
+restates a flag.** (measured 2026-09-01/2026-09-02 on a project: three runs, 20 child sessions,
+18 tickets.)
+
+Everything in `SKILL.md` still governs — tier pins, the heartbeat rule, `git status` after every
+fan-out with explicit-path staging, and "a command you write into a delegate spec carries your
+unverified premises". `PROCEDURES.md` § Hands-off ticket design governs the execution grant the
+children read. This is only the coordination layer above them.
+
+**Partition, and give every child its cwd.**
+
+- **One writer per repository `main`.** Two children committing to the same repo race the index lock
+  and the pre-commit hook, so tickets writing the same repo run sequentially even where their
+  blocking edges would allow parallelism. Partition parallel children by repo, never by ticket order.
+- **Set each child's cwd explicitly at the split; never let it inherit the coordinator's.** The
+  coordinator should sit *outside* any tree a ticket renames or moves — which is exactly the case
+  where an inherited cwd puts the child in the wrong place, or in a directory that stops existing
+  mid-run.
+- One child pane at a time, closed when its ticket closes. A fresh split per ticket kept the layout
+  legible across 20 children and returned the coordinator's pane to full width every time.
+
+**Start and prompt.**
+
+- **Confirm the pins in the child's status line before the first prompt; do not assume them from the
+  start call.** Model, effort and permission mode all take when passed as native agent arguments
+  after the separator, but a start that reports the agent not ready leaves a session that still
+  answers to its name while carrying none of them.
+- **Keep the prompt in a file and paste from there whenever it carries quotes.** A coordinator's
+  prompt is several sentences of standing clauses plus the ticket's hand-offs, and nested quoting is
+  the one thing that reliably mangles between the coordinator's shell and the child's input box. The
+  file is also the record of what the child actually executed.
+- **The prompt carries the standing clauses, not just the ticket path.** Four earned their place,
+  each measured to remove exactly the class of interruption it named and no more: stage by explicit
+  path in every repo and in any subagent; do not spell a guarded subcommand in echo strings,
+  comments, or commit messages; write file contents with the editor tools, never shell heredocs or
+  redirects; revert a marker in a scratch clone by deleting and re-cloning rather than with a git
+  verb.
+- **Prose trips permission rules.** An unanchored `Ask` pattern matches the whole command text, so a
+  child echoing a warning about a destructive verb — or a heredoc body quoting the grant — blocks on
+  a rule no git command triggered. This binds the coordinator too: its own prompt- and
+  ledger-writing calls block the same way, which is why coordinator prose goes through the editor
+  tools. Measured: 16 of the first run's 26 blocked returns were prose false positives; the prompt
+  clauses removed the classes they named, and re-anchoring the rules to the head of the command
+  removed the rest — **0 blocked returns across the following 6 children and 15 ticks**, over
+  children that moved and removed 73 files in one step and rewrote a registry. The wording lever is
+  bounded; only the rule set closes the class.
+
+**Ticks, and `blocked`.**
+
+- **Ten-minute bounded waits.** Each wait returns on a settled state — ready for input, finished, or
+  blocked — or on its own timeout, and that timeout is the heartbeat tick (payload per `SKILL.md`
+  § Heartbeat). Every block across three runs surfaced *inside* a tick rather than at its boundary,
+  so the cadence cost no responsiveness. Keep the tick cheap: running a full verifier inside one
+  overran the coordinator's own output limit and had to be dropped from later ticks.
+- **`blocked` is the only interruption, and it can be stale.** Read the dialog before escalating —
+  two reads found a working pane, the dialog having cleared between the wait returning and the read.
+- **Never answer a permission dialog on the user's behalf.** Post its text, focus the child, wait.
+  Answer only a *question* whose answer is stated literally in the ticket or the grant, and record
+  the question with the line you answered it from. Confirm the notification surface actually reaches
+  the user before relying on it; where notifications were disabled, focusing the child was the only
+  signal a human ever saw.
+- **A child stopping at a grant boundary with a question is the shape to want, not a failure.**
+
+**The handoff is the ticket file.**
+
+- **Never read a child's transcript into the coordinator's context.** The closing note plus the
+  coordinator's own gate output is the whole handoff; cap every pane read (80 lines held across
+  three runs). A note whose calibration section carries verbatim output lets the coordinator
+  reproduce a verdict line-for-line without the transcript.
+- **Re-run the ticket's gate yourself, from the instrument, never from the note** — then verify what
+  the child actually committed. A child's commit subject can mimic the coordinator's own ledger
+  form; twice it read as though the ledger had been touched when the diff said otherwise.
+- **Hand children facts with pointers — a file, a line range, a command to re-derive — never
+  decisions and never counts.** Every hand-off that was a fact came back as a decision with its
+  reasoning in the note. **Every hand-off that carried a count was wrong:** six stated figures of 5,
+  9, 16, 1, 1 and 27 re-derived as 3, 7, 21, 3, 3 and 28, and the one stated figure that was right
+  was confirmed only by a re-count that found twice as many occurrences of the thing counted.
+- **Derive a gate's expected figure from the instrument's own gating, not from the spec's prose.**
+  "Exactly one failure", "green, every assertion" and "zero each" were each contradicted by an
+  assertion the verifier runs unconditionally, a list the change itself invalidates, and a registry
+  the spec never named. Read the verifier for unguarded assertions, and list what the target state
+  cannot clear, *before* writing a verdict into a gate.
+- **A red the child predicts in its note before the destructive step is the right shape** — the
+  coordinator recognised it on sight instead of investigating it.
+- **Verify "that section printed nothing" against the unfiltered instrument.** A coordinator's own
+  tidy-up filter dropped the very assertion lines it was checking for, and the gate read as a gap.
+- **A criterion no instrument can verify from where the child stands is reported *not run*, never
+  passed** — and criteria that stay human (a read, a taste judgment) are batched at the run's end
+  rather than blocking each child. That is what keeps a hands-off chain hands-off without converting
+  a human gate into a machine one.
+
+**Close.**
+
+- **The exit signal is the agent's disappearance from the live list, not a clean-looking pane.** A
+  finished child's input box often shows the host's **dimmed suggested prompt** — grey text that
+  reads exactly like a typed command awaiting Enter. Sending Enter against it does nothing; sending
+  the exit command types over it, and the not-running error within a second is the confirmation.
+  Get that before closing the pane.
+- **Record each child's session name in the run's notes** so the user can resume that exact session
+  afterwards; the name itself is released the moment its agent exits.
+
+**Tickets that move or rename the ground under a session.**
+
+- **A session writes its project-registry entry under its *start* cwd when it exits, and re-creates
+  its own project directory on its next transcript write.** A mover therefore cannot clean up after
+  itself: dropping the stale key and the stale directory is a *later* session's step, and the
+  verifier stays red until then. Schedule it that way in the ticket instead of reading the red as a
+  defect.
+- **Poll for the precondition rather than asking a human to confirm it.** Before starting a child
+  whose ticket destroys a path, a 5-second poll over the live agent list matching cwd prefixes,
+  posted once and left to fire, cost three minutes and no attention.
+- **A ticket whose last step destroys the session's cwd must name which criteria are read after it
+  and where those readings land** — in the child's final message, since the note can no longer be
+  written. Without that, a complete note reads as an abandoned one.
+- **A shared registry file that every live session writes cannot be asserted byte-wise.** 24 seconds
+  after one atomic edit the file already differed, another session having bumped an unrelated
+  counter. Assert over the structure you care about — the map, the key set — never the document's
+  bytes or its digest.
+
+**Run end.**
+
+- **Sweep for strays with a newer-than-marker walk over the parent directories**, not only over the
+  repos: touch a marker at the run's start, list what is newer at its close. Cheap, and it is the
+  only thing that sees a file a child wrote outside every tree anyone was watching.
+- **A close-out artifact can red the very check it reports on.** A closing note that quotes the
+  forbidden string a repo-wide check hunts turns that check red on the note itself. The fix is the
+  check's own documented exclusion path, regenerated and committed — which makes regeneration a
+  normal closing step for any document that must name the thing.
+- **Record the session usage window at each child's start and exit.** Three consecutive workhorse
+  children took a five-hour window from 33% to 95%; the next child hit the limit within a minute of
+  its prompt and stalled the coordinator with it for about 80 minutes. Above roughly 80%, say so and
+  expect the next ticket to stall, rather than discovering it mid-turn.

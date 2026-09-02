@@ -117,6 +117,7 @@ When the main loop is on the scarce tier and the task is an implementation task 
 
 - **`PROCEDURES.md`** — read before **granting an orchestrator hands-off execution of a ticket** (convert the ticket's gates, don't skip them) or **starting a planning session over a multi-session doc corpus** (sweep it for rot first). Both fire only for those session types, never on a normal fan-out.
 - **`MECHANICS.md`** — read when *writing or editing a workflow script*: the `scarce`/`stages` arg surface, the `budget` global, `agentType`, per-agent `effort`, `workflow()` nesting, ultracode, resume, and which transcript file answers which question. Also read it before *dispatching an external vendor lens* — § Vendor lenses carries the direct-CLI invocations and the bridges' silent-failure modes.
+- **`MECHANICS.md` § Coordinating interactive child sessions** — read before *driving ticket work through interactive child sessions in a terminal multiplexer* (a coordinator pane, one child per ticket): partitioning, the child's cwd and pins, the standing prompt clauses, tick cadence and `blocked` handling, the ticket file as handoff, the close, and what a move ticket does to a session's own registry.
 
 ## Stale-registry and cache gotchas
 
