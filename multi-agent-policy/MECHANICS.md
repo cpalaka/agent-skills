@@ -21,7 +21,8 @@ mechanics:
 - **An unrecognized posture falls back to `none` with a LOGGED warning**, never silently.
 - **`stages: {<stage>: {model, effort}}` outranks the ladder.** This is how a deliberate one-off is
   expressed — including a scarce verify — and it is why the ladder itself needs no special cases.
-  The projection warning a scarce verify obliges is in `SKILL.md` § Scarce-tier usage.
+  A script that allows a scarce verify **must warn that its projection excludes it** (`SKILL.md`
+  § Scarce-tier usage says why).
 - **Model IDs are concrete and probe-resolved**, never short aliases — see the alias rule in
   `SKILL.md` § Tier roles. `tournament/reference/lint.mjs` ERRORs on a bare alias in any script.
 
@@ -99,7 +100,7 @@ codex exec --skip-git-repo-check -s read-only -C <dir> "$(cat PROMPT.txt)" < /de
 - **The stdin hang bites only in BACKGROUND Bash, so a foreground probe does not validate a
   background invocation.** The harness appends `< /dev/null` to foreground evals automatically: a
   foreground probe ran clean while the byte-identical background command hung 23 minutes at ~0 CPU
-  with no rollout file (2026-07-30). Write `< /dev/null` explicitly in every background vendor call.
+  with no rollout file (measured 2026-07-30). Write `< /dev/null` explicitly in every background vendor call.
 - `codex exec` writes its whole working transcript to **stderr** and only the final report to
   stdout, so 0-byte stdout mid-run is normal. `-s read-only` structurally prevents stray files.
 - **Hand vendors a read-only SNAPSHOT, not the live repo**: `git archive <sha> | tar -x -C
@@ -113,8 +114,8 @@ codex exec --skip-git-repo-check -s read-only -C <dir> "$(cat PROMPT.txt)" < /de
   under the sandbox (`sandbox-and-permissions` skill).
 - Vendor findings **skip the workflow's skeptic panels entirely** — adjudicate each against source in
   the main loop, spawning scoped xhigh verifiers for deep HIGHs. Both vendors have carried real
-  errors (2026-07-24: one misread a task's pins, the other overstated a missing-bench HIGH). The
-  payoff is still there: 2026-07-27 the Codex lens caught a 2.61× calibration error the Grok lens had
+  errors (measured 2026-07-24: one misread a task's pins, the other overstated a missing-bench HIGH). The
+  payoff is still there — measured 2026-07-27, the Codex lens caught a 2.61× calibration error the Grok lens had
   explicitly rubber-stamped as verified.
 
 **If you must use a bridge anyway**, these are its failure modes:
@@ -140,7 +141,8 @@ codex exec --skip-git-repo-check -s read-only -C <dir> "$(cat PROMPT.txt)" < /de
   codex run dispatched in the same session can be recorded there too (forked plumbing, job titled
   "Codex Task"). The log header names the actual runtime; the listing's resume cosmetics do not.
 - The `grok-build:grok-delegate` agent type only appears in sessions started **after** the plugin was
-  installed — same session-start registry cache as edited agent defs (below).
+  installed — same session-start registry cache as edited agent defs (`SKILL.md` § Stale-registry
+  and cache gotchas).
 
 ## Session-level: ultracode
 
@@ -160,8 +162,8 @@ in and re-passed by hand on the way back.
   errors ("No research question provided"). **Always re-pass the original `args` verbatim on
   resume.** An identical string is also what keeps the journal cache keys matching, so getting this
   right is what makes the cache-hit claim below true at all. (measured 2026-06-06)
-- **An object `args` can arrive STRINGIFIED**, so `args.X` is `undefined`. Measured 2026-06-06 on a
-  deep-research run: `args: {today, notesDir, reportPath}` reached the script as a JSON string;
+- **An object `args` can arrive STRINGIFIED**, so `args.X` is `undefined`. On a separate
+  deep-research run the same day: `args: {today, notesDir, reportPath}` reached the script as a JSON string;
   agents were told to write to literal `undefined/...` paths, and the run went for hours before the
   damage was visible. Hardcode critical constants (dates, paths, output locations) as
   `const` literals in the script body; if dynamic data must flow in, template it into the script
