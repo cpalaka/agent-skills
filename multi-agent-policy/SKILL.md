@@ -45,7 +45,7 @@ Literal identifiers below (`opus-implementer`, the legacy `fable` arg) are filen
 
 ## Scarce-tier usage
 
-Opt-in per launch, never a default for subagents/workflows. Still usage-limited on a weekly window: confirm current headroom before committing it to a stage. If the window is about to expire with budget unspent, the scarcity guard inverts — spend it rather than let it lapse. A scarce-tier main loop via `/model` for high-ambiguity judgment sessions is sanctioned, not something to self-police.
+Opt-in per launch, never a default for subagents/workflows. Still usage-limited on **two** windows, the weekly one AND the five-hour session window: confirm headroom on both before committing it to a stage — a fan-out of N xhigh scarce agents can drain the session window inside minutes (measured 2026-09-01 on a project: three generators died 0/3 about five minutes in, ~407k tokens; the failure is clean, journal rows read `failed`, so relaunch fresh after the reset rather than resume). If the window is about to expire with budget unspent, the scarcity guard inverts — spend it rather than let it lapse. A scarce-tier main loop via `/model` for high-ambiguity judgment sessions is sanctioned, not something to self-police.
 
 **Placement is a cost ladder, not a permission list.** "Scarce goes to the completeness critic" was a *rationing* rule, and a rationing rule expires when the ration changes — a looser window doesn't license spreading the tier around, it obliges re-deriving placement from **cost per slot vs. value at that slot**, per stage. Choose a *posture*, not a boolean; rungs are cumulative.
 
