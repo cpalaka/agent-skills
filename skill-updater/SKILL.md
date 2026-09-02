@@ -27,7 +27,7 @@ plugin/skill entry has `trusted` (bool), `updateAvailable` (bool), an identifier
 for plugins, `name` for skills), `availableLabel`/`diffstat`, and an optional `note`.
 Skill entries also carry `localTreeHash` and `localEdited`.
 
-Two special `note` values on `skills` entries:
+Two `note` values need a decision from the user (the rest are reported, not decided):
 - **moved upstream** — the skill's folder moved in the source repo (e.g. out of
   `in-progress/`). `updateAvailable`/`diffstat` are computed against the NEW path, but
   `apply-skills` may not follow the move; the note carries the reinstall command
@@ -115,14 +115,13 @@ end with this note verbatim:
   `~/.agents/skills/`. Everything else — hand-authored or vendored — is invisible to the engine by
   construction (`skillsync.py detect_skills()` iterates `lock.get("skills", {})` and nothing else).
   **"Is it a symlink?" is NOT the test** — hand-authored skills are usually symlinks too, into a
-  local checkout of the repo that authors them (measured 2026-09-01: 19 of the 21 out-of-scope
-  entries under `~/.claude/skills/` were symlinks, and none had a lock row). Check the lock row and
-  the symlink *target*, never the symlink-ness.
+  local checkout of the repo that authors them (measured on one maintainer install, 2026-09-01:
+  19 of its 21 out-of-scope entries were symlinks, and none had a lock row — your own numbers will
+  differ, the shape will not). Check the lock row and the symlink *target*, never the symlink-ness.
 - **Trusted vs. community** is defined in `~/.claude/skills/skill-updater/trusted-sources.json`.
   To promote a source to auto-apply, add its marketplace name to `marketplaces` or its
   `owner/*` glob to `repos`.
 - Set `GITHUB_TOKEN` in the environment to avoid GitHub rate limits on the clones.
-- **The engine needs only `python3`; the test suite needs `pytest`**, which a system `python3`
-  often refuses to install into — run `scripts/test_skillsync.py` from a venv
-  (`python3 -m venv .venv && .venv/bin/pip install pytest && .venv/bin/python -m pytest scripts/`
-  from this directory).
+- **The engine needs only `python3`; the suite needs `pytest`, which a system `python3` often
+  refuses to install.** From this directory:
+  `python3 -m venv .venv && .venv/bin/pip install pytest && .venv/bin/python -m pytest scripts/`.

@@ -157,6 +157,28 @@ def test_clone_skill_folders_rejects_flag_smuggling(tmp_path):
     assert not dest.exists()  # nothing was cloned
 
 
+def test_detect_skills_refuses_flagged_folder_before_any_network_call(monkeypatch, tmp_path):
+    # detect runs on every invocation and reaches git by its own two-step route, so the
+    # guard in clone_skill_folders does not cover it. An option-shaped folder from the
+    # untrusted lock file must be refused before the fetch, and reported rather than
+    # aborting the run for every other repo.
+    reached_network = []
+    monkeypatch.setattr(skillsync, "clone_no_checkout",
+                        lambda *a, **k: reached_network.append(a))
+    monkeypatch.setattr(skillsync, "local_edit_status", lambda name, entry: (None, None, None))
+    lock = tmp_path / "lock.json"
+    lock.write_text(json.dumps({"skills": {
+        "evil": {"sourceUrl": "https://github.com/x/y.git",
+                 "skillPath": "--upload-pack=touch /tmp/pwned/SKILL.md"},
+    }}))
+    monkeypatch.setattr(skillsync, "SKILL_LOCK", lock)
+    report = {"plugins": [], "skills": [], "newSkills": [], "errors": []}
+    skillsync.detect_skills(report, [])
+    assert reached_network == []
+    assert len(report["errors"]) == 1
+    assert "unsafe folder" in report["errors"][0]
+
+
 def _make_root_skill_repo(root):
     """Create a git repo whose skill IS the whole repo (SKILL.md at root + a subdir)."""
     root.mkdir(parents=True, exist_ok=True)

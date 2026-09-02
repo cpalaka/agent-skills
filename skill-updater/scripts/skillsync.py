@@ -358,6 +358,12 @@ def detect_skills(report, trusted_repos):
         ref = items[0][2]
         tmp = Path(tempfile.mkdtemp(prefix="skillsync-"))
         try:
+            # These folders come from the lock file, same as sourceUrl and ref. Check them
+            # here rather than leaving it to checkout_folders below, which runs only after
+            # the network call — the reason ValueError is caught alongside
+            # CalledProcessError: one bad repo is an entry in `errors`, not the end of the
+            # run for every other repo.
+            validate_folders([f for (_, f, _) in items])
             clone_no_checkout(source_url, ref, tmp)
             upstream = upstream_skill_folders(tmp)
             # Classify each installed skill: still at its folder, moved (same
@@ -431,9 +437,9 @@ def detect_skills(report, trusted_repos):
                         "trusted": trusted,
                         "installCmd": f"npx skills@latest add {repo} -g -y --skill {base}",
                     })
-        except subprocess.CalledProcessError as e:
-            detail = (e.stderr or str(e))[:200]
-            report["errors"].append(f"clone {repo} failed: {detail}")
+        except (subprocess.CalledProcessError, ValueError) as e:
+            detail = (getattr(e, "stderr", None) or str(e))[:200]
+            report["errors"].append(f"{repo} failed: {detail}")
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
