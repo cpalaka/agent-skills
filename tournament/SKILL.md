@@ -35,7 +35,7 @@ At run end, results are written beside the spec as `<archive>/<name>.result-<dat
 
 The interview fills gaps from the free-form brief, then confirms a compact spec. Strong overridable defaults mean the user supplies only the non-default; the interview **actively elicits domain + lenses + judges + mode** (candidate schema is inferred, §4), and everything else defaults silently but is written into the spec for editing.
 
-Depths are realized by **replicating the posture inline** — do NOT sub-invoke the `grilling` or `grill-with-docs` skills (their hard-gates and terminal states fight the tournament flow):
+Depths are realized by **replicating the posture inline**. If a separate interview skill (`grilling`, `grill-with-docs` or similar) is installed, do NOT sub-invoke it — its hard gates and terminal states fight the tournament flow:
 
 - **quick** (default) — the structured interview: ask only for the missing required fields, propose defaults for the rest, confirm.
 - **brainstorm** — collaborative, one question at a time, scoped strictly to producing the `.spec.md` (no design-doc or plan-writing detour).
