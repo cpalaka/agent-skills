@@ -1,8 +1,12 @@
 .DS_Store
 docs/scratch/
 __pycache__/
-# skill-updater's suite is run from a venv (its SKILL.md says so). A venv's shebangs and
-# pyvenv.cfg carry absolute home paths, so an un-ignored one would flood the leak-guard scan.
+# skill-updater's suite runs from a venv (its SKILL.md says so), and a venv's activate script,
+# pyvenv.cfg and console-script shebangs all carry an absolute home path. The stdlib venv and
+# pytest each drop a `*` .gitignore inside their own directory, so most of the time these two
+# rules are belt-and-braces — but a tool that omits that file leaves every one of those paths
+# in front of the leak-guard (measured 2026-09-01, both self-ignores removed: 979 extra files
+# reached the scan and 33 matched; these rules alone returned it to clean).
 .venv/
 .pytest_cache/
 
