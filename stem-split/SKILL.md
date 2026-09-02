@@ -40,7 +40,7 @@ Separation quality is bounded by the source, and the models amplify codec artifa
 | `--six-stem` | Swaps `htdemucs_ft` for `htdemucs_6s`, adding `guitar.wav` and `piano.wav`. Lower quality on the shared four — the trade is breadth for accuracy. |
 | `--keep-instrumental` | Also writes `instrumental.wav`, the full vocal-free mix from the Roformer stage. |
 | `--no-analyze` | Skips BPM and key detection. |
-| `--no-copy-source` | Skips copying the original mix into the stem folder. On by default — pass this only when asked. |
+| `--no-copy-source` | Skips copying the original mix into the stem folder. Copying is on by default — pass this only when asked. |
 | `--artist` / `--title` | Override the derived output path. |
 
 ## BPM and key

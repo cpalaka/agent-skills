@@ -53,7 +53,7 @@ if [ -z "$DEVICE" ] && [ -x "$DEMUCS_PYTHON" ]; then
   DEVICE=$("$DEMUCS_PYTHON" -c 'import torch; print("cuda" if torch.cuda.is_available() else "mps" if getattr(torch.backends,"mps",None) and torch.backends.mps.is_available() else "cpu")' 2>/dev/null || true)
 fi
 # An unanswerable probe is not the same fact as "no GPU here", and collapsing the two
-# is what made the first version of this report cpu on a machine with a working 4080.
+# is what made the first version of this report cpu on a machine with a working CUDA GPU.
 if [ -z "$DEVICE" ]; then
   echo "WARNING: could not probe torch via ${DEMUCS_PYTHON:-<none>}; assuming cpu." >&2
   DEVICE=cpu
@@ -89,9 +89,9 @@ echo "    output: $OUT"
 # Stage locally so neither model reads repeatedly over a network mount.
 #
 # Network mounts hand back corrupt reads without saying so - observed on an SMB
-# mount, where a bad copy hashed stable for minutes because macOS cached it, and
-# the file's own mtime never moved. So decode the staged copy before spending
-# GPU time on it, and re-copy if it does not survive.
+# mount over a VPN, where a bad copy hashed stable for minutes because macOS
+# cached it, and the file's own mtime never moved. So decode the staged copy
+# before spending GPU time on it, and re-copy if it does not survive.
 LOCAL="$WORK/source.${IN##*.}"
 STAGED=0
 for attempt in 1 2 3; do

@@ -2,13 +2,13 @@
 
 Both tools carry undeclared or mis-bounded dependencies, so a stage that dies on an import error is usually packaging rather than anything about the audio.
 
-All work happens in `$TMPDIR/stemsplit.$$`, which is removed on success and **kept on failure** so the logs survive — the error message prints the full path to `rf.log` or `dm.log`. Nothing intermediate is ever written beside the output or onto the source volume.
+All work happens in `$TMPDIR/stemsplit.$$`, which is removed on success and **kept when a stage fails** so the logs survive — the error message prints the full path to `rf.log` or `dm.log`. Nothing intermediate is ever written beside the output or onto the source volume.
 
 ## Setup
 
 Two tools and ffmpeg. On Apple Silicon both pick up MPS/CoreML automatically.
 
-The script's defaults put demucs at `~/.local/share/stem-split/demucs/.venv/bin/demucs` and the Roformer checkpoints in `~/.local/share/stem-split/models`. Install there and nothing needs configuring; install anywhere else and the two env vars below point the script at it, with no edit to the script.
+`audio-separator` and `ffmpeg` must be on `PATH` — neither has an override. demucs and the checkpoints are found by path, and the commands below install them where the script looks by default.
 
 ```bash
 brew install ffmpeg
@@ -29,12 +29,7 @@ mkdir -p ~/.local/share/stem-split/models
 
 Python 3.10+ is required; 3.12 is what this is tested on.
 
-| Override | Points at |
-|---|---|
-| `STEMSPLIT_DEMUCS` | the `demucs` executable |
-| `STEMSPLIT_MODEL_DIR` | the directory holding the Roformer checkpoints |
-
-When the resolved `demucs` path is not executable — the default or the override alike — a `demucs` on `PATH` is used instead, so a plain pip or uv install needs no override at all. `STEMSPLIT_OUT`, `STEMSPLIT_ROFORMER`, `STEMSPLIT_PYTHON` and `STEMSPLIT_DEVICE` override the output root, the checkpoint name, the interpreter that runs `analyze.py`, and the torch device.
+An install anywhere else needs no edit to the script, only env vars: `STEMSPLIT_DEMUCS` (the `demucs` executable, default `~/.local/share/stem-split/demucs/.venv/bin/demucs`), `STEMSPLIT_MODEL_DIR` (the checkpoint directory, default `~/.local/share/stem-split/models`), `STEMSPLIT_OUT` (output root), `STEMSPLIT_ROFORMER` (checkpoint name), `STEMSPLIT_PYTHON` (the interpreter that runs `analyze.py`) and `STEMSPLIT_DEVICE` (the torch device). Whenever the resolved `demucs` path is not executable — default or override alike — a `demucs` on `PATH` is used instead.
 
 The model cache path is passed on every run because the default is `/tmp/audio-separator-models/`, which macOS clears — losing it means re-downloading the checkpoint.
 
