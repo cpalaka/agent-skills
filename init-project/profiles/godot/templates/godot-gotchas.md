@@ -5,7 +5,8 @@
 > `~/.claude/skills` or `~/.agents/skills` — Claude Code and Codex resolve Skills through
 > different roots, so a gate that checks one skips the step for every consumer on the other
 > host), **universal** Godot / godot-ai / godot-mcp / GDScript / tooling / addon gotchas live
-> there instead, as the single source, and are never copied here.
+> there instead, as the single source, and are never copied here. Otherwise skip that split and
+> keep every gotcha in this file, marking the universal ones as such.
 
 When you hit a new gotcha, classify it:
 

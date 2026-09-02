@@ -82,14 +82,14 @@ knobs:
                             # project); skipped entirely for a board-less prototype.
     VERSION: "<pin the installed backlog CLI version>"
     PLANS_DIR: "docs/plans/"
-    VERIFY_EXAMPLES: "tests/run_tests.sh green via the headless runner; an in-editor F5 / interactive verification of the affected surface; if the `godot-gotchas` skill is installed (its directory exists under ~/.claude/skills or ~/.agents/skills), a gotcha self-scan of the diff against its Detect-proactively patterns — otherwise skip that scan and use docs/godot-gotchas.md alone"
+    VERIFY_EXAMPLES: "tests/run_tests.sh green via the headless runner; an in-editor F5 / interactive verification of the affected surface; if the `godot-gotchas` skill is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), a gotcha self-scan of the diff against its Detect-proactively patterns — otherwise skip that scan and use docs/godot-gotchas.md alone"
     # Godot-flavored DoD — standing gates for every task, ending in the user-sign-off gate
     # (backlog-core requires the list end in sign-off). Stamped into backlog/config.yml at
     # task-create time; config changes don't back-propagate.
     DoD:
       - "Headless test suite green via tests/run_tests.sh (verdict from output, not $?)"
-      - "Gotcha self-scan of the diff — against the `godot-gotchas` skill if it is installed (its directory exists under ~/.claude/skills or ~/.agents/skills), otherwise against docs/godot-gotchas.md alone — clean, or each finding addressed"
-      - "New gotchas filed: project-local -> docs/godot-gotchas.md; universal -> the `godot-gotchas` skill if it is installed (its directory exists under ~/.claude/skills or ~/.agents/skills), otherwise docs/godot-gotchas.md as well. Load-bearing decisions recorded as docs/adr/ entries"
+      - "Gotcha self-scan of the diff — against the `godot-gotchas` skill if it is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), otherwise against docs/godot-gotchas.md alone — clean, or each finding addressed"
+      - "New gotchas filed: project-local -> docs/godot-gotchas.md; universal -> the `godot-gotchas` skill if it is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), otherwise docs/godot-gotchas.md as well. Load-bearing decisions recorded as docs/adr/ entries"
       - "Any debug/diagnostic scaffolding (autoload prints, temp scenes, profiler hooks) reverted"
       - "User sign-off received"
   verify-gate:
