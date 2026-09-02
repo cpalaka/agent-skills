@@ -31,6 +31,8 @@ Two failure families, both silent. A bad instrument reports success. A negative 
 
 **And once the reading IS real, a negative is only a pass when its RIVAL CAUSES are excluded — the FORM of the failure discriminates, not the fact of it.** "Port unreachable" is produced identically by a firewall DROP and by nothing listening there, and only timeout-vs-RST separates them; crediting the wrong cause certifies a rule that was never enforced.
 
+**A reading taken from INSIDE the trust boundary cannot establish a property OF that boundary.** Public-ness, reachability and permission are properties of the *least*-privileged caller, so a credentialed probe answers a different question and answers it green: `gh repo view --json visibility`, `curl` carrying your session, `aws s3 ls` under your own role. Re-run the check unauthenticated, or as the least-privileged principal, and assert the complement — the thing that must stay closed has to fail the same probe.
+
 **When a spec NAMES the metric, ask what the metric cannot see.** Satisfy it *and* measure the stronger thing directly — e.g. `scrollWidth === clientWidth` counts start-side padding only.
 
 **A saved review/eval harness rots with no error signal.** Its pinned positions and golden answers describe files it does not own, go false when those are corrected, and then instruct N agents to flag the fix as a regression. A stale one runs clean. Re-read its embedded context against the target before every re-run.
