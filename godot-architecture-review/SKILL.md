@@ -22,16 +22,15 @@ session** ([PHASES.md](PHASES.md) has copy-paste kickoff prompts).
 - **Godot realization idiom** at dive time: the `godot-gdscript-patterns` skill; engine quirks per
   the project's gotchas catalog, and — if the `godot-gotchas` skill is installed (its directory
   exists under `~/.claude/skills` or `~/.agents/skills`) — that skill's catalog too; otherwise skip
-  this step.
-
-`godot-gotchas`, `godot-personal-preferences` ([PHASES.md](PHASES.md)) and `audit-godot-parity`
-("Maintaining this skill") are optional companions: each is gated on that same two-root test and
-skipped when absent, so nothing here hard-requires one. **Both roots, always** — Claude Code and
-Codex resolve Skills through different roots, so a gate that checks one skips the step for every
-consumer on the other host.
+  this step and use the project's catalog alone.
 
 This skill adds the three things those lack: **Godot guardrails**, **population pre-labeling**,
 and the **convergence protocol** ([ARTIFACTS.md](ARTIFACTS.md) + [PHASES.md](PHASES.md)).
+
+**Both roots, always** — Claude Code and Codex resolve Skills through different roots, so a gate
+that checks one skips the step for every consumer on the other host. An absent companion always
+means skip that step and take the stated fallback, never fail: nothing here hard-requires a
+companion Skill.
 
 ## Anchor to real drivers (required, before any phase)
 

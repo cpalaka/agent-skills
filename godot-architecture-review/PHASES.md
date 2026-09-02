@@ -2,10 +2,11 @@
 
 Run **one phase per fresh session**. Every kickoff starts by reading the project's
 `docs/architecture/campaign.md` (parameters) and invoking this skill (recipe). Engine quirks: obey
-the project's gotchas catalog throughout, and — if the `godot-gotchas` or
-`godot-personal-preferences` skill is installed (its directory exists under `~/.claude/skills` or
-`~/.agents/skills`) — obey that skill too; otherwise skip this step. Both roots, always: SKILL.md
-§ Layering says why.
+the project's gotchas catalog throughout. Two further sources are gated independently. If the
+`godot-gotchas` skill is installed (its directory exists under `~/.claude/skills` or
+`~/.agents/skills`), obey its catalog too; otherwise skip this step and use the project's catalog
+alone. If the `godot-personal-preferences` skill is installed (the same two roots), obey it too;
+otherwise skip this step. Both roots, always: SKILL.md § Layering says why.
 
 The exploration kickoffs retain Claude Code's required `ultracode.` Workflow router; the deep-dive
 kickoff deliberately has no router (solo, write-heavy). On Codex, the
