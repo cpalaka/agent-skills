@@ -58,4 +58,4 @@ Apply the fixes to the spec, persist it to the plan doc, and report to the user:
 
 **Hand /to-tickets its blocking edges.** A spec constraint of the form "decided in the artifact this ticket produces" is a BLOCKING edge, not a note on the dependent ticket — flag every one you find in the revised spec so the slice order falls out of it rather than being reconstructed later.
 
-_(Both rules were promoted to the `to-tickets` skill and silently clobbered by an npx update (measured 2026-07-27). They live here because this skill is hand-authored and upstream cannot overwrite it.)_
+_(Both rules were promoted to the `to-tickets` skill on 2026-07-27 and silently clobbered by an npx update (measured 2026-08-25). They live here because this skill is hand-authored, not vendored from an upstream that a package update overwrites.)_

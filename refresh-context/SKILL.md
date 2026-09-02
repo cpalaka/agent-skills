@@ -34,7 +34,7 @@ Building the glossary is already covered by two skills — **REQUIRED SUB-SKILLS
 
 4. **ADRs.** When a decision surfaces that passes the 3-gate test (hard-to-reverse + surprising-without-context + real trade-off), *offer* it — one at a time, on that run's evidence.
 
-5. **Wire it into the repo** (seed, or any run where the link is missing). A `CONTEXT.md` only helps if something reads it, and a global instruction file lives on one machine — it does not travel with the repo. Make the project's root `CLAUDE.md` name it: if it has no `CONTEXT.md` reference, append a one-line pointer — *"Read `CONTEXT.md` at the start of a task for the project's domain vocabulary (and `docs/adr/` when present)."* — creating a minimal `CLAUDE.md` if the repo has none. Idempotent: skip if it already references `CONTEXT.md`. This makes the repo self-describing for cloud agents, other machines, and contributors.
+5. **Wire it into the repo** (seed, or any run where the link is missing). A `CONTEXT.md` only helps if something reads it, and a user-level `CLAUDE.md` lives on one machine — it does not travel with the repo. Make the project's root `CLAUDE.md` name it: if it has no `CONTEXT.md` reference, append a one-line pointer — *"Read `CONTEXT.md` at the start of a task for the project's domain vocabulary (and `docs/adr/` when present)."* — creating a minimal `CLAUDE.md` if the repo has none. Idempotent: skip if it already references `CONTEXT.md`. This makes the repo self-describing for cloud agents, other machines, and contributors.
 
 6. **Close.** Summarize terms added/changed, any ADRs offered, and the `CLAUDE.md` wiring.
 
@@ -55,4 +55,4 @@ A `CONTEXT.md` **points into** design docs/ADRs; it never duplicates or summariz
 
 ## Red flags — STOP
 
-- Trusting `$BASE` without `git show --stat "$BASE"`. An empty `$BASE` (uncommitted glossary) makes the diff falsely empty; a docs-only/typo edit to `CONTEXT.md` hides un-glossed work committed before it. Either way the scope reads as the empty-diff exit and the run closes having glossed nothing.
+- Trusting `$BASE` without `git show --stat "$BASE"` — an empty `$BASE` (uncommitted glossary) makes the diff falsely empty, and a docs-only/typo edit to `CONTEXT.md` hides un-glossed work committed before it
