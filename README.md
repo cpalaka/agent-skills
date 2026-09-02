@@ -79,9 +79,10 @@ That arms two things:
 `core.hooksPath` is local config and is not tracked. A fresh clone has no hooks until someone
 sets it.
 
-`skill-updater` is the only Skill here with a runnable test suite. It needs `pytest`, which a
-system `python3` usually cannot install into — run it from a virtualenv; the exact command is in
-[`skill-updater/SKILL.md`](skill-updater/SKILL.md), which is where it is maintained.
+`skill-updater` is the only Skill here that ships a test suite for its own code. The suite needs
+`pytest`, which a system `python3` usually cannot install into — run it from a virtualenv. The
+exact command lives in [`skill-updater/SKILL.md`](skill-updater/SKILL.md), which is where it is
+maintained; it is not repeated here.
 
 ## The Skills
 
