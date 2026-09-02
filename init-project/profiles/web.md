@@ -9,15 +9,14 @@ imports:
 fork: git-flow-squash      # the default (ADR-0002); git-flow-noff is the opt-in alternative.
 templates: []              # none — backlog's claude-section.md is promoted into the
                            # backlog-core chunk, so no profile stamps it; web carries no Template assets.
-#
-# Two placeholder styles below, and they mean different things:
-#   {{TOKEN}}  a value to ask the user for once and substitute before writing.
-#   <shape>    illustrative prose the Profile author replaces by hand.
-# The tokens this Profile uses are listed under "## Placeholders" after the manifest.
 knobs:
   # backlog-core is an explicit import; verify-gate + dev-practice ride
   # dev-base. All three are value-variant, so the engine still writes a knob
   # block for each (knob values live in the project CLAUDE.md, never in a chunk).
+  #
+  # A `<…>` value below is shape, not a default: answer it from the project at
+  # apply time. It is deliberately NOT the Template `{{NAME}}` token — that one
+  # is substituted into COPIED files by step 3, and this Profile stamps none.
   backlog-core:
     VERSION: "1.45.2"                         # mirrors profiles/backlog.md, which carries THE canonical
                                               # pin — bump both together; confirm at apply time
@@ -34,48 +33,39 @@ knobs:
     # sequence (typecheck → test → build → smoke → secret-scan) runs. The npm
     # scripts below are the common shape; swap in the project's package manager
     # and script names at apply time.
-    dir: "{{APP_DIR}}"                        # the directory the gate runs in: the repo root for a
-                                              # single-package repo, a subdirectory where the app is one
+    dir: "<the directory the gate runs in: repo root for a single-package repo, the app's subdirectory where it is one>"
     typecheck: "npm run typecheck"
     test: "npm run test"
     build: "npm run build"
     build_check: "<the build's own artifact assertion — e.g. that the SSG/prerender step produced the static output. The build must SAY so; exit 0 alone is not the check>"
     smoke: "npm run dev"                      # bring up, confirm the affected route renders, bring down
     secret_scan: "grep -rEn '<secret-leak pattern>' over the working tree from repo root — expect ZERO matches"
-    env: "{{SECRETS_LOCATION}}"               # where the deployed secrets live; never in the repo and never
-                                              # in the client runtime
+    env: "<where the deployed secrets live — an env file on the host, a secrets manager, the platform's own store; never in the repo and never in the client runtime>"
   dev-practice:
     test_roster: "<pointer to the authoritative required-coverage list, e.g. a PRD section>"
-    spec_verify_src: "{{APP_DIR}}/src"        # the source tree specs' [reuse] claims are grep-verified against
+    spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against, e.g. the app dir's src/>"
   parallel-work:
     # parallel-work rides dev-base and is value-variant: it names two knobs the
     # engine writes into <!-- knobs:parallel-work --> in the project CLAUDE.md.
-    worktree_path_prefix: "../{{TASK_BRANCH_CONVENTION}}"   # where `git worktree add` puts each tree; the last
-                                                            # path segment is the task-branch name, so the
-                                                            # worktree layout and the branch convention stay in step
-    install: "the fresh-worktree install command — e.g. `npm install` in {{APP_DIR}}"
+    worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree; the last path
+                                                        # segment IS the task-branch name, so the worktree layout
+                                                        # and the branch convention stay in step. Match the
+                                                        # project's own convention here, not this shape.
+    install: "<the fresh-worktree install command, e.g. `npm install` in the app directory>"
 ---
-## Placeholders
-
-Four tokens, each asked once and answered before anything is written:
-
-| token | what it is | where it lands |
-| --- | --- | --- |
-| `{{APP_DIR}}` | the directory the toolchain runs in — repo root, or the subdirectory holding the app | `verify-gate`, `dev-practice`, `parallel-work` knob blocks |
-| `{{SECRETS_LOCATION}}` | where the deployed secrets actually live (an env file on the host, a secrets manager, the platform's own store) | the `verify-gate` knob block |
-| `{{TASK_BRANCH_CONVENTION}}` | the project's task-branch name shape, e.g. `<proj>-task-NNN-<slug>` | the `parallel-work` knob block |
-| `{{DEPLOY_TARGET}}` | what the project deploys to — a host, a platform, a container registry | the project's Zone 3 inline-leaf, hand-authored (see below) |
-
-The first three are knob values: the engine substitutes them as it writes Zone 2. `{{DEPLOY_TARGET}}`
-is different — deploy is inline-leaf, so the token marks a value to *ask for and hand to the
-author*, not one the engine writes anywhere.
-
 ## Bespoke setup
 
 None beyond the engine's uniform steps. The engine's apply algorithm
 (@imports + knob blocks, settings.local.json merge, verify-after-write, handoff)
 fully covers a web project; there are no installs, no `init` CLI, no
 `project.godot`-style edits, and no Templates to stamp.
+
+**Three answers the project owes before anything is written**, because nothing here can
+guess them and each one is wrong by default: **where the toolchain runs** (repo root or an
+app subdirectory — it fills the `verify-gate`, `dev-practice` and `parallel-work` values),
+**where the deployed secrets live** (the `verify-gate` `env` value), and **the task-branch
+convention** (the `parallel-work` prefix). A fourth, **the deploy target**, is not a knob at
+all — deploy is inline-leaf, so ask for it and hand it to whoever writes Zone 3.
 
 **If this project needs a board** and `backlog/` is absent, run the board
 setup from **`profiles/backlog.md`'s `## Bespoke setup`** (the `backlog init`
@@ -88,11 +78,11 @@ arrive via the `backlog-core` @import regardless; only the one-time CLI
 project's own `CLAUDE.md`.** The engine never writes Zone 3, and no manifest
 knob or shared chunk carries them:
 
-- **Deploy** — the target (`{{DEPLOY_TARGET}}`), the commands that push to it, where the
-  secrets live (`{{SECRETS_LOCATION}}`), the client-to-API boundary the frontend is held to,
-  and anything under the deploy directory (reverse-proxy config, service units). All
-  human-gated; project-specific. A deploy command belongs in this zone even when it is a
-  one-liner: the knob blocks are regenerated on every re-run and would lose it.
+- **Deploy** — the target, the commands that push to it, where the secrets live, the
+  client-to-API boundary the frontend is held to, and anything under the deploy directory
+  (reverse-proxy config, service units). All human-gated; project-specific. A deploy command
+  belongs in this zone even when it is a one-liner: the knob blocks are rewritten on every
+  re-run and would lose it.
 - **The framework skill list** — which framework or UI skills to invoke proactively and
   their triggers (before touching a component, for reusable component APIs, for route
   animations, and so on). The `dev-practice` chunk explicitly leaves this list as

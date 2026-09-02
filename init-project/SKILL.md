@@ -106,10 +106,9 @@ dedup), and record the fresh-clone rehydrate command in the handoff. (Currently 
 Profile needs this; promote nothing until a second type does.)
 
 **7. Verify-after-write.** Re-inventory the expected outputs; confirm each `@import` path
-resolves through the symlink; confirm nothing written still carries a `{{` token — **stamped
-Templates and the engine-written zones of `CLAUDE.md` alike**, since a Profile may put a token in
-a knob value and step 1 writes those; if the Profile sets a `verify-gate`, run it. Surface any
-gap; do not report success without the inventory passing (the `verify-gate` discipline).
+resolves through the symlink; confirm no stamped file still carries a `{{` token; if the Profile
+sets a `verify-gate`, run it. Surface any gap; do not report success without the inventory
+passing (the `verify-gate` discipline).
 
 **8. Handoff.** Tell the user: (a) on first launch, **approve the external-includes prompt
 once** (then restart so the imports load); (b) that same approval is what makes headless runs
@@ -119,8 +118,8 @@ recipe defers to an interactive editor step.
 ## Profiles
 
 - `profiles/backlog.md` — a board-driven dev project (dev-base + git-flow fork + backlog-core).
-- `profiles/web.md` — a web project; the toolchain gate, and `{{…}}` tokens for the app
-  directory, the secrets location, the task-branch convention and the deploy target.
+- `profiles/web.md` — a web project; carries the npm-shaped toolchain gate and leaves the
+  app directory, the secrets location and the task-branch convention as values to answer.
 - `profiles/godot.md` — a Godot project; carries the heavy bespoke recipe (MCP install,
   `project.godot` edits, lockfile-freeze) and owns its Template assets.
 
