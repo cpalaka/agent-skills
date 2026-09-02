@@ -58,7 +58,7 @@ that there, then squash-merge so the code change and the Done-stamp become a sin
   editing the same shared test fake merge silently. `git merge-base --is-ancestor` answers "can
   this merge cleanly", never "is this still the thing that was reviewed" — and neither does the
   empty `git diff $SQ HEAD` check below, which compares the squash to the *rebased* branch. The
-  gate is the only thing that closes the gap. (Measured 2026-08-02 on a project.)
+  gate is the only thing that closes the gap. (measured 2026-08-02 on a project.)
 - This squash-merge pause doubles as the review surface; a compare-references diff view is
   the alternative. There is no merge commit to inspect after the fact, so review happens here.
 
@@ -107,7 +107,7 @@ file** — under this variant the policy is: omit it.
   was approved, and nothing in git flags the difference: the spilled content is syntactically
   legal, the project still loads, the tests still pass. `git status --porcelain` must list **only**
   the files you intended; treat any unexpected asset modification as editor spill, read it, revert
-  it, and force the editor to reload from disk before it saves again. (Measured 2026-08-02 on a
+  it, and force the editor to reload from disk before it saves again. (measured 2026-08-02 on a
   project: three nodes carried mid-animation poses baked in by an editor preview, and
   a UI node had lost `visible = false` — all of it inside a fully-gated, signed-off branch, one
   command from riding the squash-merge.)
