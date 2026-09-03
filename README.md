@@ -114,13 +114,14 @@ adding a new project type.
 
 ### multi-agent-policy
 
-The model/effort policy and orchestration procedure for multi-agent work — per-stage pins,
-severity-tiered verification, fan-out → verify discipline, heartbeat monitoring, and the
-stale-cache gotchas. Names capability *tiers* (`workhorse` / `budget` / `scarce`) rather than
-model names, so it survives model churn.
+Model/effort tiers and orchestration procedure for multi-agent work — per-stage pins,
+severity-tiered verification, fan-out → verify discipline, the orchestrator-delegate procedure,
+peer-session coordination, and the stale-cache gotchas. Names capability *tiers* (`workhorse` /
+`budget` / `scarce`) rather than model names, so it survives model churn.
 
-**When to use:** before launching any workflow, subagent fan-out, adversarial review, tournament,
-or orchestrator-delegate handoff.
+**When to use:** before any subagent spawn, workflow, fan-out, adversarial review, tournament, or
+orchestrator-delegate handoff; when reconciling a fan-out's results; when sharing a live system
+with a peer session; and before dispatching an external vendor lens.
 
 [`SKILL.md`](multi-agent-policy/SKILL.md)
 
