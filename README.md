@@ -215,7 +215,7 @@ review scope contradicts it. Neither produces an error signal, so both need a pr
 
 **When to use:** before believing any post-fix number, benchmark or pass/fail verdict; before
 writing a check, gate or eval harness; before claiming anything is dead, unused, untested or
-absent.
+absent; before a 1:1 fan-out from a source.
 
 [`SKILL.md`](verification-discipline/SKILL.md)
 
