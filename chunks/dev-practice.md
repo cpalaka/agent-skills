@@ -45,5 +45,5 @@ language or a decision worth promoting into an ADR.
 pointer** (where the authoritative list of required-coverage modules lives) and the
 **spec-verify source path** (the tree that a spec's reuse claims are checked against).
 The project's per-type **skill list** — which React / Godot / framework skills to invoke
-and their triggers — is **inline-leaf**, hand-authored in the project's CLAUDE.md: not a
+and their triggers — is **inline-leaf**, hand-authored in the project contract file named by your host adapter: not a
 knob, not part of this chunk.

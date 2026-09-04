@@ -7,7 +7,7 @@ Two modes of doing more than one task at once. Pick by the decision rule: **one 
 the standing single-task process; you driving 2+ tasks hands-on → solo worktrees;
 dependency-free fan-out you are NOT hand-driving → background waves.**
 
-**Knobs** (`<!-- knobs:parallel-work -->` in this project's `CLAUDE.md`): the **worktree
+**Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
 to run in a fresh worktree to make it buildable). This chunk names them; it never bakes a
 literal path or command.

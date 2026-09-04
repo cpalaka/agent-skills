@@ -25,7 +25,7 @@ claim it passes. The gate is invariant; the exact commands are a knob.
 
 The exact commands, the directory they run in, the build's output check, the
 secret-scan grep pattern, and any env are project-specific — read them from the
-`<!-- knobs:verify-gate -->` block in this project's `CLAUDE.md`, never hardcode
+`<!-- knobs:verify-gate -->` block in the project contract file named by your host adapter, never hardcode
 them here.
 
 **Clean output, not just exit 0.** A run that exits 0 with new warnings or noise is
