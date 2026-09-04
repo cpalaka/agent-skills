@@ -76,9 +76,13 @@ codex exec --skip-git-repo-check -s read-only -C <dir> "$(cat PROMPT.txt)" < /de
 - **The exit code is worthless. Assert `wc -c` on the output file.** Both failures present as
   "completed, exit 0"; trusting absence-of-error drops coverage to one lens, the failure this rule
   exists to prevent. Arm a bounded watcher that reports the byte count either way.
-- **The stdin hang bites only in background Bash.** The harness appends `< /dev/null` to foreground
-  evals, so a foreground probe ran clean while the byte-identical background command hung 23 minutes
-  at ~0 CPU (measured 2026-07-30). Write `< /dev/null` explicitly in every background vendor call.
+- **The stdin hang bites in background Bash and in foreground compound commands alike.** A
+  foreground probe ran clean while the byte-identical background command hung 23 minutes at ~0 CPU
+  (measured 2026-07-30), which read as "the harness appends `< /dev/null` to foreground evals"; on
+  2026-09-04 a foreground `;`-chained command hung 300 s at the same call, so that carve-out is not
+  reliable. Write `< /dev/null` explicitly on every `codex exec`, foreground or background. The
+  stderr line "Reading additional input from stdin…" prints on completed runs too, so it is not the
+  tell; no hook or output line after it is.
 - `codex exec` writes its working transcript to **stderr** and only the final report to stdout, so
   0-byte stdout mid-run is normal. `-s read-only` structurally prevents stray files.
 - **Hand vendors a read-only snapshot**: `git archive <sha> | tar -x -C $TMPDIR/…` plus a
