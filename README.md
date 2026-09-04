@@ -101,11 +101,15 @@ or you want to set up the review loop.
 
 ### init-project
 
-The single engine that scaffolds (or migrates) a project onto the Chunk library — it writes the
-chunk `@import`s, the knob blocks, stamps Templates, merges `settings.local.json`, and runs a
-project-type **Profile**'s bespoke recipe. Adding a project type means adding a
-`profiles/<type>.md`; the engine never changes ([ADR 0003](docs/adr/0003-single-init-project-engine.md)).
-Ships `backlog`, `web`, and `godot` Profiles.
+The single engine that scaffolds (or migrates) a project onto the Chunk library. Every project type
+gets the same three files: `docs/agents/project-workflow.md`, the shared contract holding the
+project's rules and the engine-written knob blocks, and two thin host adapters over it — `CLAUDE.md`
+carrying the chunk `@import`s and Claude Code mechanics, `AGENTS.md` naming the same chunks for
+Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)). It also
+stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
+recipe. Adding a project type means adding a `profiles/<type>.md`; the engine never changes
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `backlog`, `web`, and `godot`
+Profiles.
 
 **When to use:** setting up a new project, adopting the Chunk library in an existing one, or
 adding a new project type.
@@ -225,8 +229,9 @@ A **Chunk** is a single-source dev-process instruction file in `chunks/`. Projec
 rather than copying it, so editing a Chunk here updates every consuming project at its next
 launch ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md),
 [ADR 0005](docs/adr/0005-codex-chunks-use-explicit-read-directives.md)). This is the opposite of a
-**Template** (`init-project/profiles/<type>/templates/`), which is *copied* into a project at init
-and thereafter diverges. The discriminator is one question: does the project edit the bytes after
+**Template** (`init-project/templates/` for the three files every Profile emits,
+`init-project/profiles/<type>/templates/` for a Profile's own assets), which is *copied* into a
+project at init and thereafter diverges. The discriminator is one question: does the project edit the bytes after
 delivery? No → Chunk. Yes → Template.
 
 | Chunk | Covers |

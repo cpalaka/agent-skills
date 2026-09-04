@@ -47,13 +47,17 @@ vendored third-party body kept here because its upstream ships no install channe
 local edits that a manual upstream sync must re-apply. Today that is `unslop/` alone.
 
 **Chunk vs Template.** A **Chunk** (`chunks/`) is single-source and referenced — editing it
-updates every consuming project at next launch. A **Template**
-(`init-project/profiles/<type>/templates/`) is *copied* into a project at init and thereafter kept
-aligned by a parity check. Know which you are editing; `CONTEXT.md` has the discriminator.
+updates every consuming project at next launch. A **Template** is *copied* into a project at init
+and thereafter kept aligned by a parity check: `init-project/templates/` holds the three files
+every Profile emits, `init-project/profiles/<type>/templates/` a Profile's own assets. Know which
+you are editing; `CONTEXT.md` has the discriminator.
 
 **The `init-project` engine is generic.** Adding a project type means adding a
-`profiles/<type>.md` Profile, never editing the engine
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)).
+`profiles/<type>.md` Profile — plus, where the type has host specifics, its three `adapters:`
+fragments — never editing the engine
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Every Profile emits the same three
+files: the shared contract and two thin host adapters over it
+([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)).
 
 **No public artifact may hard-require a private one.** Where a body calls a Skill that may not be
 installed, the reference is existence-gated on the Skill's directory existing under *either*

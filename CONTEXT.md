@@ -44,10 +44,17 @@ _Avoid_: marketplace, registry; source (a *source* is a specific origin within a
 the channel itself).
 
 **Host adapter**:
-A thin host-specific Skill directory that reads one canonical Skill body and states only the
-substitutions its host needs — invocation spelling, tool surface, or workflow router. It must not
-copy the canonical procedure. They live in `codex-skills/`.
-_Avoid_: fork, port, duplicate skill, compatibility copy.
+A thin host-specific file that reads one canonical body and states only the substitutions its host
+needs — invocation spelling, tool surface, sandbox and MCP registration, workflow router. It must
+not copy the canonical procedure. Two instances of the same idea:
+
+- **For a Skill**, a directory that reads the canonical `SKILL.md`. They live in `codex-skills/`.
+- **For a project**, the `CLAUDE.md` and `AGENTS.md` that `init-project` emits over the **project
+  contract**, `docs/agents/project-workflow.md` — the third emitted file, which holds every project
+  rule and every knob block, once, for both hosts ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)).
+
+_Avoid_: fork, port, duplicate skill, compatibility copy; project contract (the canonical body an
+adapter reads, not an adapter).
 
 ### Catalog content
 
@@ -83,11 +90,13 @@ Only *generalizable* knowledge propagates; project-specific decisions stay in th
 _Avoid_: sync (implies bidirectional — it is not), merge, backport.
 
 **Template**:
-A Skill-owned file **copied** into a *new* project at init time
-(`init-project/profiles/<type>/templates/` → the project's `docs/` and `CLAUDE.md`), thereafter
-kept aligned with the Skill by a parity check — the *copied-and-customized* delivery mechanism,
-contrast **Chunk** (referenced, single-source). Reserved for artifacts a project genuinely edits
-after the copy.
+A Skill-owned file **copied** into a *new* project at init time, thereafter kept aligned with the
+Skill by a parity check — the *copied-and-customized* delivery mechanism, contrast **Chunk**
+(referenced, single-source). Reserved for artifacts a project genuinely edits after the copy. Two
+owners: `init-project/templates/` holds the three **engine-owned** ones every Profile emits
+(`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md`), and
+`init-project/profiles/<type>/templates/` holds a Profile's own assets — its `docs/` files plus the
+three `adapters:` fragments the engine inserts into those three at their markers.
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
 ### Chunks & composition
@@ -126,19 +135,20 @@ the Profile is its input), Template.
 **knob**:
 A per-project value for a *value-variant* Chunk (backlog version, plans directory, acceptance-
 criteria verify examples, definition-of-done items), written by the `init-project` engine into a
-tagged inline block (`<!-- knobs:<chunk> --> … <!-- /knobs:<chunk> -->`) in the project's
-`CLAUDE.md` — never into the Chunk itself. Tagged so a re-run updates just that block
-idempotently. Pure-invariant Chunks have no knob block.
+tagged inline block (`<!-- knobs:<chunk> --> … <!-- /knobs:<chunk> -->`) in the project contract,
+`docs/agents/project-workflow.md` — never into a **Host adapter**, and never into the Chunk itself.
+Tagged so a re-run updates just that block idempotently. Pure-invariant Chunks have no knob block.
 _Avoid_: placeholder (`{{…}}` is the copied-Template substitution; a knob is an engine-written
 inline block beside a *referenced* Chunk), variable, config.
 
 **inline-leaf**:
-Free-form, hand-authored content in a project's `CLAUDE.md` that is genuinely specific to that one
+Free-form, hand-authored content in the project contract that is genuinely specific to that one
 project and is never extracted into a Chunk — a deploy target, a project's own toolchain pins, its
-list of relevant Skills. The third zone of a generated project file, alongside Chunk `@import`s
-and engine-written knob blocks. Because Chunks are shared and public, this is where anything
-project-specific has to live.
-_Avoid_: leaf (fine as shorthand), project section, custom.
+list of relevant Skills. It lives in the contract's **project sections**, below the engine-written
+knob blocks and the engine never edits it. Because Chunks are shared and public, this is where
+anything project-specific has to live.
+_Avoid_: leaf (fine as shorthand), custom; Zone 3 (the retired name from when a project's rules
+lived in `CLAUDE.md` beside its imports).
 
 ### MCP tooling
 
