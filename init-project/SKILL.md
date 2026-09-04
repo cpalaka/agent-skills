@@ -106,9 +106,12 @@ step 7 fails on any that survive.
 Idempotent and re-runnable: every step inventories first and **merges or skips**, never
 blind-overwrites. Re-running with an updated Profile updates only what changed.
 
-**0. Preconditions + inventory.** Confirm the chunks symlink exists
-(`readlink ~/.claude/chunks` → the skills repo's `chunks/`; if missing, run `bootstrap.sh` /
-`bootstrap.ps1`). Inventory the target: `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md
+**0. Preconditions + inventory.** Confirm **both** chunk symlinks exist — `readlink
+~/.claude/chunks` and `readlink ~/.codex/chunks`, each → the skills repo's `chunks/`; if either is
+missing, run `bootstrap.sh` / `bootstrap.ps1`, which creates the pair. **Both, on either host:** a
+stamp emits `CLAUDE.md` naming `~/.claude/chunks/…` and `AGENTS.md` naming `~/.codex/chunks/…`
+whichever host you are running on, so checking only the one your own host reads leaves the other
+adapter pointing at nothing, with no error at stamp time and none at the other host's next launch. Inventory the target: `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md
 .claude/settings.local.json` + any paths the Profile's `templates`/recipe touch. For each thing that
 exists, plan to merge/skip — not overwrite. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
