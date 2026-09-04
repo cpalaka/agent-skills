@@ -152,6 +152,21 @@ half-completes and the next merge aborts, or before adding any permission entry.
 
 [`SKILL.md`](sandbox-and-permissions/SKILL.md)
 
+### codex-sandbox-and-approvals
+
+The Codex sibling of the entry above, and the two disagree where it matters most: under Codex's
+`workspace-write` the whole of `.git/` is read-only, so `git add`, `git commit` and `git checkout`
+all fail 128 on a lock file, where Claude Code's sandbox lets a commit through. Codex has no
+permission allowlist at all — it has an approval policy, and `codex exec` cannot escalate. Carries
+the measured denial catalogue, the four sandbox-widening knobs, the project-trust gate, and a
+side-by-side table of every point where a rule for one host is wrong on the other.
+
+**When to use:** a command under Codex fails "Operation not permitted", a git write fails on
+`index.lock`, the network looks down inside a session, or before widening a sandbox or reaching for
+`--dangerously-bypass-approvals-and-sandbox`.
+
+[`SKILL.md`](codex-sandbox-and-approvals/SKILL.md)
+
 ### skill-updater
 
 Checks every installed Skill for upstream updates and installs them, across both ecosystems on a
