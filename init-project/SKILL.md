@@ -40,7 +40,8 @@ knobs:                     # per value-variant chunk → the values to write int
     PLANS_DIR: "..."
     VERIFY_EXAMPLES: "..."
     DoD: ["...", "User sign-off received"]
-  verify-gate:             # one key per step of the chunk's invariant sequence, in this order
+  verify-gate:             # the chunk's five steps plus the three it reads alongside them
+                           # (dir, build_check, env), in this order
     dir: "..."             #   the directory the gate runs in
     typecheck: "..."
     test: "..."
@@ -58,8 +59,9 @@ knobs:                     # per value-variant chunk → the values to write int
 Knob *values* that are project-specific are filled at apply time (prompt the user or derive
 from the repo); the manifest carries defaults/shape. Pure-invariant chunks (git-*, codegraph,
 code-hygiene, sandbox-auto) have no knob block. The `verify-gate` keys are the same eight in every
-Profile — the chunk's sequence is invariant, so a Profile varies the commands, never the key set;
-a step a project genuinely has no command for says so in its value rather than going missing.
+Profile — five for the chunk's invariant sequence, three (`dir`, `build_check`, `env`) for what it
+reads alongside them — so a Profile varies the commands, never the key set; a step a project
+genuinely has no command for says so in its value rather than going missing.
 
 `adapters:` names three files under the Profile's own `templates/`. An absent field, or an absent
 key inside it, inserts nothing — the engine deletes that marker line and moves on.
@@ -115,8 +117,12 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
 
 - **`docs/agents/project-workflow.md` — the shared project contract.** In this order: the engine's
   header (it states that this is the one contract both adapters read and that host mechanics live in
-  the adapters); the **knob blocks**; then the project sections — Project, Working in this repo,
-  Running, plus whatever the Profile's contract fragment adds. **For each chunk in `knobs` that is
+  the adapters); the **knob blocks**; then the project sections. **More than one fragment can write
+  into `<!-- profile:contract-sections -->`, so the order is fixed:** the engine's own stub sections
+  first (Project, Working in this repo, Running — each replaced in place where a fragment supplies
+  it), then the type Profile's contract fragment, then any conditional fragment a recipe step
+  inserts later. The board's `## Board` section is that last case, so it lands last. **For each
+  chunk in `knobs` that is
   actually imported** (it rides dev-base, it's the chosen `fork`, or it's in `imports`), write a
   tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` carrying that chunk's values. On
   re-run, replace *only* the content between the tags (idempotent); insert the block if absent.
@@ -129,14 +135,14 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
   the knob blocks and nothing else here:** it never edits a project section it did not write.
 
   **The inner shape of a knob block is fixed**, because a chunk reads it by marker out of a file it
-  never sees whole: **one bullet per key, `- <key>: <value>`, keys in the Profile's order, no
-  heading and no nesting between the markers.** A multi-item value (a DoD list) is a numbered list
-  indented under its bullet. So:
+  never sees whole: **one bullet per key, `- <key>: <value>`, the key spelled exactly as the Profile
+  names it, keys in the Profile's order, no heading and no nesting between the markers.** A
+  multi-item value (a DoD list) is a numbered list indented under its bullet. So:
 
   ```
   <!-- knobs:dev-practice -->
-  - test-roster: the project board, falling back to the design docs under `docs/`.
-  - spec-verify src: the project's own source tree.
+  - test_roster: the project board, falling back to the design docs under `docs/`.
+  - spec_verify_src: the project's own source tree.
   <!-- /knobs:dev-practice -->
   ```
 - **`CLAUDE.md` — the thin Claude Code adapter.** The import block, in order:
@@ -154,8 +160,10 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
   `parallel-work`, `verify-gate`, `dev-practice`) + the `fork` + each `imports` entry. It expands
   into **item 3 of the read list**, not a free-standing sentence, and it carries the count so a
   reader can tell a short read from a complete one:
-  `These nine files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
-  then the file names with their `.md` suffixes. The Template carries
+  `These <count> files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
+  then the file names with their `.md` suffixes. `<count>` is the length of the list you just
+  derived, spelled as a word — it is seven plus the fork plus each `imports` entry, so a board-less
+  project has one fewer than a board-driven one. The Template carries
   the rest: the read-these-completely list, the "do not read `dev-base.md` instead" warning and the
   `~/.claude/chunks` → `~/.codex/chunks` resolution rule (ADR-0005), the Skills / MCP / sandbox /
   child-agent sections, and the canary as its last line. **Keep it under 8 KiB before Profile
