@@ -1,8 +1,8 @@
 # Codex project MCP adapter — the Codex counterpart of .mcp.json.
 # Gitignored machine-wide (~/.config/git/ignore: **/.codex/config.toml) because Codex
 # resolves a relative MCP `cwd` against the LAUNCH directory (measured 2026-09-03), so the
-# launcher paths must be absolute and therefore per-clone. Recreate from the block in
-# docs/godot-mcp-guide.md on a fresh clone; replace <CLONE-ROOT> with the clone's absolute path.
+# launcher paths must be absolute and therefore per-clone. Stamped with this clone's absolute
+# root; on a fresh clone recreate it from the block in docs/godot-mcp-guide.md § Host adapters.
 # godot-ai is NOT listed here: it lives at user scope in ~/.codex/config.toml.
 
 [mcp_servers.godot-mcp]

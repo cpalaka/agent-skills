@@ -8,6 +8,5 @@
   every other host (contract, § godot-ai addon).
 - **`godot-export-verifier`** (`.claude/agents/`) is the export smoke-tester the contract's `build`
   knob names — dispatch it with the `Agent` tool.
-- **The four Godot skills the contract names** — `godot-gdscript-patterns`,
-  `godot-animation-tree-mastery`, `godot-gotchas`, `godot-personal-preferences` — auto-load on their
-  own contexts in this host, so there is no invocation rule to follow for them here.
+- **The four Godot skills the contract names** are `godot-gdscript-patterns`,
+  `godot-animation-tree-mastery`, `godot-gotchas` and `godot-personal-preferences`.

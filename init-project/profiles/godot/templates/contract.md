@@ -1,8 +1,9 @@
 ## Working in this repo
 
-- **For the project's domain vocabulary, read `CONTEXT.md` (repo root) first** — the pinned glossary
-  (term → what-it-IS + `_Avoid_` synonyms); use these exact terms for naming stability.
-  Produced/maintained by the `godot-architecture-review` skill. `docs/agents/domain.md` is the short
+- **For the project's domain vocabulary, read `CONTEXT.md` (repo root) first, once the project has
+  one** — the pinned glossary (term → what-it-IS + `_Avoid_` synonyms); use these exact terms for
+  naming stability. The `godot-architecture-review` skill produces and maintains it, so a project
+  that has not run that skill yet has no glossary to read. `docs/agents/domain.md` is the short
   pointer to it and to `docs/adr/`.
 - **For any work involving the Godot MCP tools, read `docs/godot-mcp-guide.md` first.** Division of
   labour: **godot-ai = primary WRITER** (scene/node/script/property creation, `project_run`,
@@ -10,23 +11,28 @@
   `godot_runtime_state`, `godot_docs`, `godot_editor get_log_messages` — **no `source` arg, it is a
   phantom and silently stripped**; editor-only filtering is godot-ai `logs_read source="editor"`);
   **minimal-godot = local diagnostics** (`get_diagnostics`). Never write through godot-mcp (it
-  silently no-ops `Rect2`); **one writer per editor instance**. **Project pins:** godot-mcp
-  *<version, `tools/mcp/package.json` — addon and server bumped together>*, godot-ai *<version>*.
+  silently no-ops `Rect2`); **one writer per editor instance**. **Project pins:**
+  *<Fill at init: the godot-mcp version pinned in `tools/mcp/package.json` — addon and server are
+  bumped together — and the godot-ai version, which is the tag vendored below.>*
 - **MCP servers connect at session start.** After any MCP config change, start a new session — your
   host adapter says which files hold that config and how a new session is started. The tool-name
   prefix a host shows you is a host detail; the roles above are not.
 - **For any work involving the Blender MCP tools, read `docs/blender-mcp-guide.md` first** — schema
   inconsistencies (`name` vs `object_name`, `output_path` basename-only), the data-API-over-`bpy.ops`
   rule, depsgraph staleness on derived reads, edit-mode bmesh discipline, the `glTF Material Output`
-  node group pattern for AO, and Blender 5.x API drift. **For Blender → Godot asset pipeline shape,
-  read `docs/asset-pipeline.md`.** *<Both bullets are for Blender-pipeline projects; drop this one
-  where the project has no Blender source.>*
+  node group pattern for AO, and Blender 5.x API drift.
+- **For Blender → Godot asset pipeline shape, read `docs/asset-pipeline.md`** — the directory
+  layout, the naming discipline that leaks from Blender into Godot, and what crosses the boundary.
 - **Four Godot skills, read when you touch the work they cover** — `godot-gdscript-patterns`
   (GDScript), `godot-animation-tree-mastery` (AnimationTree), `godot-gotchas` (engine/editor quirks —
   the single source for *universal* ones; `docs/godot-gotchas.md` holds only *project-local* ones),
-  `godot-personal-preferences` (workflow rules — invoke at session start). Read them when touching
-  `.gd` / `.tscn` / AnimationTree work whether or not your host fires them from context on its own;
-  your adapter says which of the two it is here.
+  `godot-personal-preferences` (workflow rules — read at session start). Read each **where it is
+  installed** — its directory exists under `~/.claude/skills` (Claude Code) or `~/.agents/skills`
+  (Codex); the two hosts resolve skills through different roots, so a check against one root skips
+  the read for everyone on the other. Where one is absent, skip that read and fall back to
+  `docs/godot-gotchas.md` and this contract — never fail on it. Read them when touching `.gd` /
+  `.tscn` / AnimationTree work whether or not your host fires them from context on its own; your
+  adapter says which of the two it is here.
 - **Invoke by name, always explicitly:** `godot-architecture-review` for architecture/refactor work
   (leaves `CONTEXT.md`, `docs/adr/`, `docs/architecture/system-map.md`); `audit-godot-parity` for
   periodic project↔skill parity audits.
@@ -38,7 +44,7 @@
 ## godot-ai addon (vendored, TRACKED)
 
 `addons/godot_ai` is a plain vendored copy of upstream `hi-godot/godot-ai` at tag
-*<the tag vendored at init>*, **committed to git** (the version here must equal
+*<Fill at init: the tag checked out before vendoring.>*, **committed to git** (the version here must equal
 `addons/godot_ai/plugin.cfg`) — the checked-out tag pins BOTH the addon and the Python MCP server the
 dock fetches from PyPI via `uvx` (`uv` must be on PATH).
 

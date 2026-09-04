@@ -7,14 +7,12 @@
 - **godot-ai is not in that file.** It is registered at USER scope in `~/.codex/config.toml`, with
   its ports hardcoded there — see the contract's godot-ai section, including the rule that a port fix
   is applied to every host's user-scope config.
-- **Read the four Godot skills explicitly**, by name, when you touch the work they cover:
-  `$godot-gdscript-patterns` (GDScript), `$godot-animation-tree-mastery` (AnimationTree),
-  `$godot-gotchas` (engine/editor quirks — before hand-editing a `.tscn`/`.tres`, before a risky
-  editor operation, and before any commit), `$godot-personal-preferences` (workflow rules — at
-  session start). They fire from context on the other host; here nothing loads them for you.
+- **The four Godot skills the contract names, and when each one fires here:**
+  `$godot-gdscript-patterns` on GDScript work, `$godot-animation-tree-mastery` on AnimationTree work,
+  `$godot-gotchas` before hand-editing a `.tscn`/`.tres`, before a risky editor operation, and before
+  any commit, `$godot-personal-preferences` at session start.
 - **The `build` step's export smoke-tester has no Codex dispatch yet.** Until one exists, run exports
   from a Claude Code session or by hand, and say which of the two you did.
-- **One writer per editor instance**, and the godot-mcp bridge accepts **one client**: a second
-  editor — on a worktree, say — is a second independent writer, and any other session already
-  holding the bridge blocks your reads through it. Say which it was rather than reporting the server
-  as failed.
+- **One writer per editor instance**, and the godot-mcp bridge accepts **one client**: a session
+  already holding the bridge blocks this session's reads through it, which reads as a dead server
+  and is not one. Report that it is held, not that it failed.
