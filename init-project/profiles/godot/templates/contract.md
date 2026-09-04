@@ -20,9 +20,10 @@
 - **For any work involving the Blender MCP tools, read `docs/blender-mcp-guide.md` first** — schema
   inconsistencies (`name` vs `object_name`, `output_path` basename-only), the data-API-over-`bpy.ops`
   rule, depsgraph staleness on derived reads, edit-mode bmesh discipline, the `glTF Material Output`
-  node group pattern for AO, and Blender 5.x API drift.
-- **For Blender → Godot asset pipeline shape, read `docs/asset-pipeline.md`** — the directory
-  layout, the naming discipline that leaks from Blender into Godot, and what crosses the boundary.
+  node group pattern for AO, and Blender 5.x API drift. **For Blender → Godot asset pipeline shape,
+  read `docs/asset-pipeline.md`** — the directory layout, the naming discipline that leaks from
+  Blender into Godot, and what crosses the boundary. Both docs are stamped only for a project with a
+  Blender source, so this bullet is dropped whole where they are absent.
 - **Four Godot skills, read when you touch the work they cover** — `godot-gdscript-patterns`
   (GDScript), `godot-animation-tree-mastery` (AnimationTree), `godot-gotchas` (engine/editor quirks —
   the single source for *universal* ones; `docs/godot-gotchas.md` holds only *project-local* ones),

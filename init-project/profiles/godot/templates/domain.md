@@ -10,7 +10,9 @@ copy of the model — the files below are authoritative.
   decision earns an ADR when it constrains future work.
 - *<Fill at init, where the project keeps one: the **design source** — the single doc every design
   or build decision is read out of, and the rule for editing it (edited in place, never appended to
-  with a superseding design). Name the ADR that pins it.>*
+  with a superseding design). Name the ADR that pins it. Where the project has none, say so here in
+  one line rather than naming a path that does not exist — an invented design source is worse than
+  an admitted absence.>*
 
 How to use it:
 

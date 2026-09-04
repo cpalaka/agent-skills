@@ -16,8 +16,9 @@ fork: git-flow-squash       # The default (ADR-0002). git-flow-noff is the opt-i
 # Template assets under profiles/godot/templates/ are already copied in; this manifest enumerates
 # the ones to STAMP, with DEST (engine step 3: copy src→dest, skip-if-exists unless refresh:true).
 # The godot settings.local.json delta is NOT a template — it is the `settings:` field below,
-# merged into .claude/settings.local.json by the engine (step 4). blender-mcp-guide.md is stamped
-# CONDITIONALLY (only for Blender-pipeline projects) — see the recipe, not this list.
+# merged into .claude/settings.local.json by the engine (step 4). blender-mcp-guide.md and
+# asset-pipeline.md are stamped CONDITIONALLY, together (only for Blender-pipeline projects) — see
+# the recipe, not this list.
 # The three contract/adapter fragments are NOT stamped from here either: they are the `adapters:`
 # field below, inserted into the engine's own Templates at their markers (engine step 1).
 # Three stamps have a recipe ORDERING dependency: mcp.json, codex/config.toml and mcp/package.json
@@ -29,7 +30,6 @@ templates:
   # per-project reference docs (docs/) — always copy, skip-if-exists unless refresh
   - { src: godot-mcp-guide.md,    dest: docs/godot-mcp-guide.md }
   - { src: domain.md,             dest: docs/agents/domain.md }        # host-neutral pointer to CONTEXT.md + docs/adr/; both adapters reach it through the contract
-  - { src: asset-pipeline.md,     dest: docs/asset-pipeline.md }       # carries a {{WORKSPACE_ROOT}} token — engine step 3 asks for it
   - { src: godot-gotchas.md,      dest: docs/godot-gotchas.md }
   # headless test harness (tests/)
   - { src: tests/run_tests.sh,                          dest: tests/run_tests.sh }    # chmod +x in recipe
@@ -182,13 +182,16 @@ the project keeps its task-tracking guidance in the contract's project sections 
 init-project later with the board enabled adds exactly this wiring (the engine is idempotent:
 import-line dedup + knob insert).
 
-**Reference docs:** the engine always stamps `docs/godot-mcp-guide.md`, `docs/asset-pipeline.md`,
-`docs/godot-gotchas.md` and `docs/agents/domain.md`. **Blender is opt-in** — only if the project
-uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide.md` →
-`docs/blender-mcp-guide.md`; otherwise drop the contract fragment's one Blender-MCP bullet. The
-asset-pipeline bullet stays either way — that doc is stamped unconditionally. Both MCP
-guides are carried forward as-is and are **due a content-staleness audit at step 6** (they track
-live MCP tool reality / Blender API drift).
+**Reference docs:** the engine always stamps `docs/godot-mcp-guide.md`, `docs/godot-gotchas.md` and
+`docs/agents/domain.md`. **The Blender pair is opt-in, and the two travel together** — only if the
+project uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide.md` →
+`docs/blender-mcp-guide.md` and `templates/asset-pipeline.md` → `docs/asset-pipeline.md` (that one
+carries a `{{WORKSPACE_ROOT}}` token to ask for at stamp time). They document the same pipeline and
+the pipeline doc points at the MCP guide, so one without the other is a dangling reference, and the
+workspace-root question is meaningless with no Blender source. Where the project has none, **both
+Blender bullets drop from the contract fragment together.** Both MCP guides are carried forward
+as-is and are **due a content-staleness audit at step 6** (they track live MCP tool reality /
+Blender API drift).
 
 **Stamp order, and the two files that must wait for the freeze.** `.mcp.json` and
 `.codex/config.toml` both launch the two npm servers out of `tools/mcp/node_modules/`, so both are
@@ -295,15 +298,25 @@ stays as the read/test complement. Skip this step only if the project writes thr
    walk strands every host at once — the contract's godot-ai section carries that rule, and
    `.codex/config.toml` lists the two npm servers only, exactly as `.mcp.json` does.
 
-**If NOT using godot-ai:** drop the `mcp__godot-ai__*` allow from `settings.local.json` and
-remove the user-scope `godot-ai` entry from `~/.claude.json` if a previous project's dock
-wrote one (it is machine-wide, so it will otherwise show as a failed server in every
-project). (`uv` on PATH is a prerequisite when used — the dock auto-starts a uv-managed
-Python server on `:8000` + `:9500`.) **Then fix the contract, or it documents a server the project
-does not have:** delete the fragment's whole `## godot-ai addon (vendored, TRACKED)` section and the
-godot-ai half of the Project-pins sentence in the MCP bullet, and name godot-mcp as the writer in
-that bullet's division of labour. `.mcp.json` and `.codex/config.toml` are unaffected — neither ever
-listed godot-ai.
+**If NOT using godot-ai**, three sets of edits, and skipping any one of them leaves the project
+documenting or permitting a server it does not run. (`uv` on PATH is a prerequisite when used — the
+dock auto-starts a uv-managed Python server on `:8000` + `:9500`.)
+
+1. **Permissions.** Drop all three godot-ai entries from the `settings` delta — `mcp__godot-ai__*`
+   and the two port probes `Bash(lsof -nP -iTCP:8000*)` and `Bash(lsof -nP -iTCP:9500*)`, which
+   exist only for its HTTP and WS ports. Then remove the user-scope `godot-ai` entry from
+   `~/.claude.json` if a previous project's dock wrote one (it is machine-wide, so it will otherwise
+   show as a failed server in every project).
+2. **The contract.** Delete the fragment's whole `## godot-ai addon (vendored, TRACKED)` section and
+   the godot-ai half of the Project-pins sentence in the MCP bullet, and name godot-mcp as the
+   writer in that bullet's division of labour. Add one sentence there: `docs/godot-mcp-guide.md`
+   documents godot-ai as the recommended writer for projects that vendor it, and this project does
+   not. **Leave the guide's own writer/reader matrix alone** — it is a carried-forward reference
+   about the tool stack, not a claim about this project.
+3. **Both adapter fragments.** Drop the godot-ai bullet from `adapter-claude.md` and from
+   `adapter-codex.md`; each points at the contract section step 2 just deleted.
+
+`.mcp.json` and `.codex/config.toml` are unaffected — neither ever listed godot-ai.
 
 ### 5. Lockfile-freeze PAYLOAD (the engine mechanic, godot's package set)
 
