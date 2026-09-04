@@ -17,6 +17,7 @@ task, and the DoD always ends in the explicit user sign-off. The full convention
 criterion, drafts versus tasks, milestones — is the `backlog-core` chunk's, which your host adapter
 loads.
 
-**"Nothing owns this" is a claim that needs a search behind it.** Check the board first
-(`backlog task list --plain`, then `backlog task <id> --plain` for the row that would own it), then
-`docs/`, before reporting that something is untracked.
+**Before you claim something is absent, check the board.** `backlog task list --plain` to see what
+exists, then `backlog task <id> --plain` on the row that would own the thing you are about to call
+missing. **"Nothing owns this" is a claim that needs a search behind it, not an impression** — the
+board first, then `docs/`, then the repo's own notes.
