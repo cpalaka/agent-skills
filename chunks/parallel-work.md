@@ -1,5 +1,6 @@
 <!-- chunk:parallel-work | kind: value-variant | single-source: agent-skills/chunks/parallel-work.md -->
-<!-- Delivered by @import via ~/.claude/chunks/. Edit here only — no per-project copies, no parity. -->
+<!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
+     Edit here only — no per-project copies, no parity. -->
 
 ## Parallel work — waves & solo worktrees
 
@@ -21,22 +22,20 @@ with no shared state and no ordering between them:
   (`git worktree add <prefix>-<slug> -b <branch> main`) and run the **install command** in
   it. No settings copy needed here: a subagent **inherits the parent session's permission
   mode and sandbox** (see `sandbox-auto`).
-- **Host differences.**
-  - **Claude Code:** The inherited permission mode and sandbox follow the rule above.
-  - **Codex:** Native subagents inherit the parent's sandbox, MCP servers, and skills unless the
-    role TOML overrides them. `mcp_servers = {}` parses but inherits every server. Disabling one
-    requires its full transport (`command`/`args` or `url`) plus `enabled = false`. Put every
-    scalar key before the first `[mcp_servers.*]` table; otherwise it is parsed into that table
-    and the role is dropped. Roles load only at parent session start; restart the parent after an
-    edit.
+- **Host differences.** The inheritance above is Claude Code's. On **Codex**, native subagents
+  inherit the parent's sandbox, MCP servers and skills unless the role TOML overrides them:
+  `mcp_servers = {}` parses but inherits every server; disabling one needs its full transport
+  (`command`/`args` or `url`) plus `enabled = false`; every scalar key must precede the first
+  `[mcp_servers.*]` table, or it is parsed into that table and the role is dropped. Roles load
+  at session start only — restart the parent after editing one.
 - Spawn one background subagent per task, all in a **single message** so they run
   concurrently. Each subagent's prompt must, verbatim: confine it to its own worktree; have
   it read the task and the relevant design docs first; run the full project verify gate (see
   `verify-gate`) and paste the output into its report; commit on the branch; end with a
-  review handoff. **Hard limits, in every prompt:** no push, no merge, no branch deletion, no
-  `gh` writes, no marking Done, no deploys, and no board writes. Under Codex `-a on-request`, a
-  child executes `git push` without asking, so the prompt—not the approval policy—must carry
-  these gates.
+  review handoff. **Hard limits, in every prompt:** no merge, no push, no marking Done, no
+  deploys, no board writes, no `gh` writes. Restate them verbatim rather than trusting the
+  host: under Codex `-a on-request` a child executes `git push` without asking, so the prompt,
+  not the approval policy, carries the gates (`git-confirm-destructive`).
 - Steer a drifting subagent with a message rather than respawning it (a respawn loses its
   context).
 - **The orchestrator re-verifies every handoff itself.** On each subagent handoff, the main
@@ -54,13 +53,15 @@ only `task create` stays main-repo-only (the max+1 ID scan collides under concur
 - Set up with `git worktree add <prefix>-<slug> -b <branch> origin/main`. Branching off
   fresh `origin/main` already satisfies the standing sync-`main`-first step, so don't re-run
   the checkout-and-pull inside the worktree.
-- **Footgun — a fresh interactive worktree inherits no gitignored project-local host
-  configuration.** Unlike a Mode A subagent, a new worktree session does not inherit its parent:
-  - **Claude Code:** `.claude/settings.local.json` does not travel. **Copy it into the worktree's
-    `.claude/` first** (`cp .claude/settings.local.json <prefix>-<slug>/.claude/`) or the session
-    silently runs without sandbox+auto (see `sandbox-auto`).
-  - **Codex:** `.codex/config.toml` does not travel, so the session has no project MCP servers.
-    Supply that gitignored config in the worktree before launch.
+- **Footgun — a fresh interactive worktree does NOT inherit sandbox+auto, or any other
+  gitignored host config.** Unlike a subagent (Mode A, which inherits the parent), a fresh
+  interactive worktree session starts WITHOUT the parent's defaults, because the files that
+  carry them are gitignored and do not travel with the new worktree. Host differences:
+  - **Claude Code:** `.claude/settings.local.json`. **Copy it into the worktree's `.claude/`
+    first** (`cp .claude/settings.local.json <prefix>-<slug>/.claude/`) or the session silently
+    runs without the defaults (see `sandbox-auto`).
+  - **Codex:** `.codex/config.toml`, so the session has no project MCP servers until you supply
+    that file in the worktree before launch.
 
 **Filesystem isolation is NOT tool-state isolation.** A worktree separates *files*; it does not
 separate any state a tool resolves across git refs or outside the tree. A CLI that scans "the

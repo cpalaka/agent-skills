@@ -1,5 +1,6 @@
 <!-- chunk:verify-gate | kind: value-variant | single-source: agent-skills/chunks/verify-gate.md -->
-<!-- Delivered by @import via ~/.claude/chunks/. Edit here only — no per-project copies, no parity. -->
+<!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
+     Edit here only — no per-project copies, no parity. -->
 
 ## Verify gate (run before any commit or handoff)
 
@@ -26,10 +27,9 @@ claim it passes. The gate is invariant; the exact commands are a knob.
 The exact commands, the directory they run in, the build's output check, the
 secret-scan grep pattern, and any env are project-specific — read them from the
 `<!-- knobs:verify-gate -->` block in the project contract file named by your host adapter, never hardcode
-them here. That block may also carry **further named gate lines after `secret-scan`**
-(a host-neutrality scan, a gotcha scan, a parity check); they are part of the invariant,
-run in the order listed, and must pass like the five above. A gate line in the knob block
-is never an optional extra.
+them here. That block may also carry **further named gate lines after `secret-scan`**;
+they are part of the invariant, run in the order listed and held to the same pass bar as
+the five above.
 
 **Clean output, not just exit 0.** A run that exits 0 with new warnings or noise is
 **not** a pass — investigate the warning rather than ignoring it. "Passing" means the

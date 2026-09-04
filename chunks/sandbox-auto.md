@@ -1,5 +1,6 @@
 <!-- chunk:sandbox-auto | kind: invariant | single-source: agent-skills/chunks/sandbox-auto.md -->
-<!-- Delivered by @import via ~/.claude/chunks/. Edit here only — no per-project copies, no parity. -->
+<!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
+     Edit here only — no per-project copies, no parity. -->
 <!-- Trimmed 2026-07-25: the allowlist-hygiene rules, the settings.local.json merge contract, and
      the half-switched-tree recovery moved to the `sandbox-and-permissions` skill. They fire only
      when you are editing permissions or recovering from a denial — this chunk is read every
@@ -25,21 +26,20 @@ personal, not committed):
 
 **Host differences.**
 
-- **Claude Code:** The configuration above applies; repo MCP servers come from `.mcp.json`.
-- **Codex:** There is no `settings.local.json` or `defaultMode`. Use a gitignored,
+- **Claude Code:** the file above; repo MCP servers come from `.mcp.json`.
+- **Codex:** no `settings.local.json` and no `defaultMode`. The equivalents are a gitignored,
   project-scope `.codex/config.toml` plus `[projects."<absolute path>"] trust_level = "trusted"`
-  in user-scope `~/.codex/config.toml`; choose the sandbox with
-  `-s read-only|workspace-write` and approvals with `-a on-request|never`. Codex ignores repo
-  `.mcp.json`; put project MCP servers in the project config with absolute launcher paths because
-  a relative `cwd` resolves against the launch directory, not the repo.
+  in the user-scope `~/.codex/config.toml`; the sandbox is `-s read-only|workspace-write`,
+  approvals `-a on-request|never`. Codex reads no repo `.mcp.json`: project MCP servers go in
+  that project config with absolute launcher paths, because a relative `cwd` resolves against
+  the launch directory, not the repo.
 
-Both hosts read sandbox/permission configuration and MCP servers once at session start; changes
-need a new session. Neither host's sandbox or approval mode is a git sign-off: under Codex
-`-a on-request`, plain `git push` runs without a dialog. The human git gates are instruction-level
-(`git-confirm-destructive`) and bind whatever the approval policy permits.
+On either host, a sandbox or approval mode that lets a command through is not a sign-off for
+it. The human git gates are instruction-level (`git-confirm-destructive`) and bind whatever the
+mode permits.
 
 **Session-init, not toggleable.** Neither can be changed mid-session by a tool call —
-both are read once at session start. Confirm the indicators at session start; if the file
+both are read once at session start, on both hosts, and so are MCP servers. Confirm the indicators at session start; if the file
 lacks them, update it and **restart** before proceeding. A fresh session needs this
 configured explicitly: the file is gitignored, so it does not travel with a clone or a
 new worktree. (How defaults reach subagents vs. fresh worktree sessions: `parallel-work`.)
