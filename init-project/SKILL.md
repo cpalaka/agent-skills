@@ -243,7 +243,14 @@ Surface any gap; do not report success without the inventory passing (the `verif
 **8. Handoff.** Tell the user: (a) on first launch in Claude Code, **approve the external-includes
 prompt once**, then restart so the imports load; (b) that same approval is what makes headless runs
 expand the imports; (c) on first launch in Codex, **answer the directory-trust prompt** — the Codex
-counterpart of that approval; (d) **the two per-clone host config files are ignored machine-wide,
+counterpart of that approval, **and load-bearing for MCP, not only for config loading.** Answering
+it writes `[projects."<absolute path>"] trust_level = "trusted"` into `~/.codex/config.toml`, and
+until that entry exists the project's own `.codex/config.toml` does not load at all: `codex mcp
+list` from the project root shows only the user-scope servers, with no error and nothing to say the
+project file was skipped (measured 2026-09-03 on Codex 0.153.1, on a freshly stamped project — the
+entry appended, both project servers appeared; removed, they vanished again). A
+`-c projects."<path>".trust_level="trusted"` override on the command line does **not** substitute
+for the file entry; (d) **the two per-clone host config files are ignored machine-wide,
 and the engine writes neither ignore.** Check both —
 `git check-ignore -q .codex/config.toml` and `git check-ignore -q .claude/settings.local.json` — and
 for each that comes back unignored, tell the user the line to add to `~/.config/git/ignore`:

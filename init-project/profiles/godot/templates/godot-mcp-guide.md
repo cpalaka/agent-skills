@@ -128,7 +128,7 @@ sky = SubResource("s")
 
 `scenes/` `scripts/` `scripts/shaders/` `materials/` `meshes/` `environments/`
 
-For the Blender → Godot pipeline (where source files live, what crosses, naming discipline): see `asset-pipeline.md`.
+For the Blender → Godot pipeline (where source files live, what crosses, naming discipline): see `asset-pipeline.md`, where the project has a Blender source — it and `blender-mcp-guide.md` are stamped together, or not at all.
 
 ## Host adapters
 
@@ -157,7 +157,9 @@ required = false
 startup_timeout_sec = 30
 ```
 
-Verifying the adapter from Codex: `codex mcp list` from the clone root must show `godot` and `godot-mcp` enabled beside the user-scope `godot-ai`. A Codex *session* exposes MCP tools through its code-mode `exec` surface and discovers them lazily, so a probe that forbids tool calls ("no shell commands") can under-report while every server is in fact loaded (measured 2026-09-03: two runs in the same fresh worktree, one with a discovery call listing all eight servers and 21 `godot_*` tools, one without listing a single unrelated server). Ask the session to enumerate its MCP tools, not to recite them. A worktree needs no `trust_level` entry for the project adapter to load (measured the same day, with and without a `trust_level="trusted"` override).
+Verifying the adapter from Codex: `codex mcp list` from the clone root must show `godot` and `godot-mcp` enabled beside the user-scope `godot-ai`. A Codex *session* exposes MCP tools through its code-mode `exec` surface and discovers them lazily, so a probe that forbids tool calls ("no shell commands") can under-report while every server is in fact loaded (measured 2026-09-03: two runs in the same fresh worktree, one with a discovery call listing all eight servers and 21 `godot_*` tools, one without listing a single unrelated server). Ask the session to enumerate its MCP tools, not to recite them.
+
+**Trust is what loads this file, and the two measurements differ by case.** On a **freshly stamped project**, `.codex/config.toml` does not load until that project has a `[projects."<absolute path>"] trust_level = "trusted"` entry in `~/.codex/config.toml`: with no entry, `codex mcp list` from the project root showed only the user-scope servers; with the entry appended, both project servers appeared beside it (measured 2026-09-03 on Codex 0.153.1). A `-c projects."<path>".trust_level="trusted"` override on the command line did not substitute for the file entry. Answering the directory-trust prompt at first launch is what writes it — so an unanswered prompt reads as missing servers, with no error either way. In a **worktree of an already-trusted project**, no separate `trust_level` entry was needed for the project adapter to load (measured the same day, with and without such an override).
 
 ## New-project setup checklist
 
@@ -166,7 +168,6 @@ Verifying the adapter from Codex: `codex mcp list` from the clone root must show
 3. `addons/godot_mcp/` present; enabled in `[editor_plugins]`
 4. `MCPGameBridge` autoload registered
 5. This guide copied to `docs/godot-mcp-guide.md`; `docs/agents/project-workflow.md` references it
-6. `docs/blender-mcp-guide.md` copied if the project uses Blender as a DCC source
-7. `docs/asset-pipeline.md` copied for Blender → Godot pipeline conventions
-8. `godot-gdscript-patterns` skill installed globally; `docs/agents/project-workflow.md` references it for GDScript context
-9. `godot-animation-tree-mastery` skill installed globally; `docs/agents/project-workflow.md` references it for AnimationTree context
+6. `docs/blender-mcp-guide.md` and `docs/asset-pipeline.md` copied together if the project uses Blender as a DCC source — the pipeline conventions and the tool guide for the same pipeline
+7. `godot-gdscript-patterns` skill installed globally; `docs/agents/project-workflow.md` references it for GDScript context
+8. `godot-animation-tree-mastery` skill installed globally; `docs/agents/project-workflow.md` references it for AnimationTree context

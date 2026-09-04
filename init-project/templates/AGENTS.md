@@ -32,6 +32,13 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   and it may not exist in your checkout yet**. Re-create it per clone the way the other host
   re-creates its own gitignored settings file. While it is absent this repo's project-scope servers
   are simply not connected; say so rather than reporting them as failed.
+- **Two reasons you may see no project servers, and neither reports an error.** The file above is
+  missing, or **this repo has no `[projects."<absolute path>"] trust_level = "trusted"` entry in
+  `~/.codex/config.toml`** — without that entry the project file is not loaded at all, and
+  `codex mcp list` from the repo root shows only the user-scope servers (measured 2026-09-03 on
+  Codex 0.153.1). Answering the directory-trust prompt on first launch here is what writes it; a
+  `-c` override on the command line does not substitute for it. Check both before concluding a
+  server is broken.
 - MCP servers connect **at session start**. After any config change, start a new session; nothing
   re-reads it mid-session.
 - Which server writes and which ones only read is in the contract, § Working in this repo. That
