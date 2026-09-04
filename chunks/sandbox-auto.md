@@ -23,6 +23,21 @@ personal, not committed):
 }
 ```
 
+**Host differences.**
+
+- **Claude Code:** The configuration above applies; repo MCP servers come from `.mcp.json`.
+- **Codex:** There is no `settings.local.json` or `defaultMode`. Use a gitignored,
+  project-scope `.codex/config.toml` plus `[projects."<absolute path>"] trust_level = "trusted"`
+  in user-scope `~/.codex/config.toml`; choose the sandbox with
+  `-s read-only|workspace-write` and approvals with `-a on-request|never`. Codex ignores repo
+  `.mcp.json`; put project MCP servers in the project config with absolute launcher paths because
+  a relative `cwd` resolves against the launch directory, not the repo.
+
+Both hosts read sandbox/permission configuration and MCP servers once at session start; changes
+need a new session. Neither host's sandbox or approval mode is a git sign-off: under Codex
+`-a on-request`, plain `git push` runs without a dialog. The human git gates are instruction-level
+(`git-confirm-destructive`) and bind whatever the approval policy permits.
+
 **Session-init, not toggleable.** Neither can be changed mid-session by a tool call —
 both are read once at session start. Confirm the indicators at session start; if the file
 lacks them, update it and **restart** before proceeding. A fresh session needs this
