@@ -12,7 +12,8 @@ templates: []              # none — backlog's claude-section.md is promoted in
 knobs:
   # backlog-core is an explicit import; verify-gate + dev-practice ride
   # dev-base. All three are value-variant, so the engine still writes a knob
-  # block for each (knob values live in the project CLAUDE.md, never in a chunk).
+  # block for each, into the project's shared contract (docs/agents/project-workflow.md) —
+  # never into an adapter, and never into a chunk.
   #
   # A `<…>` value below is shape, not a default: answer it from the project at
   # apply time. It is deliberately NOT the Template `{{NAME}}` token — that one
@@ -46,7 +47,7 @@ knobs:
     spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against, e.g. the app dir's src/>"
   parallel-work:
     # parallel-work rides dev-base and is value-variant: it names two knobs the
-    # engine writes into <!-- knobs:parallel-work --> in the project CLAUDE.md.
+    # engine writes into <!-- knobs:parallel-work --> in the project's contract.
     worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree; the last path
                                                         # segment IS the task-branch name, so the worktree layout
                                                         # and the branch convention stay in step. Match the
@@ -56,16 +57,18 @@ knobs:
 ## Bespoke setup
 
 None beyond the engine's uniform steps. The engine's apply algorithm
-(@imports + knob blocks, settings.local.json merge, verify-after-write, handoff)
-fully covers a web project; there are no installs, no `init` CLI, no
-`project.godot`-style edits, and no Templates to stamp.
+(the contract and the two adapters, the settings.local.json merge, verify-after-write,
+handoff) fully covers a web project; there are no installs, no `init` CLI, no
+`project.godot`-style edits, no Templates to stamp, and no host specifics beyond the
+generic ones, so this Profile declares no `adapters:` fragments either.
 
 **Three answers the project owes before anything is written**, because nothing here can
 guess them and each one is wrong by default: **where the toolchain runs** (repo root or an
 app subdirectory — it fills the `verify-gate`, `dev-practice` and `parallel-work` values),
 **where the deployed secrets live** (the `verify-gate` `env` value), and **the task-branch
 convention** (the `parallel-work` prefix). A fourth, **the deploy target**, is not a knob at
-all — deploy is inline-leaf, so ask for it and hand it to whoever writes Zone 3.
+all — deploy is inline-leaf, so ask for it and hand it to whoever writes the contract's
+project sections.
 
 **If this project needs a board** and `backlog/` is absent, run the board
 setup from **`profiles/backlog.md`'s `## Bespoke setup`** (the `backlog init`
@@ -74,9 +77,10 @@ Profiles do not compose; reference, don't copy. (The board CONVENTIONS still
 arrive via the `backlog-core` @import regardless; only the one-time CLI
 `init` is bespoke, and it lives in the backlog profile.)
 
-**Web-specific concerns live as INLINE-LEAF (Zone 3), hand-authored in the
-project's own `CLAUDE.md`.** The engine never writes Zone 3, and no manifest
-knob or shared chunk carries them:
+**Web-specific concerns live as INLINE-LEAF, hand-authored in the contract's project
+sections (`docs/agents/project-workflow.md`) — not in either adapter, which carry host
+mechanics only.** The engine never writes a project section it did not author, and no
+manifest knob or shared chunk carries these:
 
 - **Deploy** — the target, the commands that push to it, where the secrets live, the
   client-to-API boundary the frontend is held to, and anything under the deploy directory
