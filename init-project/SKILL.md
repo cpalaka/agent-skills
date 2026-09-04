@@ -121,7 +121,11 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
   into `<!-- profile:contract-sections -->`, so the order is fixed:** the engine's own stub sections
   first (Project, Working in this repo, Running — each replaced in place where a fragment supplies
   it), then the type Profile's contract fragment, then any conditional fragment a recipe step
-  inserts later. The board's `## Board` section is that last case, so it lands last. **For each
+  inserts later. The board's `## Board` section is that last case, so it lands last. **A fragment
+  section that is not a stub replacement keeps its position in its own fragment's order**, placed
+  after whichever stub section precedes it there — so a fragment running Working in this repo →
+  godot-ai addon → Running emits the addon section between those two, not after both.
+  **For each
   chunk in `knobs` that is
   actually imported** (it rides dev-base, it's the chosen `fork`, or it's in `imports`), write a
   tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` carrying that chunk's values. On
@@ -267,7 +271,12 @@ For a project already on the Chunk library whose `CLAUDE.md` was written by the 
 chunk imports, the knob blocks inline below them, and the project's own rules below those. It moves
 what belongs in the contract into the contract and leaves an adapter behind. It **moves prose; it
 never authors any**, and it **never rewrites a line to fix it** — a line that needs fixing is
-flagged for the user.
+flagged for the user. **Transcribing is moving, not authoring**: lifting a name or a value the moved
+prose already carries into a Template slot that asks for it is in scope; inventing one is not.
+
+**The project name is not asked for in this mode.** Take it from the existing `CLAUDE.md`'s own H1,
+and use the same string in all three emitted files — `{{PROJECT_NAME}}` is an init question, and a
+project that already has a heading has already answered it.
 
 **0. Stop if it is already migrated.** If `docs/agents/project-workflow.md` exists *and* `CLAUDE.md`
 carries no `<!-- knobs:` marker, report "already migrated, nothing to move" and stop. Only past this
@@ -301,12 +310,16 @@ same prose.
 - **Whole bullets that are only host mechanics move to the adapter instead**: the
   `.claude/settings.local.json` baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and
   any "skills auto-load here" claim. They belong in `## Claude Code mechanics (this host only)`, not
-  in a shared contract.
+  in a shared contract. Init's rule about dropping the `.claude/agents/` bullet where the Profile
+  stamps no subagents is **init's rule, not this one**: migrate stamps nothing, and a moved bullet
+  naming a subagent the project actually has always wins over the Template's generic one.
 
-**Flag, never rewrite.** Three classes, each reported in step 8's ledger with its file and its
-line, and left exactly as it was:
+**Flag, never rewrite.** Four classes, each reported in step 8's ledger with its file and its
+line, and left exactly as it was. **They apply to moved prose only** — the engine's own header and
+Template bullets name `CLAUDE.md`, `AGENTS.md` and both chunk roots by design, and flagging the
+boilerplate you just wrote buries the findings that matter:
 
-- Any line still in the contract that names a host or a host path — `Claude Code`, `.claude/`,
+- Any moved line still in the contract that names a host or a host path — `Claude Code`, `.claude/`,
   `~/.claude`, `.mcp.json`, `~/.claude.json`, or the Codex equivalents (`Codex`, `.codex/`,
   `~/.codex`). Whether it is host mechanics or a project rule that happens to mention one is a
   judgement the user makes.
@@ -314,24 +327,55 @@ line, and left exactly as it was:
   silently misses on the other, so the user replaces it with a host-neutral entry point in the repo.
 - Any cross-reference to a heading whose level the promotion changed (`see **### Running**` when
   `Running` is now `##`).
+- **Any moved knob block whose keys do not match the Profile's key set** — a renamed key
+  (`test-roster` where the Profile names `test_roster`) or a missing one (a six-key `verify-gate`
+  where the Profile fixes eight). Report the block, the keys that differ, the keys that are absent,
+  and the Profile's list beside them. Do not rename and do not fill a gap: the keys are how the
+  chunks find the values, but the values are the project's measured facts and only the user knows
+  what the missing ones are.
 
 **5. Rewrite `CLAUDE.md` as the thin adapter** — the header and mechanics section from
 `templates/CLAUDE.md`, the import-block comment and import lines the file already had (the comment
 is the project's own record of why each import is there: keep it) plus
 `@docs/agents/project-workflow.md`, and, folded into that mechanics section, whatever step 4 moved
-out of the contract. Where a moved line and a Template bullet cover the same ground, **keep the
-project's wording and append whatever fact the Template bullet carries that the project's line
-lacks** — the project line is the more specific, but dropping the Template's is how the migration
-loses content nobody notices missing.
+out of the contract.
+
+**The project's wording wins, and its facts survive.** Where a moved line and a Template bullet
+cover the same ground, keep the project's line and append whatever fact the Template's carries that
+it lacks — the project line is the more specific, but dropping the Template's is how a migration
+loses content nobody notices missing. **The same holds for the header**, which is otherwise replaced
+wholesale: carry across any fact the old one stated that the Template's does not, such as where the
+Chunk library is single-sourced on this machine. And **the same holds against an inserted Profile
+fragment**: where a fragment bullet covers ground a moved bullet already covers, keep the moved one,
+record the fragment's version in the ledger as the Profile's current wording, and **never emit
+both** — two bullets on one subject is how a stale claim outlives the line that corrected it.
+
+**The imports carry over as they are, including the fork.** Migrate does not choose a git-flow
+variant. Where the fork line disagrees with what the repo's history actually shows, **flag it** —
+switching a project's integration model as a migration side effect is exactly what the Profile's
+`fork:` note forbids, and that note is not reachable from this mode.
 
 **6. Emit `AGENTS.md`** as init step 1 does, from the imports the file already carries — including
 the Profile's **`codex` adapter fragment**, which is host mechanics this project has never had and
-cannot have written down. Same for the `claude` fragment in step 5. **Do not insert the `contract`
-fragment**: the project already has its own prose for those sections, and this mode moves prose
-rather than replacing it. Instead, for each contract-fragment section whose heading matches one the
-migration moved, list it in the ledger as "the Profile's current wording for this section; adopt by
-hand if you want it". A migrated project whose Profile has a `codex` fragment must not come out with
-an `AGENTS.md` that says nothing about that project type.
+cannot have written down. Same for the `claude` fragment in step 5. A migrated project whose Profile
+has a `codex` fragment must not come out with an `AGENTS.md` that says nothing about that project
+type.
+
+**The Skills fill prompt is filled by transcription or not at all.** Step 7 fails on a surviving
+`*<Fill at init:` prompt, and this mode may not author one. So: transcribe into that bullet the
+skill names the moved prose already carries, spelled `$name`. Where the moved prose names none,
+**leave the prompt standing and record it in the ledger as a fill the user owes** — a prompt the
+user can see beats a list you made up, and step 7's failure is the correct outcome until they answer
+it. Say in the ledger which of the two happened.
+
+**Do not insert the `contract` fragment**: the project already has its own prose for those sections,
+and this mode moves prose rather than replacing it. Offer it in the ledger instead, in both kinds:
+
+- A fragment section whose heading **matches** one the migration moved — offered as the Profile's
+  current wording for that section, to adopt by hand.
+- A fragment section with **no counterpart** in the moved prose — offered as an addition. This is
+  the one that silently vanishes otherwise: a board section, say, exists in no pre-contract
+  `CLAUDE.md`, so nothing it carries would ever reach a migrated project.
 
 **7. Run verify-after-write** (step 7 above), byte gate included.
 
@@ -341,6 +385,12 @@ who disagrees with a move needs to see it, not diff for it. Then init step 8's i
 and (e) — the external-includes approval, what it does for headless runs, the Codex directory-trust
 prompt, and the new-session rule — plus the byte figures from step 7. A migrated project is a first
 launch on the second host, so none of those has been answered yet.
+
+**Then tell them to run init once.** Migrate stamps no Templates, so the files the emitted contract
+and adapters now point at — a gotcha-scan wrapper, a reference guide, a domain pointer, a test
+harness, the Codex MCP config — are still absent, and until init runs the contract names files that
+are not there. Init is idempotent and skip-if-exists: over a migrated project it stamps exactly the
+missing ones and touches nothing this mode wrote.
 
 ## Profiles
 

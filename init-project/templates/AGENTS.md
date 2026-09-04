@@ -21,8 +21,8 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
 - **Explicit-only skills are invoked by name.** The list below says *which* ones this project uses
   on this host; the global `~/.codex/AGENTS.md` routing table says *when* each one fires. Read that
   table for the triggers — this file does not repeat them.
-- *<Fill at init: those skills, as `$name`, plus any project-specific trigger the global routing
-  table does not already cover.>*
+- *<Fill at init: the explicit-only skills this project uses on this host, as `$name`, plus any
+  project-specific trigger the global routing table does not already cover.>*
 - **A skill that fires from context on the other host does not fire here.** Where the contract names
   a skill to read when you touch the work it covers, read it explicitly, by name, yourself.
 
