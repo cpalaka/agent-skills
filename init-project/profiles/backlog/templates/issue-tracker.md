@@ -3,7 +3,8 @@
 <!-- Stamped by init-project (profiles/backlog/templates/issue-tracker.md). This file is the
      canonical tracker pointer for skills that look up docs/agents/issue-tracker.md
      (code-review's Spec axis, triage, to-tickets). Conventions stay authoritative in the
-     backlog-core chunk loaded via CLAUDE.md — this is a pointer, not a second copy. -->
+     backlog-core chunk, which your host adapter loads (CLAUDE.md for Claude Code, AGENTS.md for
+     Codex) — this is a pointer, not a second copy. -->
 
 Issues live in **Backlog.md**: task files under `backlog/` in this repo, driven by the
 `backlog` CLI. Never hand-edit files under `backlog/` — the CLI owns IDs, naming, and

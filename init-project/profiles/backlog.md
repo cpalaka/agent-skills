@@ -8,12 +8,16 @@ fork: git-flow-squash       # ADR-0002 default. Opt-in alternative is git-flow-n
                             # (plain task-NNN branch + SHA-in-notes) — swap the fork
                             # line to migrate; never import both.
 templates:                  # board conventions arrive via the backlog-core @import (the old
-                            # claude-section.md Template was promoted INTO that chunk). The one
-                            # stamped asset is the canonical tracker pointer for skills that
-                            # look up docs/agents/issue-tracker.md (code-review, triage, to-tickets).
+                            # claude-section.md Template was promoted INTO that chunk). Two stamped
+                            # assets, both host-neutral and both reached through the contract:
+                            # the canonical tracker pointer for skills that look up
+                            # docs/agents/issue-tracker.md (code-review, triage, to-tickets), and
+                            # the board's label vocabulary.
   - { src: issue-tracker.md, dest: docs/agents/issue-tracker.md }
+  - { src: triage-labels.md, dest: docs/agents/triage-labels.md }
 knobs:
-  # Per-project values written into <!-- knobs:backlog-core --> in the project CLAUDE.md.
+  # Per-project values written into <!-- knobs:backlog-core --> in the project's shared contract,
+  # docs/agents/project-workflow.md — never into an adapter, and never into the chunk.
   backlog-core:
     VERSION: "1.45.2"                       # THE canonical pin — any other Profile that mirrors it bumps with it; npm i -g backlog.md@<pin>
     PLANS_DIR: "docs/plans/"                # where multi-task plan docs linked via --doc live
@@ -85,10 +89,12 @@ the repo root.)
      free-form (`-l a,b`) and emerge organically. After seeding, retire the old queue
      homes (point roadmap docs/memories at the board; never maintain two queues).
 
-5. **Adoption commit.** Commit `backlog/` + the updated `CLAUDE.md` (chunk @imports + knob
-   blocks) as one adoption commit. `auto_commit: false` means task-file changes always ride
+5. **Adoption commit.** Commit `backlog/` + the three emitted files (`CLAUDE.md`, `AGENTS.md`
+   and `docs/agents/project-workflow.md`) plus the two stamped `docs/agents/` pointers as one
+   adoption commit. `auto_commit: false` means task-file changes always ride
    along with code commits thereafter (one task-file change per code commit).
 
 **Then resume the engine's verify-after-write + handoff** (the imports resolve, the knob
-blocks are populated, the board exists) — including the first-launch external-includes
-approval, which is also what makes headless runs expand the imports.
+blocks are populated in the contract, the board exists) — including the byte gate over the
+auto-loaded Codex pair, the first-launch external-includes approval (which is also what makes
+headless runs expand the imports), and the Codex directory-trust prompt.
