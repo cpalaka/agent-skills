@@ -189,9 +189,15 @@ project uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide
 carries a `{{WORKSPACE_ROOT}}` token to ask for at stamp time). They document the same pipeline and
 the pipeline doc points at the MCP guide, so one without the other is a dangling reference, and the
 workspace-root question is meaningless with no Blender source. Where the project has none, **both
-Blender bullets drop from the contract fragment together.** Both MCP guides are carried forward
-as-is and are **due a content-staleness audit at step 6** (they track live MCP tool reality /
-Blender API drift).
+Blender bullets drop from the contract fragment together.**
+
+**A leftover from an earlier run is reported, never deleted.** A project stamped before the pair
+went conditional can hold `docs/asset-pipeline.md` with no Blender source: the engine does not
+remove a project file, so name it in the handoff as a leftover for the user to delete, keep both
+contract bullets dropped, and leave the MCP guide's pointer to it conditional as it is written.
+
+Both MCP guides are carried forward as-is and are **due a content-staleness audit at step 6** (they
+track live MCP tool reality / Blender API drift).
 
 **Stamp order, and the two files that must wait for the freeze.** `.mcp.json` and
 `.codex/config.toml` both launch the two npm servers out of `tools/mcp/node_modules/`, so both are
@@ -302,19 +308,30 @@ stays as the read/test complement. Skip this step only if the project writes thr
 documenting or permitting a server it does not run. (`uv` on PATH is a prerequisite when used — the
 dock auto-starts a uv-managed Python server on `:8000` + `:9500`.)
 
-1. **Permissions.** Drop all three godot-ai entries from the `settings` delta — `mcp__godot-ai__*`
-   and the two port probes `Bash(lsof -nP -iTCP:8000*)` and `Bash(lsof -nP -iTCP:9500*)`, which
-   exist only for its HTTP and WS ports. Then remove the user-scope `godot-ai` entry from
+1. **Permissions — in the project's `.claude/settings.local.json`**, the file engine step 4 has
+   already written; the `settings` delta in this manifest stays as it is, or every future project
+   loses these too. Remove all three godot-ai entries from that file: `mcp__godot-ai__*` and the two
+   port probes `Bash(lsof -nP -iTCP:8000*)` and `Bash(lsof -nP -iTCP:9500*)`, which exist only for
+   its HTTP and WS ports. Then remove the user-scope `godot-ai` entry from
    `~/.claude.json` if a previous project's dock wrote one (it is machine-wide, so it will otherwise
    show as a failed server in every project).
-2. **The contract.** Delete the fragment's whole `## godot-ai addon (vendored, TRACKED)` section and
-   the godot-ai half of the Project-pins sentence in the MCP bullet, and name godot-mcp as the
-   writer in that bullet's division of labour. Add one sentence there: `docs/godot-mcp-guide.md`
-   documents godot-ai as the recommended writer for projects that vendor it, and this project does
-   not. **Leave the guide's own writer/reader matrix alone** — it is a carried-forward reference
-   about the tool stack, not a claim about this project.
-3. **Both adapter fragments.** Drop the godot-ai bullet from `adapter-claude.md` and from
-   `adapter-codex.md`; each points at the contract section step 2 just deleted.
+2. **The contract**, four edits in the fragment. (a) Delete the whole
+   `## godot-ai addon (vendored, TRACKED)` section. (b) In the MCP bullet, drop the godot-ai half of
+   the Project-pins prompt and **name godot-mcp the writer, with its hole stated as a hole**: it
+   silently no-ops `Rect2`, so that property type is hand-edited in the `.tscn`/`.tres` and
+   re-verified — a known gap to work around, not a prohibition, because with godot-ai absent there
+   is no other writer to send it to. Add one sentence: `docs/godot-mcp-guide.md` documents godot-ai
+   as the recommended writer for projects that vendor it, and this project does not. (c) In the same
+   bullet, drop the read/test parenthetical's "editor-only filtering is godot-ai
+   `logs_read source=\"editor\"`" — that filtering has no source here. (d) In `## Running`, drop
+   "`addons/godot_ai` is tracked, so there is no re-vendor step" from the fresh-clone rehydrate: no
+   addon is vendored, so the sentence answers a question nobody asked. **Leave the guide's own
+   writer/reader matrix alone** — it is a carried-forward reference about the tool stack, not a
+   claim about this project.
+3. **Both adapter fragments.** In `adapter-claude.md`, drop only the godot-ai half of the MCP
+   bullet — **keep the sentence saying `.mcp.json` lists godot-mcp and minimal-godot**, which is the
+   only inventory of that file either adapter carries. In `adapter-codex.md`, drop the godot-ai
+   bullet whole; it is nothing but a pointer at the contract section step 2 just deleted.
 
 `.mcp.json` and `.codex/config.toml` are unaffected — neither ever listed godot-ai.
 

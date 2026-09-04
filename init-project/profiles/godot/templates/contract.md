@@ -13,7 +13,8 @@
   **minimal-godot = local diagnostics** (`get_diagnostics`). Never write through godot-mcp (it
   silently no-ops `Rect2`); **one writer per editor instance**. **Project pins:**
   *<Fill at init: the godot-mcp version pinned in `tools/mcp/package.json` — addon and server are
-  bumped together — and the godot-ai version, which is the tag vendored below.>*
+  bumped together — and, where the project vendors godot-ai, its version, which is the tag vendored
+  below. A project that skips godot-ai names godot-mcp alone here.>*
 - **MCP servers connect at session start.** After any MCP config change, start a new session — your
   host adapter says which files hold that config and how a new session is started. The tool-name
   prefix a host shows you is a host detail; the roles above are not.
