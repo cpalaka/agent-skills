@@ -13,6 +13,7 @@ entry, not a quiet edit.
 | [0006](0006-scarce-tier-posture-ladder.md) | Scarce-tier placement is a cost-ordered posture ladder, not a permission list |
 | [0007](0007-vendor-unchanneled-third-party-skills.md) | Third-party skills with no distribution channel are vendored into this repo |
 | [0008](0008-public-private-split-by-audience.md) | The Skill library is split into two repos by audience, not by kind |
+| [0009](0009-init-project-emits-contract-and-two-adapters.md) | `init-project` emits one shared contract and two thin host adapters |
 
 **0004 is deliberately absent.** These numbers are the original ones from the single repo this
 library was split out of (ADR 0008), kept so a reference to "ADR 0002" means the same document in
