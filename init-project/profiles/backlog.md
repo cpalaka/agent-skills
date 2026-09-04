@@ -77,10 +77,13 @@ the repo root.)
 3. **DoD defaults — hand-edit `backlog/config.yml`.** The key is `definition_of_done`,
    snake_case in the file, and `backlog config set` does NOT expose it — so hand-edit the yaml
    (config is fine to hand-edit; task files are NOT — the CLI owns IDs/naming/frontmatter). Write
-   the `DoD` knob list, adapting items 1–N to the project's standing gates and **always ending with
-   the explicit user sign-off** item (the human-in-the-loop Done-gate; also surfaced per-task by
-   `backlog-core`). Read it back with `backlog config get definitionOfDone` — the CLI takes the
-   camelCase spelling for the same key (verified 2026-09-03 on 1.45.2).
+   the `DoD` knob list — **the calling Profile's, where another Profile is running these steps**
+   (the godot Profile's board step brings its own, Godot-flavoured list); this Profile's own entries
+   are placeholder shapes and are the list only when backlog is the project type. Adapt items 1–N to
+   the project's standing gates and **always end with the explicit user sign-off** item (the
+   human-in-the-loop Done-gate; also surfaced per-task by `backlog-core`). Read it back with
+   `backlog config get definitionOfDone` — the CLI takes the camelCase spelling for the same key
+   (verified 2026-09-03 on 1.45.2).
 
 4. **Seed the board** — MAIN session only, sequential. `task create`'s ID generation is a
    max+1 scan, so concurrent creation from subagents/workflow agents collides (upstream
