@@ -218,7 +218,10 @@ gate command is worse than no migration.
 engine's header, in the order they appeared.
 
 **4. Move every project section verbatim** into the contract, after the knob blocks — same order,
-demoting nothing and rewriting nothing, with exactly two exceptions:
+same prose. The only structural change is that a wrapper heading (`## Project-specific
+(inline-leaf)` and the like) disappears and its children rise one level to `##`: promotion, because
+they are now top-level sections of a file of their own. Nothing is demoted and nothing is reworded,
+with exactly two exceptions:
 
 - **Claude-only host mechanics move to the adapter instead**: the `.claude/settings.local.json`
   baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and any "skills auto-load here"
@@ -228,8 +231,11 @@ demoting nothing and rewriting nothing, with exactly two exceptions:
   must replace with a host-neutral entry point. (The godot Profile's replacement is
   `tools/agent/godot-gotchas-scan.sh`.)
 
-**5. Rewrite `CLAUDE.md` as the thin adapter** — the same import lines it already had, plus
-`@docs/agents/project-workflow.md`, then the mechanics section holding what step 4 moved into it.
+**5. Rewrite `CLAUDE.md` as the thin adapter** — the header and mechanics section from
+`templates/CLAUDE.md`, the same import lines the file already had plus
+`@docs/agents/project-workflow.md`, and, folded into that mechanics section, whatever step 4 moved
+out of the contract. Where a moved line and a Template bullet say the same thing, keep the project's
+own wording: it is the more specific of the two.
 
 **6. Emit `AGENTS.md`** exactly as init step 1 does, from the imports the file already carries.
 
