@@ -7,9 +7,16 @@ description: Split a song into four production-ready stems (vocals, drums, bass,
 
 `stemsplit.sh` runs the whole pipeline. Your job is the judgement around it: picking the right source file, then reading the verification back honestly.
 
+Run it from this skill's own directory, which is host-specific:
+
 ```bash
+# Claude Code
 ~/.claude/skills/stem-split/stemsplit.sh "/path/to/song.flac"
+# Codex
+~/.agents/skills/stem-split/stemsplit.sh "/path/to/song.flac"
 ```
+
+`analyze.py` and `TROUBLESHOOTING.md` sit beside it under the same root.
 
 Output lands in `~/Music/stems/{artist}/{title}/` as `vocals.wav`, `drums.wav`, `bass.wav`, `other.wav`. Artist and title come from the file's tags, falling back to the filename with any leading track number stripped. Override with `--artist NAME` / `--title NAME` when the tags are wrong or absent.
 
