@@ -40,7 +40,15 @@ knobs:                     # per value-variant chunk → the values to write int
     PLANS_DIR: "..."
     VERIFY_EXAMPLES: "..."
     DoD: ["...", "User sign-off received"]
-  verify-gate: { commands: "...", paths: "...", secret_scan: "...", env: "..." }
+  verify-gate:             # one key per step of the chunk's invariant sequence, in this order
+    dir: "..."             #   the directory the gate runs in
+    typecheck: "..."
+    test: "..."
+    build: "..."
+    build_check: "..."     #   the build's own artifact assertion — exit 0 alone is not the check
+    smoke: "..."
+    secret_scan: "..."
+    env: "..."
   dev-practice: { test_roster: "...", spec_verify_src: "..." }
 ---
 ## Bespoke setup
@@ -49,7 +57,9 @@ knobs:                     # per value-variant chunk → the values to write int
 
 Knob *values* that are project-specific are filled at apply time (prompt the user or derive
 from the repo); the manifest carries defaults/shape. Pure-invariant chunks (git-*, codegraph,
-code-hygiene, sandbox-auto) have no knob block.
+code-hygiene, sandbox-auto) have no knob block. The `verify-gate` keys are the same eight in every
+Profile — the chunk's sequence is invariant, so a Profile varies the commands, never the key set;
+a step a project genuinely has no command for says so in its value rather than going missing.
 
 `adapters:` names three files under the Profile's own `templates/`. An absent field, or an absent
 key inside it, inserts nothing — the engine deletes that marker line and moves on.
@@ -114,9 +124,21 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
   file by marker. **A chunk listed in `knobs` but NOT imported** — a CONDITIONAL import, e.g. the
   godot profile's `backlog-core` (imported only for board-driven projects) — gets its knob block
   written by the Profile's conditional recipe step at the moment it adds the import, never by this
-  default pass; a board-less project must not be left with a dangling `<!-- knobs:backlog-core -->`
-  block. **The engine owns the header and the knob blocks and nothing else here:** it never edits a
-  project section it did not write.
+  default pass, and at the position the Profile's `knobs` order gives it; a board-less project must
+  not be left with a dangling `<!-- knobs:backlog-core -->` block. **The engine owns the header and
+  the knob blocks and nothing else here:** it never edits a project section it did not write.
+
+  **The inner shape of a knob block is fixed**, because a chunk reads it by marker out of a file it
+  never sees whole: **one bullet per key, `- <key>: <value>`, keys in the Profile's order, no
+  heading and no nesting between the markers.** A multi-item value (a DoD list) is a numbered list
+  indented under its bullet. So:
+
+  ```
+  <!-- knobs:dev-practice -->
+  - test-roster: the project board, falling back to the design docs under `docs/`.
+  - spec-verify src: the project's own source tree.
+  <!-- /knobs:dev-practice -->
+  ```
 - **`CLAUDE.md` — the thin Claude Code adapter.** The import block, in order:
   `@~/.claude/chunks/dev-base.md`, then the `fork` (`@~/.claude/chunks/<fork>.md`), then each
   `imports` entry, then **`@docs/agents/project-workflow.md`** — an `@` import, not a prose pointer,
@@ -129,12 +151,20 @@ sections is a pre-contract project: stop and run `## Migrate mode` instead of th
   knob block and no project rule may remain in this file.**
 - **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: dev-base's seven bundled
   chunks (`git-sync-branch-start`, `git-commit-format`, `git-confirm-destructive`, `sandbox-auto`,
-  `parallel-work`, `verify-gate`, `dev-practice`) + the `fork` + each `imports` entry — named as
-  files under `~/.codex/chunks/`, counted in the sentence that introduces them. The Template carries
+  `parallel-work`, `verify-gate`, `dev-practice`) + the `fork` + each `imports` entry. It expands
+  into **item 3 of the read list**, not a free-standing sentence, and it carries the count so a
+  reader can tell a short read from a complete one:
+  `These nine files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
+  then the file names with their `.md` suffixes. The Template carries
   the rest: the read-these-completely list, the "do not read `dev-base.md` instead" warning and the
   `~/.claude/chunks` → `~/.codex/chunks` resolution rule (ADR-0005), the Skills / MCP / sandbox /
   child-agent sections, and the canary as its last line. **Keep it under 8 KiB before Profile
   fragments**, and see the byte gate in step 7 for the pair that is actually capped.
+
+  **The canary is the truncation signal.** A fresh Codex session that cannot quote the last line did
+  not receive the whole file — the auto-loaded pair is over the cap, or the file never loaded at all
+  — so it is the one check that distinguishes "read and ignored" from "never arrived". The `v1` in
+  it names the adapter Template's *shape*; bump it only when that shape changes, never per project.
 
 **2. Enable external @imports (load-bearing — see ADR-0001), and trust the repo on Codex.**
 External `@~/.claude/chunks/…` imports require a **one-time, per-project interactive approval**
@@ -152,7 +182,9 @@ exists** unless `refresh: true`. After copying, replace every `{{NAME}}` token w
 the user supplies for NAME; ask once per distinct token. Two tokens are **derived, never asked**:
 `{{PROJECT_ROOT}}` is `pwd` at the repo root at stamp time, and `{{PROJECT_NAME}}` is the answer
 step 1 already has. Templates are *copied + parity-tracked* (unlike chunks); their source of truth
-is the Profile asset, kept aligned by a parity check, never hand-merged.
+is the Profile asset, kept aligned by a parity check, never hand-merged. **Leave behind any
+`templates` entry whose comment says it waits for the lockfile-freeze** — the recipe stamps those
+itself, after the freeze, because they point into a tree that does not exist yet at this step.
 
 **4. Merge `.claude/settings.local.json` (the merge contract from `sandbox-auto`).** Apply the
 Profile's `settings` delta (if any): union its `allow` globs into `permissions.allow`, and add
@@ -170,12 +202,25 @@ express (a CLI `init`, editing `project.godot`, a pinned tool install). Empty fo
 *payload* (which packages, which versions) is Profile-leaf. Install once into a local tree,
 **commit the lockfile, not the modules**, gitignore the module tree (append with exact-string
 dedup), and record the fresh-clone rehydrate command in the handoff. (Currently only the godot
-Profile needs this; promote nothing until a second type does.)
+Profile needs this; promote nothing until a second type does.) **This is a mechanic, not a position
+in the sequence:** it runs where the recipe puts it — the godot recipe calls it at its own step 5,
+before the two MCP adapter files that launch out of the frozen tree — so read the recipe for the
+order and this step for what the freeze does.
 
 **7. Verify-after-write.** Re-inventory the expected outputs; confirm the three emitted files exist;
 confirm each `@import` path resolves through the symlink; confirm no stamped file still carries a
 `{{` token, an unconsumed `<!-- profile:… -->` marker, or a surviving `*<Fill at init:` prompt; if
-the Profile sets a `verify-gate`, run it. Then two measurements:
+the Profile sets a `verify-gate`, run it.
+
+**Two verdicts a scaffold produces that are neither pass nor fail**, and both have been read as a
+pass: a **gate step that hangs** — no exit, banner only — is a **stamp failure**; kill it, report
+the command and that it did not return, and fix the knob rather than recording the step as green.
+And on day zero a project has no tests, so the test step prints `no tests match` or its equivalent:
+that is an empty run, not a green one. The scaffold's real test verdict is the harness's own
+self-check (for the godot Profile, `tests/run_tests.sh --selftest` ending
+`selftest: 8/8 verdicts correct`) — quote that, and say the suite was empty.
+
+Then two measurements:
 
 - **The byte gate (it FAILS the stamp).** `wc -c AGENTS.md ~/.codex/AGENTS.md`; the two figures
   summed must be **≤ 32,768**. Over that, report both figures and **stop** — do not trim silently, and
@@ -190,20 +235,29 @@ Surface any gap; do not report success without the inventory passing (the `verif
 **8. Handoff.** Tell the user: (a) on first launch in Claude Code, **approve the external-includes
 prompt once**, then restart so the imports load; (b) that same approval is what makes headless runs
 expand the imports; (c) on first launch in Codex, **answer the directory-trust prompt** — the Codex
-counterpart of that approval; (d) `.codex/config.toml` is ignored machine-wide by
-`**/.codex/config.toml` in `~/.config/git/ignore`. Check it with
-`git check-ignore -q .codex/config.toml`; if it is **not** ignored, tell the user to add that line
-there. The engine does not touch the project's `.gitignore` for it — the file is per-clone and
-machine-local, and one line in the machine-wide ignore covers every project; (e) **both hosts need a
+counterpart of that approval; (d) **the two per-clone host config files are ignored machine-wide,
+and the engine writes neither ignore.** Check both —
+`git check-ignore -q .codex/config.toml` and `git check-ignore -q .claude/settings.local.json` — and
+for each that comes back unignored, tell the user the line to add to `~/.config/git/ignore`:
+`**/.codex/config.toml` and `**/.claude/settings.local.json`. Not the project's `.gitignore`: both
+files are per-clone and machine-local, and one line each in the machine-wide ignore covers every
+project; (e) **both hosts need a
 new session after an MCP or settings change** — nothing re-reads either mid-session; (f) any
 fresh-clone rehydrate command from step 6; (g) step 7's figures — the two halves of the auto-loaded
 pair and the chunk total; (h) anything the Profile recipe defers to an interactive editor step.
 
 ## Migrate mode
 
-For a project already on the Chunk library whose `CLAUDE.md` was written by the previous engine —
-Zone 1 imports, knob blocks inline, project sections below them. It moves what belongs in the
-contract into the contract and leaves an adapter behind. It **moves prose; it never authors any**.
+For a project already on the Chunk library whose `CLAUDE.md` was written by the previous engine: the
+chunk imports, the knob blocks inline below them, and the project's own rules below those. It moves
+what belongs in the contract into the contract and leaves an adapter behind. It **moves prose; it
+never authors any**, and it **never rewrites a line to fix it** — a line that needs fixing is
+flagged for the user.
+
+**0. Stop if it is already migrated.** If `docs/agents/project-workflow.md` exists *and* `CLAUDE.md`
+carries no `<!-- knobs:` marker, report "already migrated, nothing to move" and stop. Only past this
+check does step 2's refusal mean anything: a migrated project has no knob blocks in `CLAUDE.md` by
+design, and refusing it for that would make migrate fail on its own output.
 
 **1. Refuse what this is not for.** If `CLAUDE.md` carries no `@~/.claude/chunks/dev-base.md` line,
 this is not a chunk-library project: say so and stop — the right tool is init, not migrate.
@@ -218,34 +272,60 @@ gate command is worse than no migration.
 engine's header, in the order they appeared.
 
 **4. Move every project section verbatim** into the contract, after the knob blocks — same order,
-same prose. The only structural change is that a wrapper heading (`## Project-specific
-(inline-leaf)` and the like) disappears and its children rise one level to `##`: promotion, because
-they are now top-level sections of a file of their own. Nothing is demoted and nothing is reworded,
-with exactly two exceptions:
+same prose.
 
-- **Claude-only host mechanics move to the adapter instead**: the `.claude/settings.local.json`
-  baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and any "skills auto-load here"
-  claim. They belong in `## Claude Code mechanics (this host only)`, not in a shared contract.
-- **A `~/.claude/skills/<skill>/scripts/…` path inside a knob value is host-specific** — it resolves
-  on one host and silently misses on the other. Do not rewrite it: **report it** as a value the user
-  must replace with a host-neutral entry point. (The godot Profile's replacement is
-  `tools/agent/godot-gotchas-scan.sh`.)
+- **The unit of movement is a whole bullet or a whole paragraph**, never a sentence cut out of one.
+  A paragraph that mixes host mechanics with a project rule is not split: it **stays in the
+  contract** and is flagged for the user to split by hand.
+- **The only structural change is promotion.** A wrapper heading (`## Project-specific
+  (inline-leaf)` and the like) disappears and its children rise one level to `##`, because they are
+  now top-level sections of a file of their own. Nothing is demoted and nothing is reworded.
+- **A moved section replaces an engine stub when its heading begins with the stub's text.** So
+  `## Working in this repo — Godot domain & MCP workflow` replaces the `## Working in this repo`
+  stub, keeping the project's fuller heading; likewise `## Running`.
+- **Whole bullets that are only host mechanics move to the adapter instead**: the
+  `.claude/settings.local.json` baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and
+  any "skills auto-load here" claim. They belong in `## Claude Code mechanics (this host only)`, not
+  in a shared contract.
+
+**Flag, never rewrite.** Three classes, each reported in step 8's ledger with its file and its
+line, and left exactly as it was:
+
+- Any line still in the contract that names a host or a host path — `Claude Code`, `.claude/`,
+  `~/.claude`, `.mcp.json`, `~/.claude.json`, or the Codex equivalents (`Codex`, `.codex/`,
+  `~/.codex`). Whether it is host mechanics or a project rule that happens to mention one is a
+  judgement the user makes.
+- Any `~/.claude/skills/<skill>/scripts/…` path inside a knob value: it resolves on one host and
+  silently misses on the other, so the user replaces it with a host-neutral entry point in the repo.
+- Any cross-reference to a heading whose level the promotion changed (`see **### Running**` when
+  `Running` is now `##`).
 
 **5. Rewrite `CLAUDE.md` as the thin adapter** — the header and mechanics section from
-`templates/CLAUDE.md`, the same import lines the file already had plus
+`templates/CLAUDE.md`, the import-block comment and import lines the file already had (the comment
+is the project's own record of why each import is there: keep it) plus
 `@docs/agents/project-workflow.md`, and, folded into that mechanics section, whatever step 4 moved
-out of the contract. Where a moved line and a Template bullet say the same thing, keep the project's
-own wording: it is the more specific of the two.
+out of the contract. Where a moved line and a Template bullet cover the same ground, **keep the
+project's wording and append whatever fact the Template bullet carries that the project's line
+lacks** — the project line is the more specific, but dropping the Template's is how the migration
+loses content nobody notices missing.
 
-**6. Emit `AGENTS.md`** exactly as init step 1 does, from the imports the file already carries.
+**6. Emit `AGENTS.md`** as init step 1 does, from the imports the file already carries — including
+the Profile's **`codex` adapter fragment**, which is host mechanics this project has never had and
+cannot have written down. Same for the `claude` fragment in step 5. **Do not insert the `contract`
+fragment**: the project already has its own prose for those sections, and this mode moves prose
+rather than replacing it. Instead, for each contract-fragment section whose heading matches one the
+migration moved, list it in the ledger as "the Profile's current wording for this section; adopt by
+hand if you want it". A migrated project whose Profile has a `codex` fragment must not come out with
+an `AGENTS.md` that says nothing about that project type.
 
 **7. Run verify-after-write** (step 7 above), byte gate included.
 
-**8. Hand off with the ledger:** every line moved and where it went, and every line flagged for the
-user to replace. A reader who disagrees with a move needs to see it, not diff for it.
-
-**Migrate is idempotent.** A second run finds `docs/agents/project-workflow.md` already there and a
-`CLAUDE.md` with no knob blocks left to move, and changes nothing.
+**8. Hand off with the ledger and the init handoff.** The ledger: every line moved and where it went,
+every line flagged and why, and every contract-fragment section offered for hand-adoption. A reader
+who disagrees with a move needs to see it, not diff for it. Then init step 8's items (a), (b), (c)
+and (e) — the external-includes approval, what it does for headless runs, the Codex directory-trust
+prompt, and the new-session rule — plus the byte figures from step 7. A migrated project is a first
+launch on the second host, so none of those has been answered yet.
 
 ## Profiles
 
