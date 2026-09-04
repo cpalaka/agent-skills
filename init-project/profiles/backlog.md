@@ -15,6 +15,11 @@ templates:                  # board conventions arrive via the backlog-core @imp
                             # the board's label vocabulary.
   - { src: issue-tracker.md, dest: docs/agents/issue-tracker.md }
   - { src: triage-labels.md, dest: docs/agents/triage-labels.md }
+
+adapters:                   # the contract's Board section is what gives the two pointers above a
+                            # reader; without it they are stamped and never named. No host-mechanics
+                            # fragments — driving the CLI is the same on both hosts.
+  contract: contract.md     # → <!-- profile:contract-sections --> in docs/agents/project-workflow.md
 knobs:
   # Per-project values written into <!-- knobs:backlog-core --> in the project's shared contract,
   # docs/agents/project-workflow.md — never into an adapter, and never into the chunk.
@@ -29,9 +34,14 @@ knobs:
       - "Debug/scaffolding instrumentation reverted"
       - "User sign-off received"
   # verify-gate + dev-practice are imported via dev-base; we only supply their knob values.
-  verify-gate:
-    commands: "<typecheck> · <test> · <build (+ artifact check)> · <smoke up/down> · <secret-scan grep>"
-    paths: "<dir the gate runs in>"
+  verify-gate:              # one key per step of the chunk's invariant sequence, same eight keys
+                            # in every Profile — vary the commands, never the key set.
+    dir: "<the directory the gate runs in>"
+    typecheck: "<the type/compile step>"
+    test: "<the test suite>"
+    build: "<a real production build>"
+    build_check: "<the build's own artifact assertion — exit 0 alone is not the check>"
+    smoke: "<bring it up, confirm the affected surface, bring it down>"
     secret_scan: "<grep pattern; expect zero matches>"
     env: "<any required env>"
   dev-practice:
@@ -64,12 +74,13 @@ the repo root.)
    `statuses: [To Do, In Progress, Done]` (keep defaults — the four gates are DoD items,
    not columns), `zero_padded_ids: 3`.
 
-3. **DoD defaults — hand-edit `backlog/config.yml`.** `backlog config set` does NOT expose
-   `definition_of_done`, so hand-edit the yaml (config is fine to hand-edit; task files are
-   NOT — the CLI owns IDs/naming/frontmatter). Write the `DoD` knob list, adapting items
-   1–N to the project's standing gates and **always ending with the explicit user
-   sign-off** item (the human-in-the-loop Done-gate; also surfaced per-task by
-   `backlog-core`).
+3. **DoD defaults — hand-edit `backlog/config.yml`.** The key is `definition_of_done`,
+   snake_case in the file, and `backlog config set` does NOT expose it — so hand-edit the yaml
+   (config is fine to hand-edit; task files are NOT — the CLI owns IDs/naming/frontmatter). Write
+   the `DoD` knob list, adapting items 1–N to the project's standing gates and **always ending with
+   the explicit user sign-off** item (the human-in-the-loop Done-gate; also surfaced per-task by
+   `backlog-core`). Read it back with `backlog config get definitionOfDone` — the CLI takes the
+   camelCase spelling for the same key (verified 2026-09-03 on 1.45.2).
 
 4. **Seed the board** — MAIN session only, sequential. `task create`'s ID generation is a
    max+1 scan, so concurrent creation from subagents/workflow agents collides (upstream

@@ -3,11 +3,16 @@
 <!-- Stamped by init-project (profiles/backlog/templates/triage-labels.md). The label vocabulary for
      this repo's board (Backlog.md, `backlog/`); both host adapters point here. -->
 
-Labels are free-form and multiple per item (`-l a,b`); the `labels:` list in `backlog/config.yml` is
-a **suggestions list for the web UI, not a gate** — probed on backlog 1.45.2 (2026-09-03): an
-unlisted label passed to `draft create -l`, and again to `task create -l` (a throwaway task, removed
-before commit), was accepted and written to the item's frontmatter unchanged. Enumerating the five
-below in the config is therefore for discoverability, not enforcement.
+This file holds one thing: the five triage labels and what each hands off to. How labels behave —
+free-form and multiple per item, the config's `labels:` list as suggestions rather than a closed
+vocabulary, the provenance label set at `-l` time, drafts setting their labels at `draft create -l`
+because they have no edit verb — is the `backlog-core` chunk's, which your host adapter loads. Read
+it there; this file does not restate it.
+
+Enumerating the five below in `backlog/config.yml` is for discoverability, not enforcement: probed
+on backlog 1.45.2 (2026-09-03), an unlisted label passed to `draft create -l`, and again to
+`task create -l` (a throwaway task, removed before commit), was accepted and written to the item's
+frontmatter unchanged.
 
 ## The five triage labels
 
@@ -23,13 +28,8 @@ below in the config is therefore for discoverability, not enforcement.
 - **`wontfix`** — decided against. Kept as a row rather than deleted so the decision stays findable;
   the reason belongs in the row's notes.
 
-## The project's own conventions
+Beside these five sit the provenance label `backlog-core` names, and whatever topic labels emerge.
 
-- **A provenance label** set at `-l` time on every task or draft an agent creates. The discriminator
-  is the creation *mechanism*, not where the idea came from; rows the owner enters directly stay
-  unlabeled.
-- **`human`** — this row needs a person. A ticket whose dependency carries `human` is a checkpoint: a
-  delegated run stops there and does not work past it.
-- **`checkpoint`** — the run-stopping rows themselves, lifted by the owner marking them Done.
-- Topic labels are added organically as themes emerge.
-- A draft's labels must be set at `draft create -l` time — drafts have no CLI edit verb.
+*<Fill at init, where the project wants them: a `human` label marking rows that need a person, and
+a `checkpoint` label for the run-stopping rows a delegated run must not work past. Both are
+optional — add them only if this project runs delegated sessions against the board.>*
