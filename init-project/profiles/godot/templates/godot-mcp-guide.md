@@ -6,7 +6,7 @@ For agents working in Godot projects with `@satelliteoflove/godot-mcp` + `@ryanm
 
 - **godot-mcp** (v4.1.0 — templates scaffold this pin; existing projects may still be on 3.6.1, check `tools/mcp/package.json`) — drives the editor via WebSocket bridge (port 6550). Tools (all prefixed `mcp__godot-mcp__godot_*`). On **4.1.0** (surface read from `dist/tools/` on 2026-08-08): `godot_scene`, `godot_scene3d`, `godot_resource`, `godot_project`, `godot_input`, `godot_runtime_state`, `godot_docs`, `godot_profiler`, split read/edit pairs `godot_node_read`/`godot_node_edit`, `godot_editor_read`/`godot_editor_edit`, `godot_animation_read`/`godot_animation_edit`, `godot_tilemap_read`/`godot_tilemap_edit`, `godot_gridmap_read`/`godot_gridmap_edit`, plus new `godot_exec`, `godot_game_time`, `godot_validate_meshes`. On **3.6.1** the same surfaces are unsplit (`godot_node`, `godot_editor`, `godot_animation`, `godot_tilemap`, `godot_gridmap`). **READ/TEST role only — never its write ops** (see the matrix below). **Version history of the pin:** v3.6.1 was held through July 2026 on a June-2026 field scan showing v4.0 had dropped the authoring verbs — a blocker only while godot-mcp was a candidate writer. That hold is obsolete twice over: godot-ai owns all writes in this stack, and 4.1.0 ships `*_edit` verbs anyway. New projects take 4.1.0; there is no reason to seek out 3.6.1.
 - **minimal-godot-mcp** (its `.mcp.json` server key is `godot`, so its tools are `mcp__godot__*` — grepping `.mcp.json` for "minimal-godot" finds nothing) — filesystem-based. Tools: GDScript diagnostics (`get_diagnostics`), runtime console output capture (`get_console_output`).
-- **godot-ai** (`hi-godot/godot-ai` v3.2.4, vendored at `addons/godot_ai/`, **tracked in git** — it self-updates in-editor, gotcha #116; added 2026-05-30, last bumped 2026-09-02) — construction-grade editor MCP over HTTP `http://127.0.0.1:8000/mcp` (its Python server is also a WS *server* on :9500; the editor plugin dials out). 44 tools (catalog diffed against the 3.1.3 tree on 2026-09-02; new since 3.1.3: `gridmap_manage`, `csg_manage`, `custom_manage` — the last invokes tools other addons register via the 3.2.0 custom-tool registry; nothing here registers one): `scene_*`/`node_*`/`script_*`, `signal_manage`, `material`/`particle`/`camera`/`animation`/`ui_manage`, `project_run`, `editor_screenshot`, `logs_read`, `game_manage` (v2.7.x: **raw** key/mouse/gamepad input injection — `input_key`/`input_mouse`/`input_gamepad`, which drive any *mapped* action — plus runtime node-state read `get_node_info`/`get_scene_tree` and named-action-state read `input_state`; verified live on 2.7.5 / Godot 4.7). Enabled as a project plugin; the dock auto-starts the uv server. Since 3.2.0 the dock's client registration scope is an EditorSettings enum (`user` default → the stdio entry lives in `~/.claude.json`, not `.mcp.json`; see CLAUDE.md § godot-ai addon). Upgrades *construction* over godot-mcp's run/edit baseline — but the two heavily overlap (scene/node/script), so **prefer one writer per editor instance** across them.
+- **godot-ai** (`hi-godot/godot-ai` v3.2.4, vendored at `addons/godot_ai/`, **tracked in git** — it self-updates in-editor, gotcha #116; added 2026-05-30, last bumped 2026-09-02) — construction-grade editor MCP over HTTP `http://127.0.0.1:8000/mcp` (its Python server is also a WS *server* on :9500; the editor plugin dials out). 44 tools (catalog diffed against the 3.1.3 tree on 2026-09-02; new since 3.1.3: `gridmap_manage`, `csg_manage`, `custom_manage` — the last invokes tools other addons register via the 3.2.0 custom-tool registry; nothing here registers one): `scene_*`/`node_*`/`script_*`, `signal_manage`, `material`/`particle`/`camera`/`animation`/`ui_manage`, `project_run`, `editor_screenshot`, `logs_read`, `game_manage` (v2.7.x: **raw** key/mouse/gamepad input injection — `input_key`/`input_mouse`/`input_gamepad`, which drive any *mapped* action — plus runtime node-state read `get_node_info`/`get_scene_tree` and named-action-state read `input_state`; verified live on 2.7.5 / Godot 4.7). Enabled as a project plugin; the dock auto-starts the uv server. Since 3.2.0 the dock's client registration scope is an EditorSettings enum (`user` default → the stdio entry lives in the host's user-scope config, not `.mcp.json`; see the contract, `docs/agents/project-workflow.md` § godot-ai addon). Upgrades *construction* over godot-mcp's run/edit baseline — but the two heavily overlap (scene/node/script), so **prefer one writer per editor instance** across them.
 
 ## Which tool to use (writer / reader split)
 
@@ -128,13 +128,43 @@ sky = SubResource("s")
 
 For the Blender → Godot pipeline (where source files live, what crosses, naming discipline): see `asset-pipeline.md`.
 
+## Host adapters
+
+`.mcp.json` is the Claude Code MCP adapter. Codex needs its own, because it does not read a repo-root `.mcp.json`: before `.codex/config.toml` existed, `codex mcp list` from the repo showed only the user-scope servers (measured 2026-09-03). `.codex/config.toml` is the Codex MCP adapter for the two npm servers; godot-ai remains user-scoped and is not repeated there. It is gitignored machine-wide by `**/.codex/config.toml` in `~/.config/git/ignore`. Codex resolves a relative MCP `cwd` against the **launch directory** (measured 2026-09-03), so its launcher paths must be absolute and therefore per-clone.
+
+On a fresh clone, copy this full block into `.codex/config.toml` at the clone root and replace `<CLONE-ROOT>` with the clone's absolute path (`pwd` at the repo root); a wrong or unreplaced path fails silently, because `required = false`:
+
+```toml
+# Codex project MCP adapter — the Codex counterpart of .mcp.json.
+# Gitignored machine-wide (~/.config/git/ignore: **/.codex/config.toml) because Codex
+# resolves a relative MCP `cwd` against the LAUNCH directory, so the launcher paths must be
+# absolute and therefore per-clone. Recreate from the block in docs/godot-mcp-guide.md on a
+# fresh clone; replace <CLONE-ROOT> with the clone's absolute path.
+# godot-ai is NOT listed here: it lives at user scope in ~/.codex/config.toml.
+
+[mcp_servers.godot-mcp]
+command = "node"
+args = ["<CLONE-ROOT>/tools/mcp/node_modules/@satelliteoflove/godot-mcp/dist/cli.js"]
+required = false
+startup_timeout_sec = 30
+
+[mcp_servers.godot]
+command = "node"
+args = ["<CLONE-ROOT>/tools/mcp/node_modules/@ryanmazzolini/minimal-godot-mcp/dist/index.js"]
+required = false
+startup_timeout_sec = 30
+```
+
+Verifying the adapter from Codex: `codex mcp list` from the clone root must show `godot` and `godot-mcp` enabled beside the user-scope `godot-ai`. A Codex *session* exposes MCP tools through its code-mode `exec` surface and discovers them lazily, so a probe that forbids tool calls ("no shell commands") can under-report while every server is in fact loaded (measured 2026-09-03: two runs in the same fresh worktree, one with a discovery call listing all eight servers and 21 `godot_*` tools, one without listing a single unrelated server). Ask the session to enumerate its MCP tools, not to recite them. A worktree needs no `trust_level` entry for the project adapter to load (measured the same day, with and without a `trust_level="trusted"` override).
+
 ## New-project setup checklist
 
-1. `.mcp.json` with all three servers (godot-mcp, minimal-godot, godot-ai). The two npm servers launch from a lockfile-frozen local install in `tools/mcp/` via `node …` (committed `package-lock.json`; `node_modules/` gitignored), **not** `npx -y` — this freezes the transitive dependency tree against supply-chain drift. After a fresh clone, run `npm ci --prefix tools/mcp` before the godot-mcp/minimal tools will load.
-2. `addons/godot_mcp/` present; enabled in `[editor_plugins]`
-3. `MCPGameBridge` autoload registered
-4. This guide copied to `docs/godot-mcp-guide.md`; `CLAUDE.md` references it
-5. `docs/blender-mcp-guide.md` copied if the project uses Blender as a DCC source
-6. `docs/asset-pipeline.md` copied for Blender → Godot pipeline conventions
-7. `godot-gdscript-patterns` skill installed globally; `CLAUDE.md` references it for GDScript context
-8. `godot-animation-tree-mastery` skill installed globally; `CLAUDE.md` references it for AnimationTree context
+1. `.mcp.json` with the two project-scoped servers (`godot-mcp` and `godot`, the minimal-godot server); godot-ai is registered at user scope by its own dock. The two npm servers launch from a lockfile-frozen local install in `tools/mcp/` via `node …` (committed `package-lock.json`; `node_modules/` gitignored), **not** `npx -y` — this freezes the transitive dependency tree against supply-chain drift. After a fresh clone, run `npm ci --prefix tools/mcp`, then import once (`godot --headless --path . --import` or open the editor). Both hosts pick up MCP changes only in a new session.
+2. `.codex/config.toml` with the same two servers at absolute paths — see § Host adapters.
+3. `addons/godot_mcp/` present; enabled in `[editor_plugins]`
+4. `MCPGameBridge` autoload registered
+5. This guide copied to `docs/godot-mcp-guide.md`; `docs/agents/project-workflow.md` references it
+6. `docs/blender-mcp-guide.md` copied if the project uses Blender as a DCC source
+7. `docs/asset-pipeline.md` copied for Blender → Godot pipeline conventions
+8. `godot-gdscript-patterns` skill installed globally; `docs/agents/project-workflow.md` references it for GDScript context
+9. `godot-animation-tree-mastery` skill installed globally; `docs/agents/project-workflow.md` references it for AnimationTree context

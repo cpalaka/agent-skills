@@ -18,13 +18,17 @@ fork: git-flow-squash       # The default (ADR-0002). git-flow-noff is the opt-i
 # The godot settings.local.json delta is NOT a template — it is the `settings:` field below,
 # merged into .claude/settings.local.json by the engine (step 4). blender-mcp-guide.md is stamped
 # CONDITIONALLY (only for Blender-pipeline projects) — see the recipe, not this list.
-# Two stamps have a recipe ORDERING dependency: mcp.json and mcp/package.json both point into
-# tools/mcp/, so the recipe's lockfile-freeze runs before either tree is used.
+# The three contract/adapter fragments are NOT stamped from here either: they are the `adapters:`
+# field below, inserted into the engine's own Templates at their markers (engine step 1).
+# Three stamps have a recipe ORDERING dependency: mcp.json, codex/config.toml and mcp/package.json
+# all point into tools/mcp/, so the recipe's lockfile-freeze runs before any of those trees is used.
 templates:
   # root
   - { src: mcp.json,              dest: .mcp.json }                    # stamped; launches the two npm servers from the frozen tools/mcp tree (freeze runs first — see Bespoke). No godot-ai entry: see step 4.4
+  - { src: codex/config.toml,     dest: .codex/config.toml }           # the Codex counterpart of .mcp.json; {{PROJECT_ROOT}} is DERIVED from pwd at the repo root, never asked. Same freeze ordering; gitignored machine-wide, see step 8
   # per-project reference docs (docs/) — always copy, skip-if-exists unless refresh
   - { src: godot-mcp-guide.md,    dest: docs/godot-mcp-guide.md }
+  - { src: domain.md,             dest: docs/agents/domain.md }        # host-neutral pointer to CONTEXT.md + docs/adr/; both adapters reach it through the contract
   - { src: asset-pipeline.md,     dest: docs/asset-pipeline.md }       # carries a {{WORKSPACE_ROOT}} token — engine step 3 asks for it
   - { src: godot-gotchas.md,      dest: docs/godot-gotchas.md }
   # headless test harness (tests/)
@@ -40,13 +44,21 @@ templates:
   - { src: tests/fixtures/fixture_parse_error.gd.txt,   dest: tests/fixtures/fixture_parse_error.gd.txt }  # inert .gd.txt — never a live .gd
   # project-local subagents (.claude/agents/)
   - { src: agents/godot-export-verifier.md,  dest: .claude/agents/godot-export-verifier.md }
+  # host-neutral tool entry points (tools/agent/) — named by the knob strings below, so they must
+  # resolve on either host; chmod +x in recipe
+  - { src: agents/godot-gotchas-scan.sh,     dest: tools/agent/godot-gotchas-scan.sh }
   # user-level helper (NOT in-repo; chmod +x in recipe)
   - { src: godot-mcp-clean,       dest: ~/.local/bin/godot-mcp-clean }   # user-level, once per machine; recipe chmod +x
-  # CLAUDE.md handling (snippet OR full; engine Zone-3 insert, NOT a clobber stamp)
-  - { src: CLAUDE.md.snippet,     dest: CLAUDE.md }   # bullets inserted into "Working in this repo" if CLAUDE.md exists (see Bespoke)
-  - { src: CLAUDE.md.full,        dest: CLAUDE.md }   # used ONLY when CLAUDE.md is absent (minimal starter)
   # lockfile-freeze seed (engine step 6 mechanic, payload below)
   - { src: mcp/package.json,      dest: tools/mcp/package.json }   # pins both servers exactly; recipe runs the freeze
+
+# The three fragments the engine inserts into ITS Templates (engine step 1). The Godot project
+# rules are contract content — host-neutral, "your host adapter says how" — and each adapter
+# fragment carries only what is true of that host alone.
+adapters:
+  contract: contract.md          # → <!-- profile:contract-sections --> in docs/agents/project-workflow.md
+  claude:   adapter-claude.md    # → <!-- profile:claude-mechanics --> in CLAUDE.md
+  codex:    adapter-codex.md     # → <!-- profile:codex-mechanics --> in AGENTS.md
 
 settings:                 # merged into .claude/settings.local.json by the engine (step 4)
   allow:
@@ -74,34 +86,39 @@ settings:                 # merged into .claude/settings.local.json by the engin
   enabled_mcp_servers: [ godot-mcp, godot ]   # godot-ai is NOT an .mcp.json server since 3.2.x — its dock registers
                                             # a user-scope stdio entry in ~/.claude.json itself (recipe step 4.4)
 
-# Every knob string below that names the `godot-gotchas` skill carries its own two-root
-# existence test, because these strings are stamped into a project's CLAUDE.md and
-# backlog/config.yml and are read there, detached from this file. The rationale for testing
-# both roots is stated once, under "Companion Skills are gated" in the recipe below.
+# These knob strings are stamped into a project's docs/agents/project-workflow.md and
+# backlog/config.yml and are read there, detached from this file — and they are read on BOTH
+# hosts. So none of them names a per-host skill root: the gotcha scan is invoked through
+# `tools/agent/godot-gotchas-scan.sh`, the stamped wrapper that resolves the skill under either
+# root and hands off (the rationale for testing both roots is stated once, under "Companion
+# Skills are gated" in the recipe below). Read the wrapper's VERDICT line, never `$?`; give it a
+# scope (`--all`, or the scan's own diff arguments), because VACUOUS is not a pass.
 knobs:
   backlog-core:             # CONDITIONAL — written ONLY when backlog-core is imported (board-driven
                             # project); skipped entirely for a board-less prototype.
     VERSION: "<pin the installed backlog CLI version>"
     PLANS_DIR: "docs/plans/"
-    VERIFY_EXAMPLES: "tests/run_tests.sh green via the headless runner; an in-editor F5 / interactive verification of the affected surface; if the `godot-gotchas` skill is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), a gotcha self-scan of the diff against its Detect-proactively patterns — otherwise skip that scan and use docs/godot-gotchas.md alone"
+    VERIFY_EXAMPLES: "tests/run_tests.sh green via the headless runner; an in-editor F5 / interactive verification of the affected surface; a Gotcha pre-commit scan — `tools/agent/godot-gotchas-scan.sh --all`, or the scan's diff arguments for the change (read the VERDICT line, not `$?`; with no scope on a clean tree it prints `VERDICT: VACUOUS`, which is NOT a pass), then a hand-scan of the diff's Detect-proactively patterns"
     # Godot-flavored DoD — standing gates for every task, ending in the user-sign-off gate
     # (backlog-core requires the list end in sign-off). Stamped into backlog/config.yml at
     # task-create time; config changes don't back-propagate.
     DoD:
       - "Headless test suite green via tests/run_tests.sh (verdict from output, not $?)"
-      - "Gotcha self-scan of the diff — against the `godot-gotchas` skill if it is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), otherwise against docs/godot-gotchas.md alone — clean, or each finding addressed"
-      - "New gotchas filed: project-local -> docs/godot-gotchas.md; universal -> the `godot-gotchas` skill if it is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`), otherwise docs/godot-gotchas.md as well. Load-bearing decisions recorded as docs/adr/ entries"
+      - "Gotcha pre-commit scan — tools/agent/godot-gotchas-scan.sh (read the VERDICT line, not $?), then a hand-scan of the diff — clean, or each finding addressed"
+      - "New gotchas filed: project-local -> docs/godot-gotchas.md; universal -> the `godot-gotchas` skill. Load-bearing decisions recorded as docs/adr/ entries"
       - "Any debug/diagnostic scaffolding (autoload prints, temp scenes, profiler hooks) reverted"
       - "User sign-off received"
   verify-gate:
-    # The godot verify gate's concrete command. The chunk's full sequence is
-    # typecheck/test/build/smoke/secret-scan; for a Godot project the test step is the headless
-    # runner, the "build" is a headless export (godot-export-verifier subagent, pre-push), and
-    # the "smoke" is opening the project / F5 the affected scene.
-    commands: "tests/run_tests.sh"
-    paths: "tests/"
-    secret_scan: "git grep -nE '(api[_-]?key|secret|password|token)\\s*=' -- ':!docs' ':!*.md'"
-    env: "GODOT=<editor binary>  # $GODOT → /Applications/Godot.app/Contents/MacOS/Godot → godot on PATH"
+    # The godot verify gate, one line per step of the chunk's invariant sequence
+    # (typecheck → test → build → smoke → secret-scan), plus the env line. For a Godot project
+    # the test step is the headless runner, the "build" is a headless export, and the "smoke" is
+    # opening the project / F5 the affected scene.
+    typecheck: "godot --headless --path . --check-only --quit — **not an exhaustive parse**; treat it as a smoke check, not project-wide parse coverage"
+    test: "tests/run_tests.sh — the headless runner; see **## Running** for its verdict-from-output / --selftest / never-trust-`$?` discipline. Runs in tests/"
+    build: "headless export via the project's export smoke-tester (`godot-export-verifier`; your host adapter says how to dispatch it) — pre-push / at milestone close, not per-merge"
+    smoke: "open the project / F5 the affected scene (a green test run is not a played scene)"
+    secret_scan: "git grep -nE '(api[_-]?key|secret|password|token)\\s*=' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match"
+    env: "$GODOT → the editor binary (macOS app path → `godot` on PATH); run from the repo root. The runner writes its capture files under $TMPDIR, so it runs green INSIDE either host's sandbox — do not disable the sandbox for a test run"
   dev-practice:
     # test-roster: where the authoritative list of required-coverage modules lives.
     test_roster: "the project board (backlog) if present, else the design docs under docs/; new gameplay systems with verifiable runtime behaviour get a tests/test_<topic>.gd before implementation"
@@ -117,10 +134,11 @@ knobs:
 
 ## Bespoke setup
 
-The heavy Godot recipe. The engine already owns the uniform steps — CLAUDE.md zones
-(@imports + the tagged knob blocks above), the `.claude/settings.local.json` merge (the
-godot allow-delta, union by exact-string dedup), plain Template stamping, the
-lockfile-freeze MECHANIC, verify-after-write, and the handoff. Do **not** re-run those here.
+The heavy Godot recipe. The engine already owns the uniform steps — the contract and the two
+adapters (the @imports, the tagged knob blocks above, and the three `adapters:` fragments), the
+`.claude/settings.local.json` merge (the godot allow-delta, union by exact-string dedup), plain
+Template stamping, the lockfile-freeze MECHANIC, verify-after-write including the byte gate, and the
+handoff. Do **not** re-run those here.
 This recipe supplies only what the manifest can't express: the MCP install, the `project.godot`
 edits, the freeze PAYLOAD, and the load-bearing WHYs. Run the numbered steps in order.
 
@@ -135,24 +153,40 @@ script the test is:
 [ -d "$HOME/.claude/skills/godot-gotchas" ] || [ -d "$HOME/.agents/skills/godot-gotchas" ]
 ```
 
+That test is why `tools/agent/godot-gotchas-scan.sh` is stamped: a knob string lands in the
+project's contract and in `backlog/config.yml`, where both hosts read it, so it names the wrapper
+and the wrapper does the resolving. Its own exit 2 (neither root holds a runnable scanner) is a
+broken install to fix, never a clean verdict.
+
 **Board (conditional):** backlog-core is NOT imported unconditionally — it actively instructs
 board ops ("session start: check the board"), so it is not safe-when-unused. Decide at apply
 time whether this project is board-driven: if `backlog/` already exists,
 or the user wants a board (default **yes** for a real game project, **no** for a
-prototype/sketch), then (a) add `@~/.claude/chunks/backlog-core.md` to the CLAUDE.md import
-block, (b) write the `<!-- knobs:backlog-core -->` block from the manifest knobs, (c) run
+prototype/sketch), then (a) add `@~/.claude/chunks/backlog-core.md` to the `CLAUDE.md` import
+block, (b) write the `<!-- knobs:backlog-core -->` block from the manifest knobs **into
+`docs/agents/project-workflow.md`**, beside the other knob blocks, (c) run
 the board init + seeding from `profiles/backlog.md` → `## Bespoke setup` (seeding still needs an
-explicit go-ahead per `backlog-core`), and (d) stamp the backlog profile's `issue-tracker.md`
-Template to `docs/agents/issue-tracker.md` (the canonical tracker pointer for skills that look
-up that path: code-review, triage, to-tickets). If board-less, skip all four — the project keeps its
-task-tracking guidance as inline-leaf instead. Re-running init-project later with the board
-enabled adds exactly this wiring (the engine is idempotent: import-line dedup + knob insert).
+explicit go-ahead per `backlog-core`), and (d) stamp the backlog profile's `issue-tracker.md` and
+`triage-labels.md` Templates to `docs/agents/` (`issue-tracker.md` is the canonical tracker pointer
+for skills that look up that path: code-review, triage, to-tickets). If board-less, skip all four —
+the project keeps its task-tracking guidance in the contract's project sections instead. Re-running
+init-project later with the board enabled adds exactly this wiring (the engine is idempotent:
+import-line dedup + knob insert).
 
 **Reference docs:** the engine always stamps `docs/godot-mcp-guide.md`, `docs/asset-pipeline.md`,
-and `docs/godot-gotchas.md`. **Blender is opt-in** — only if the project uses a Blender→Godot
-pipeline, also stamp `templates/blender-mcp-guide.md` → `docs/blender-mcp-guide.md`. Both MCP
+`docs/godot-gotchas.md` and `docs/agents/domain.md`. **Blender is opt-in** — only if the project
+uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide.md` →
+`docs/blender-mcp-guide.md`, and drop the contract fragment's Blender bullet otherwise. Both MCP
 guides are carried forward as-is and are **due a content-staleness audit at step 6** (they track
 live MCP tool reality / Blender API drift).
+
+**Stamp order, and the two files that must wait for the freeze.** `.mcp.json` and
+`.codex/config.toml` both launch the two npm servers out of `tools/mcp/node_modules/`, so both are
+written **after** step 5's lockfile-freeze — otherwise they point at a tree that does not exist yet.
+`.codex/config.toml` needs absolute paths (Codex resolves a relative MCP `cwd` against the launch
+directory, not the repo), so its `{{PROJECT_ROOT}}` is filled from `pwd` at the repo root, derived,
+never asked. `chmod +x tools/agent/godot-gotchas-scan.sh` after stamping it; a present-but-non-
+executable copy takes the wrapper's exit-2 path.
 
 ### 1. User-level helpers (once per machine, idempotent — independent of this project)
 
@@ -224,10 +258,11 @@ stays as the read/test complement. Skip this step only if the project writes thr
    tag pins BOTH addon and server, stopping cross-project drift. **Commit the vendored copy;
    do NOT gitignore it.** The addon self-updates in-editor and rewrites `project.godot` and
    `.mcp.json` on its own schedule (gotcha #116): an ignored copy drifts with no git trace
-   and the version recorded in CLAUDE.md rots silently (measured on one project: a silent
+   and the recorded version rots silently (measured on one project: a silent
    2.8.4 → 3.1.3 bump left 23 of 47 recorded godot-ai claims stale). Tracked, the drift
    shows in `git status` and can be pinned by a test that asserts `plugin.cfg` equals the
-   version CLAUDE.md records. Record the vendored version in CLAUDE.md's godot-ai section.
+   version the contract records. Record the vendored tag in the contract's godot-ai section
+   (`docs/agents/project-workflow.md`), which is where both hosts read it.
 2. **Disable telemetry** (ON by default): set `GODOT_AI_DISABLE_TELEMETRY=true` before first
    launching the editor; the setting persists once written.
 3. **Enable the plugin** at Project → Project Settings → Plugins after opening the editor.
@@ -245,7 +280,10 @@ stays as the read/test complement. Skip this step only if the project writes thr
    (b) the entry **hardcodes 8000/9500** while the plugin itself walks ports on collision —
    if the dock moves, re-run its client setup rather than hand-editing `~/.claude.json`.
    The entry is INERT until the plugin is enabled AND the editor is running — a fresh session
-   shows godot-ai disconnected in `/mcp`; expected, not a bug.
+   shows godot-ai disconnected in `/mcp`; expected, not a bug. The dock writes the equivalent
+   user-scope entry for each host it configures, hardcoding the same ports in each, so a port
+   walk strands every host at once — the contract's godot-ai section carries that rule, and
+   `.codex/config.toml` lists the two npm servers only, exactly as `.mcp.json` does.
 
 **If NOT using godot-ai:** drop the `mcp__godot-ai__*` allow from `settings.local.json` and
 remove the user-scope `godot-ai` entry from `~/.claude.json` if a previous project's dock
@@ -267,7 +305,8 @@ tree → record the rehydrate command) runs against THIS payload:
    (**NOT** `.godotignore` — the wrong name silently does nothing).
 4. Append `tools/mcp/node_modules/` to `.gitignore` (create if absent; exact-string dedup).
 
-**WHY freeze:** `.mcp.json` launches the two npm servers on *every* editor/Claude session.
+**WHY freeze:** `.mcp.json` and `.codex/config.toml` launch the two npm servers on *every* session
+on their host.
 `npx -y <pkg>@<ver>` re-resolves the **unpinned transitive tree** from the registry on each
 cold start and runs install lifecycle scripts — a recurring arbitrary-code-execution surface
 on the dev machine and on every clone that approves the MCP prompt. Pinning the top-level
@@ -275,11 +314,18 @@ version does NOT freeze the transitive tree; launching from a committed lock doe
 from step 3's `--install-addon`: that is a one-time pinned fetch whose committed result
 isn't a recurring runtime exposure.)
 
-### 6. Write `.mcp.json` from the frozen tree, then edit `project.godot`
+### 6. Write both MCP adapters from the frozen tree, then edit `project.godot`
 
 `.mcp.json` (the stamped `mcp.json`) launches the two servers via `node tools/mcp/node_modules/…`
 (NOT `npx -y`) — **which is why the freeze (step 5) must run first**: otherwise it points at a
-`node_modules/` that doesn't exist yet.
+`node_modules/` that doesn't exist yet. `.codex/config.toml` (the stamped `codex/config.toml`) is
+the same two servers for the other host, with `{{PROJECT_ROOT}}` filled from `pwd` at the repo root
+and `required = false`, so a wrong or unreplaced path fails silently rather than blocking a session.
+
+Then check the ignore: `git check-ignore -q .codex/config.toml`. It should already be covered
+machine-wide by `**/.codex/config.toml` in `~/.config/git/ignore`; if it is not, tell the user to
+add that line there, and do **not** add it to the project's `.gitignore` — the file is per-clone and
+machine-local, and one line in the machine-wide ignore covers every project.
 
 Then read `project.godot` and make three edits (sections are top-level INI-style; Godot
 reorders cleanly on next save):
@@ -327,18 +373,22 @@ Tell the user, in addition to the engine's external-includes-approval note:
 2. Confirm the `godot_mcp` plugin (and `godot_ai`, if installed) is enabled at
    Project → Project Settings → Plugins.
 3. In Claude Code, `/mcp` to (re)connect the servers to the now-running bridge; verify with
-   `mcp__godot-mcp__godot_project addon_status` → `connected: true`. **Single-client bridge:**
-   only one Claude session can hold the slot — if they hit "Another MCP server connected and
-   replaced this one", run `godot-mcp-clean` then `/mcp`.
+   `mcp__godot-mcp__godot_project addon_status` → `connected: true`. In Codex, `codex mcp list`
+   from the repo root must show both npm servers enabled beside the user-scope godot-ai.
+   **Single-client bridge:** the godot-mcp bridge accepts ONE client, on either host — if they hit
+   "Another MCP server connected and replaced this one", or a Codex read reports the bridge already
+   held, run `godot-mcp-clean` and reconnect from the one session that should hold it.
 4. **Fresh-clone rehydrate** (the lockfile-freeze clone gap): `node_modules/` and `.godot/`
    are both gitignored, so a clone must (a) `npm ci --prefix tools/mcp` once
    (integrity-verified against the committed lock) before the godot-mcp/minimal tools load,
    (b) import once — open the editor or `godot --headless --path . --import` — or
    `tests/run_tests.sh` false-FAILs `fixture_pass.gd` with `SCRIPT ERROR` (class cache empty),
    (`addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai MCP
-   client entry is user-scope in `~/.claude.json`, so a clone on a NEW machine gets it only
-   after the dock's first enable — step 4.4).
-   `.mcp.json` changes only take effect after a Claude Code restart.
-5. If `~/.claude/settings.json` (user-level) doesn't already allow the godot-mcp tools, the
+   client entry is user-scope, so a clone on a NEW machine gets it only after the dock's first
+   enable — step 4.4). `.codex/config.toml` is gitignored too, so a clone re-creates it from the
+   block in `docs/godot-mcp-guide.md` § Host adapters with its own absolute root. Neither host
+   picks up an MCP change without a new session.
+5. If the user-level Claude Code settings don't already allow the godot-mcp tools, the
    user may get permission prompts — user-level perms are out of scope here (this profile sets
-   project-level perms only).
+   project-level perms only). Codex has no such allowlist; its sandbox and approval policy are
+   the equivalent, and `AGENTS.md` states the profile this repo expects.
