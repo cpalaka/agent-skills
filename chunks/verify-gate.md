@@ -26,7 +26,10 @@ claim it passes. The gate is invariant; the exact commands are a knob.
 The exact commands, the directory they run in, the build's output check, the
 secret-scan grep pattern, and any env are project-specific — read them from the
 `<!-- knobs:verify-gate -->` block in the project contract file named by your host adapter, never hardcode
-them here.
+them here. That block may also carry **further named gate lines after `secret-scan`**
+(a host-neutrality scan, a gotcha scan, a parity check); they are part of the invariant,
+run in the order listed, and must pass like the five above. A gate line in the knob block
+is never an optional extra.
 
 **Clean output, not just exit 0.** A run that exits 0 with new warnings or noise is
 **not** a pass — investigate the warning rather than ignoring it. "Passing" means the
