@@ -347,9 +347,9 @@ same prose.
 - **Whole bullets that are only host mechanics move to the adapter instead**: the
   `.claude/settings.local.json` baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and
   any "skills auto-load here" claim. They belong in `## Claude Code mechanics (this host only)`, not
-  in a shared contract. Init's rule about dropping the `.claude/agents/` bullet where the Profile
-  stamps no subagents is **init's rule, not this one**: migrate stamps nothing, and a moved bullet
-  naming a subagent the project actually has always wins over the Template's generic one.
+  in a shared contract. The Template's generic `.claude/agents/` bullet stands where `.claude/agents`
+  exists — that is its `<!-- requires: -->` target, step 6's check — and a moved bullet naming a
+  subagent the project actually has always wins over it.
 
 **Flag, never rewrite.** Four classes, each reported in step 8's ledger with its file and its
 line, and left exactly as it was. **They apply to moved prose only** — the engine's own header and
@@ -384,9 +384,11 @@ it lacks — the project line is the more specific, but dropping the Template's 
 loses content nobody notices missing. **The same holds for the header**, which is otherwise replaced
 wholesale: carry across any fact the old one stated that the Template's does not, such as where the
 Chunk library is single-sourced on this machine. And **the same holds against an inserted Profile
-fragment**: where a fragment bullet covers ground a moved bullet already covers, keep the moved one,
-record the fragment's version in the ledger as the Profile's current wording, and **never emit
-both** — two bullets on one subject is how a stale claim outlives the line that corrected it.
+fragment**: where a fragment bullet covers ground a bullet step 4 moved **into the same adapter**
+already covers, keep the moved one, record the fragment's version in the ledger as the Profile's
+current wording, and **never emit both** — two bullets on one subject is how a stale claim outlives
+the line that corrected it. A bullet moved into the contract never covers an adapter bullet: the
+host mechanics that would cover it were themselves moved to the adapter.
 
 **The imports carry over as they are, including the fork.** Migrate does not choose a git-flow
 variant. Where the fork line disagrees with what the repo's history actually shows, **flag it** —
@@ -406,12 +408,13 @@ target its `<!-- requires: -->` comment names (the four forms, the strip rule an
 are the `requires:` paragraph in § What a Profile is) against the tree **as this run leaves it** —
 migrate stamps nothing, so "exists" means exists now, and a target init would write counts as absent.
 Every target resolves → insert the bullet whole. Any target fails → **withhold the bullet whole**:
-nothing else in the fragment is stripped, the bullet is not reworded, and no placeholder stands in
-for it — a line saying "not present here" is a claim about this project, which this mode may not
-author, and one a fresh session pays for on every launch. The ledger gets one row per withheld bullet
-instead: `adapter bullet withheld — <the requires text>`, then on its own line `found: <what the
-check found, per target>`, then the bullet verbatim as the Profile's current wording, then, where a
-contract-fragment section offered below would create the target, that section's heading. A fragment
+nothing else in the fragment is stripped, the bullet is not reworded, no placeholder stands in for
+it, and it leaves no blank line behind — a line saying "not present here" is a claim about this
+project, which this mode may not author, and one a fresh session pays for on every launch. The ledger
+gets one row per withheld bullet instead: `adapter bullet withheld — <the requires text>`, then on
+its own line `found: <what the check found, per target>`, then the bullet verbatim as the Profile's
+current wording, then, where a contract-fragment section offered below would create the target, that
+section's heading. A fragment
 section all of whose bullets are withheld is withheld whole, heading included (ledger row: `adapter
 section withheld — every bullet failed its target`). What makes the check observable: the emitted
 adapters contain no bullet whose `requires:` failed, and the ledger shows exactly one row for each
@@ -429,8 +432,9 @@ and this mode moves prose rather than replacing it. Offer it in the ledger inste
 contract fragment and any conditional fragment its recipe would insert where the condition already
 holds in this project (the godot recipe's Board section where `backlog/` exists) — in both kinds:
 
-- A fragment section whose heading **matches** one the migration moved — offered as the Profile's
-  current wording for that section, to adopt by hand.
+- A fragment section whose heading **matches** one the migration moved (step 4's prefix rule: the
+  moved heading begins with the fragment's) — offered as the Profile's current wording for that
+  section, to adopt by hand.
 - A fragment section with **no counterpart** in the moved prose — offered as an addition. This is
   the one that silently vanishes otherwise: a board section, say, exists in no pre-contract
   `CLAUDE.md`, so nothing it carries would ever reach a migrated project.
@@ -439,8 +443,8 @@ holds in this project (the godot recipe's Board section where `backlog/` exists)
 
 **8. Hand off with the ledger and the init handoff.** The ledger: every line moved and where it went,
 every line flagged and why, and every contract-fragment section offered for hand-adoption. A reader
-who disagrees with a move needs to see it, not diff for it. It lives in the project — the
-migration's board row where the project has a board, else the project's notes file — and the
+who disagrees with a move needs to see it, not diff for it. It lives in the project — the board row
+for this migration where one exists — never create one here — else the project's notes file — and the
 Profile's parity check reads the withheld and never-emit-both rows from there. Then init step 8's items (a), (b), (c)
 and (e) — the external-includes approval, what it does for headless runs, the Codex directory-trust
 prompt, and the new-session rule — plus the byte figures from step 7. A migrated project is a first
@@ -452,12 +456,13 @@ pointer, a test harness, the Codex MCP config — the project lacks is still abs
 runs the contract names files that are not there. Init is idempotent and skip-if-exists: over a
 migrated project it stamps exactly the missing ones and touches nothing this mode wrote. Two things
 that run does not do, and the handoff says both. The stamps it lands are named only by contract
-sections this mode offered and did not insert, unless the Profile's recipe inserts one itself on that
-run — the Profile's migration section says which stamp each offered section names — so until those
-are adopted the files are present and named by nothing. And it restores no withheld adapter
-bullet: init runs no target check and re-inserts nothing at a consumed marker, and migrate cannot be
-re-run over its own output (step 0), so a bullet whose target the user later creates returns through
-the Profile's parity check, not through either mode.
+sections this mode offered and did not insert — no migrated contract carries the
+`<!-- profile:contract-sections -->` marker, so no recipe step can insert a section into it, and every
+offered section is adopted by hand; the Profile's migration section says which stamp each offered
+section names — so until those are adopted the files are present and named by nothing. And it
+restores no withheld adapter bullet: init runs no target check and re-inserts nothing at a consumed
+marker, and migrate cannot be re-run over its own output (step 0), so a bullet whose target the user
+later creates returns through the Profile's parity check, not through either mode.
 
 ## Profiles
 

@@ -188,8 +188,8 @@ project uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide
 `docs/blender-mcp-guide.md` and `templates/asset-pipeline.md` → `docs/asset-pipeline.md` (that one
 carries a `{{WORKSPACE_ROOT}}` token to ask for at stamp time). They document the same pipeline and
 the pipeline doc points at the MCP guide, so one without the other is a dangling reference, and the
-workspace-root question is meaningless with no Blender source. Where the project has none, **the
-Blender bullet drops from the contract fragment.**
+workspace-root question is meaningless with no Blender source. Where the project has no Blender
+source, **the Blender bullet drops from the contract fragment.**
 
 **A leftover from an earlier run is reported, never deleted.** A project stamped before the pair
 went conditional can hold `docs/asset-pipeline.md` with no Blender source: the engine does not
@@ -446,10 +446,10 @@ Tell the user, in addition to the engine's external-includes-approval note:
 
 Run the engine's `## Migrate mode` first; it moves the prose. Four things are godot-specific:
 
-- **The knob value migrate flags is this Profile's `tools/agent/godot-gotchas-scan.sh`.** A
+- **The knob value migrate flags is this Profile's `tools/agent/godot-gotchas-scan.sh`.** Where a
   pre-contract project's `VERIFY_EXAMPLES` and DoD item 2 name
   `~/.claude/skills/godot-gotchas/scripts/precommit-scan.sh` — a path that resolves on one host and
-  silently misses on the other. Migrate reports it; the replacement is the stamped wrapper, with the
+  silently misses on the other — migrate reports it; the replacement is the stamped wrapper, with the
   read-the-VERDICT-line and give-it-a-scope wording the knobs above carry.
 - **The fragment target check (engine step 6) withholds most of this Profile's adapter bullets** over
   a pre-contract tree — their targets are contract sections and stamps a fresh init writes — and each
@@ -461,7 +461,8 @@ Run the engine's `## Migrate mode` first; it moves the prose. Four things are go
   touches nothing migrate wrote. Two of those stamps get a reader only when an offered contract
   section is adopted by hand: `docs/agents/domain.md` is named by § Working in this repo bullet 1,
   `tools/agent/godot-gotchas-scan.sh` by the § Running gotcha-scan paragraph. The Board pair is
-  `profiles/backlog.md`'s (its `adapters:` comment); the Board (conditional) step inserts `## Board`
-  on the init run where `backlog/` exists, so those two get their reader from init.
+  `profiles/backlog.md`'s (its `adapters:` comment), and its `## Board` is **offered** and adopted by
+  hand like the other two — the recipe's Board step cannot insert into a migrated contract, which
+  carries no `<!-- profile:contract-sections -->` marker.
 - **`docs/godot-mcp-guide.md` § Host adapters is the one guide gap neither mode fills** — migrate
   moves no guide and init skips the existing one; pair 1 of the parity check (the guide diff) owns it.
