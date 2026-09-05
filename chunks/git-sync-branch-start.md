@@ -6,8 +6,12 @@
 At the start of any task, get onto a **fresh `main`** before you branch — never branch
 off a stale base. The default branch is `main`.
 
-**Sync `main` first — before reading the task or anything else.** The first technical
-action of a task is, once the paragraph below has cleared the working tree:
+**Sync `main` first — before the first write, not before the first read.** List the board
+(`backlog-core`), read the task, run `git status -sb` first: that is how you learn whose work is
+in the tree, and those reads stay available while the paragraph below has you stopped. What the
+sync must precede is the new task's *writes* — its branch, its board edit, its commits (clearing
+your own leftovers from the branch you're leaving comes first, next paragraph). So the first
+technical action of a task, once the paragraph below has cleared the working tree, is:
 
 ```sh
 git checkout main && git pull origin main
@@ -31,7 +35,7 @@ git add <the files you changed> && git commit -m "…"   # on this branch (or: g
 If any of it is not yours — another session shares this checkout — leave their files exactly as
 they are (`parallel-work` § "One clone per interactive session" names the operations that would
 move them) and do not switch branches: the checkout is theirs until they hand it off, even once
-it is clean (`git-commit-format`, the re-verify-the-branch paragraph). Commit your own files by
+it is clean (`parallel-work`, same section — a branch switch is on its list). Commit your own files by
 explicit path only after `git branch --show-current` confirms the branch is yours; otherwise ask
 the peer to commit and wait, or take your own worktree on an explicit parallel-work signal.
 

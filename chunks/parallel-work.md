@@ -20,8 +20,9 @@ not touch, HEAD is on a branch you did not check out this session, or `git check
 refuses or would carry the changes along (`git-sync-branch-start`). When you see it:
 
 - **A peer's uncommitted work is not yours to move.** `git stash`, `reset --hard`, `clean`,
-  `checkout -- <file>`, `restore` and `rebase` on a tree that is not yours each remove, overwrite
-  or hide in-flight work — `git checkout -- <file>` discards unstaged edits by restoring the
+  `checkout -- <file>`, `restore`, `rebase` and switching branches (`checkout <branch>`, which
+  carries or blocks on their changes) on a tree that is not yours each remove, overwrite or hide
+  in-flight work — `git checkout -- <file>` discards unstaged edits by restoring the
   indexed version, with no output; `stash` moves the peer's edits where their session will not
   find them. Park what you were about to do and ask the peer to commit. Your own worktree or
   clone is the way forward only on an explicit parallel-work signal (next bullet); with no
@@ -32,8 +33,8 @@ refuses or would carry the changes along (`git-sync-branch-start`). When you see
   because a checkout is busy; a worktree you did not create is someone else's session, not a
   spare. A throwaway clone or worktree that only runs a gate (`verify-gate`) is not parallel
   work and needs no signal.
-- **Board with two writers:** each session commits only its own task file, by path
-  (`backlog-core`).
+- **Board with two writers:** each session commits only the task-file edits it made — its own
+  row and any dependent rows it pinned — by explicit path (`backlog-core`).
 
 **Mode A — Waves (dependency-free fan-out via background subagents).** For multiple tasks
 with no shared state and no ordering between them:
