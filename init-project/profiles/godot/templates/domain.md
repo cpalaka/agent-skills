@@ -8,7 +8,7 @@ copy of the model — the files below are authoritative.
   `godot-architecture-review` skill.
 - **`docs/adr/`** — the **decisions**. One numbered file per load-bearing choice, kept lazily: a
   decision earns an ADR when it constrains future work.
-- *<Fill at init, where the project keeps one: the **design source** — the single doc every design
+- *<Fill at init: where the project keeps one, the **design source** — the single doc every design
   or build decision is read out of, and the rule for editing it (edited in place, never appended to
   with a superseding design). Name the ADR that pins it. Where the project has none, say so here in
   one line rather than naming a path that does not exist — an invented design source is worse than

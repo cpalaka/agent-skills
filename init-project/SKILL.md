@@ -237,10 +237,13 @@ self-check (for the godot Profile, `tests/run_tests.sh --selftest` ending
 
 Then two measurements:
 
-- **The byte gate (it FAILS the stamp).** `wc -c AGENTS.md ~/.codex/AGENTS.md`; the two figures
-  summed must be **≤ 32,768**. Over that, report both figures and **stop** — do not trim silently, and
-  do not report the stamp as done. Codex's `project_doc_max_bytes` cap governs exactly this
-  auto-loaded pair, and a chain over it is truncated with no error.
+- **The byte gate (it FAILS the stamp).** `wc -c AGENTS.md ~/.codex/AGENTS.md`; **each** figure
+  must be **≤ 32,768** — the cap is per file, not across the loaded pair (measured 2026-09-04 on
+  codex-cli 0.153.3: a byte-offset marker at 32318 returned and one at 32772 did not, while a
+  21497-byte global file loaded whole beside a project file at the ceiling; the earlier "summed"
+  reading here was never measured). Over the cap, report both figures and **stop** — do not trim
+  silently, and do not report the stamp as done. Codex's `project_doc_max_bytes` cap governs each
+  auto-loaded file, and a file over it is truncated with no error.
 - **The chunk total (recorded, never gated).** `wc -c` over the chunk files `AGENTS.md` names, summed.
   Those are tool-read on demand, outside the cap; the figure belongs in the handoff so a later reader
   knows what the adapter costs when it is followed.

@@ -30,6 +30,6 @@ frontmatter unchanged.
 
 Beside these five sit the provenance label `backlog-core` names, and whatever topic labels emerge.
 
-*<Fill at init, where the project wants them: a `human` label marking rows that need a person, and
+*<Fill at init: where the project wants them, a `human` label marking rows that need a person, and
 a `checkpoint` label for the run-stopping rows a delegated run must not work past. Both are
 optional — add them only if this project runs delegated sessions against the board.>*

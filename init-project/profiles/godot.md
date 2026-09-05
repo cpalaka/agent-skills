@@ -122,7 +122,7 @@ knobs:
     build: "headless export via the project's export smoke-tester (`godot-export-verifier`; your host adapter says how to dispatch it) — pre-push / at milestone close, not per-merge"
     build_check: "the smoke-tester's own PASS/FAIL line per platform preset, read from its output — an export that exits 0 having written nothing still reports FAIL there"
     smoke: "open the project / F5 the affected scene (a green test run is not a played scene)"
-    secret_scan: "git grep -nE '(api[_-]?key|secret|password|token)\\s*=' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match"
+    secret_scan: "git grep -nE '(api[_-]?key|secret|password|token)[[:space:]]*=' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match ([[:space:]], not \\s: git grep -E on macOS matches \\s only as a literal, measured 2026-09-04)"
     env: "$GODOT → the editor binary (macOS app path → `godot` on PATH); run from the repo root. The runner writes its capture files under $TMPDIR, so it needs no sandbox bypass on either host (measured 2026-09-03)"
   dev-practice:
     # test-roster: where the authoritative list of required-coverage modules lives.
