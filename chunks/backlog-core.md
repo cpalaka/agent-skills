@@ -86,19 +86,21 @@ one file fine to hand-edit; `backlog config set` does not expose `definition_of_
   as a setter ("set acceptance criteria"), it **APPENDS** and silently swallows near-duplicates
   — measured on 1.45.2, feeding back 8 criteria with one reworded yielded **9**. Task files are
   git-tracked, so check `git status --porcelain` on the file first and recover any misfire with
-  `git checkout -- "backlog/tasks/task-NNN - ….md"`. (Same replace-vs-append trap family as
-  `--desc`/`--notes` below.)
+  `git checkout -- "backlog/tasks/task-NNN - ….md"` — only when that file was clean before the
+  call; the same command discards a peer's uncommitted edit to the same row along with the
+  misfire. (Same replace-vs-append trap family as `--desc`/`--notes` below.)
 
 **Mark Done ON THE BRANCH, before the merge.** After the user signs off on the diff, on the
 feature branch run `backlog task edit <id> --check-ac N … --check-dod 1 … -s Done` and
 commit the task-file change there (`auto_commit` stays false so the edit batches with code,
-one task-file change per code commit). With two sessions on one checkout, each session commits
-**only its own task file, by explicit path** — `git add -A` or `git add backlog/` sweeps the
-peer's row (and its In Progress edit) into your commit, and the CLI's own writes to a
-*different* task file are not yours to stage (shared-checkout rules: `parallel-work`).
-Whether the `--notes` summary carries a commit SHA is
+one task-file change per code commit). Whether the `--notes` summary carries a commit SHA is
 **a merge-model decision — follow your imported git-flow variant's notes-SHA policy**
-(`git-flow-squash` vs `git-flow-noff`); this chunk states no SHA rule of its own. Merging
+(`git-flow-squash` vs `git-flow-noff`); this chunk states no SHA rule of its own. With two
+sessions on one checkout, each session commits only the task-file edits **it made** — its own
+row and any dependent rows it pinned (§ "Propagate downstream findings onto the board") — by
+explicit path; `git add -A` or `git add backlog/` sweeps the peer's row (and its In Progress
+edit) into your commit, and a row the CLI rewrote for the peer beside yours is not yours to
+stage (shared-checkout rules: `parallel-work`). Merging
 never auto-closes a task — Done is set by `task edit` only, after sign-off. The task↔commit
 link is the commit subject's **`<area>/task-NNN`** scope (the slice/subsystem `<area>` plus the
 owning task id) and a **`Refs task-NNN`** footer — together `git log --grep "task-NNN"` resolves

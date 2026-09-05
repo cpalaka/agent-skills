@@ -7,7 +7,7 @@ At the start of any task, get onto a **fresh `main`** before you branch — neve
 off a stale base. The default branch is `main`.
 
 **Sync `main` first — before reading the task or anything else.** The first technical
-action of a task is:
+action of a task is, once the paragraph below has cleared the working tree:
 
 ```sh
 git checkout main && git pull origin main
@@ -25,12 +25,15 @@ explicit path (`git-commit-format`):
 
 ```sh
 git status -sb          # is the working tree dirty — and is all of it yours?
-git add <the files you changed> && git commit -m "…"   # …on the current branch (or: git stash)
+git add <the files you changed> && git commit -m "…"   # on this branch (or: git stash push -- <those files>)
 ```
 
-If any of it is not yours — another session shares this checkout — stop: do not stash, commit,
-reset, clean or check it out. Ask the peer to commit, or take your own worktree.
-`parallel-work` § "One clone per interactive session" owns the shared-checkout rules.
+If any of it is not yours — another session shares this checkout — leave their files exactly as
+they are (`parallel-work` § "One clone per interactive session" names the operations that would
+move them) and do not switch branches: the checkout is theirs until they hand it off, even once
+it is clean (`git-commit-format`, the re-verify-the-branch paragraph). Commit your own files by
+explicit path only after `git branch --show-current` confirms the branch is yours; otherwise ask
+the peer to commit and wait, or take your own worktree on an explicit parallel-work signal.
 
 Uncommitted, non-conflicting changes **follow a branch switch** — so checking out `main`
 with a dirty tree silently carries that work onto `main`. The damage compounds: the

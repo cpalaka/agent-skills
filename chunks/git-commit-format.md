@@ -25,7 +25,10 @@ chunk's.
 **Stage by explicit file path — never `git add <dir>/`.** Directory-level staging
 silently sweeps in untracked strays near your write paths (a concurrent session's
 files, editor droppings), and multi-session repos make strays the expected case.
-Backstop: read the commit's `--stat` output before any push.
+The commit takes the whole index, so a peer's already-staged file rides a commit
+that names only your paths: read `git diff --cached --stat` before committing and
+stop — do not unstage it — if it lists a path you did not change. Backstop: read
+the commit's `--stat` output before any push.
 
 **Re-verify the current branch immediately before every commit.** In a shared
 checkout a parallel session can create and switch branches under you, so the

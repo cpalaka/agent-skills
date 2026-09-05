@@ -13,28 +13,25 @@ path prefix** (where `git worktree add` puts each tree) and the **install comman
 to run in a fresh worktree to make it buildable). This chunk names them; it never bakes a
 literal path or command.
 
-**One clone per interactive session — and what a shared checkout looks like.** Two sessions on
-one checkout is not a mode; it is the failure both modes below exist to avoid. The tell:
-`git status` shows changes to files you did not touch, a branch you did not create is checked
-out, or `git pull --rebase` refuses because the tree is dirty. When you see it:
+**One clone per interactive session.** Two sessions on one checkout is not a mode; it is the
+failure both modes below exist to avoid. The tell: `git status` shows changes to files you did
+not touch, HEAD is on a branch you did not check out this session, or `git checkout main` either
+refuses or would carry the changes along (`git-sync-branch-start`). When you see it:
 
 - **A peer's uncommitted work is not yours to move.** `git stash`, `reset --hard`, `clean`,
-  `checkout -- <file>`, `restore` and `rebase` against a dirty tree that is not yours each destroy
-  in-flight work that exists nowhere else — `git checkout -- <file>` restores from HEAD and drops
-  the diff with no output. Park your own push or merge and ask the peer to commit; if you must
-  proceed now, take your own worktree (Mode B) or clone. Never surgery on theirs.
+  `checkout -- <file>`, `restore` and `rebase` on a tree that is not yours each remove, overwrite
+  or hide in-flight work — `git checkout -- <file>` discards unstaged edits by restoring the
+  indexed version, with no output; `stash` moves the peer's edits where their session will not
+  find them. Park what you were about to do and ask the peer to commit. Your own worktree or
+  clone is the way forward only on an explicit parallel-work signal (next bullet); with no
+  signal, wait.
 - **Stage by explicit path, and re-verify the branch immediately before every commit** —
-  `git-commit-format` owns both rules. They bite hardest here: a peer's strays are the expected
-  case, and a peer can switch the branch under you between your check and your commit.
+  `git-commit-format` owns both rules.
 - **Worktrees only on an explicit parallel-work signal.** Mode A or B is chosen, never assumed
   because a checkout is busy; a worktree you did not create is someone else's session, not a
-  spare. (Once you have your own, "Filesystem isolation is NOT tool-state isolation" below still
-  applies.)
+  spare.
 - **Board with two writers:** each session commits only its own task file, by path
   (`backlog-core`).
-
-These rules are host-neutral; the Codex `-a on-request` caveat under Mode A covers `git stash`
-as much as `git push`.
 
 **Mode A — Waves (dependency-free fan-out via background subagents).** For multiple tasks
 with no shared state and no ordering between them:
