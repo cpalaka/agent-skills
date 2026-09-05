@@ -24,6 +24,9 @@ that there, then squash-merge so the code change and the Done-stamp become a sin
 
 - `git checkout main && git merge --squash <branch>` → **review the staged changes** →
   `git commit` (write the message per `git-commit-format`), or `git reset --merge` to abort.
+  If another session shares this checkout, do not switch to `main` at all (`parallel-work` §
+  "One clone per interactive session"): build the squash commit with the `commit-tree` form
+  below and push the SHA.
 - Push `main`. The diff approval **is** the authorisation for that one push — see (d).
 - **Merging from a worktree? Release `main` right after the push.** If the main checkout is held
   by a parallel session on another branch, you `git checkout main` *inside your own worktree* to

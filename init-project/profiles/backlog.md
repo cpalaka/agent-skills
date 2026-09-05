@@ -47,6 +47,14 @@ knobs:
   dev-practice:
     test_roster: "<pointer to the authoritative required-coverage list, e.g. a PRD section>"
     spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against>"
+  parallel-work:
+    # parallel-work rides dev-base and is value-variant: it names two knobs the
+    # engine writes into <!-- knobs:parallel-work --> in the project's contract.
+    worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree; the last path
+                                                        # segment IS the task-branch name, so the worktree layout
+                                                        # and the branch convention stay in step. Match the
+                                                        # project's own convention here, not this shape.
+    install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
 ---
 
 ## Bespoke setup
@@ -103,10 +111,10 @@ the repo root.)
      free-form (`-l a,b`) and emerge organically. After seeding, retire the old queue
      homes (point roadmap docs/memories at the board; never maintain two queues).
 
-5. **Adoption commit.** Commit `backlog/` + the three emitted files (`CLAUDE.md`, `AGENTS.md`
-   and `docs/agents/project-workflow.md`) plus the two stamped `docs/agents/` pointers as one
-   adoption commit. `auto_commit: false` means task-file changes always ride
-   along with code commits thereafter (one task-file change per code commit).
+5. **Adoption commit.** Commit the `backlog/` files by explicit path + the three emitted files
+   (`CLAUDE.md`, `AGENTS.md` and `docs/agents/project-workflow.md`) plus the two stamped
+   `docs/agents/` pointers as one adoption commit. `auto_commit: false` means task-file changes
+   always ride along with code commits thereafter (one task-file change per code commit).
 
 **Then resume the engine's verify-after-write + handoff** (the imports resolve, the knob
 blocks are populated in the contract, the board exists) — including the byte gate over the

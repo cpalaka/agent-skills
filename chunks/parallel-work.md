@@ -4,9 +4,10 @@
 
 ## Parallel work — waves & solo worktrees
 
-Two modes of doing more than one task at once. Pick by the decision rule: **one task →
-the standing single-task process; you driving 2+ tasks hands-on → solo worktrees;
-dependency-free fan-out you are NOT hand-driving → background waves.**
+Two modes of doing more than one task at once, both taken only on an explicit parallel-work
+signal — a busy checkout is not one. Pick by the decision rule: **one task → the standing
+single-task process; you driving 2+ tasks hands-on → solo worktrees; dependency-free fan-out
+you are NOT hand-driving → background waves.**
 
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
@@ -29,7 +30,8 @@ refuses or would carry the changes along (`git-sync-branch-start`). When you see
   `git-commit-format` owns both rules.
 - **Worktrees only on an explicit parallel-work signal.** Mode A or B is chosen, never assumed
   because a checkout is busy; a worktree you did not create is someone else's session, not a
-  spare.
+  spare. A throwaway clone or worktree that only runs a gate (`verify-gate`) is not parallel
+  work and needs no signal.
 - **Board with two writers:** each session commits only its own task file, by path
   (`backlog-core`).
 
