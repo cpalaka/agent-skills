@@ -11,10 +11,15 @@ This is a thin **Host adapter** for the canonical skill at
 canonical and apply unchanged; `../../tournament/reference/example-spec.md` is the worked spec.
 
 Its §5 and §7 assemble and launch a **Claude Code Workflow script**, and Codex has no Workflow
-runtime, so the substitutions below replace those two sections; of §6 only the lint is dropped
-(`reference/stages.md` and `reference/lint.mjs` concern that script — ignore them on this host),
-and **§6's smoke run stands** at the parameters §6 names. Load `$multi-agent-policy` before the
-first spawn; its pins and its fan-out → verify discipline govern.
+runtime, so the substitutions below replace those two sections' *mechanics*; of §6 only the lint
+is dropped (`reference/stages.md` and `reference/lint.mjs` concern that script — ignore them on
+this host), and **§6's smoke run stands** at the parameters §6 names. §5's host-neutral rules
+still bind on Codex: item 7 (vote-tallying stages reconcile SENT vs RETURNED — here it is the
+instrument below), item 9 (skeptic/verify schemas carry ≥4 severity tiers; an "evidence-fit" axis
+measures quote fidelity, not claim support; funders and 0-cost options get their own class), and
+§1's bracket-or-scoreboard choice (this adapter's `board` is the scoreboard variant; a bracket run
+reconciles each match's votes the same way per file, but no bracket runner ships here yet). Load
+`$multi-agent-policy` before the first spawn; its pins and its fan-out → verify discipline govern.
 
 ## Substitutions
 
@@ -29,19 +34,33 @@ first spawn; its pins and its fan-out → verify discipline govern.
    expected input count, written **before** the fan-out so a short stage reads as a number
    mismatch.
 
-3. **Dispatch surface: `collaboration.spawn_agent`**, one child per item, then `wait_agent`.
-   Every call sets `fork_turns: "none"`, an explicit `model`, an explicit `reasoning_effort`, and
-   a `task_name` of `<stage>_<id>` (lowercase, digits, underscores). The `message` is the whole
+3. **Dispatch surface: `collaboration.spawn_agent`**, then `wait_agent`. The dispatch unit is
+   the child; the reconciliation unit is the file, whatever the grouping. Generate, verify and
+   synthesize dispatch one child per item. The judge stage dispatches **one child per judge
+   persona** that writes one vote file per candidate (run 1: 3 judge children, 9 vote files);
+   one child per vote is allowed and reconciles identically. `<rundir>/candidates.txt` is the
+   generate stage's **returned** ids, one per line, written after that stage's reconcile is GREEN
+   (a dropped candidate must never reach the board unnoticed). Every call sets
+   `fork_turns: "none"`, an explicit `model`, an explicit `reasoning_effort`, and a `task_name`
+   of `<stage>_<id>` (lowercase, digits, underscores). The `message` is the whole
    brief — domain block, the item's lens or rubric, the candidate text for judges, and the exact
    output path `<rundir>/<stage>/<id>.json` with the JSON shape it must write — because a
    `fork_turns: "none"` child inherits nothing of the parent's context. Before each spawn, write
    that message verbatim to `<rundir>/dispatch/<task_name>.md`, so a re-dispatch is diffable
    against the original (rollouts store spawn payloads encrypted). The child replies with
    the path only. **The file is the verdict; the child's reply is not.** A judge item is one
-   vote, `<judge>__<candidate>`, so a judge child writes one file per candidate it scores and
-   the judge stage reconciles at the vote level. Measured 2026-09-04 (codex-cli 0.153.3): the
-   `model` and `reasoning_effort` overrides apply only with `fork_turns: "none"` (or an integer);
-   a full-history fork inherits the parent's model and effort **silently**.
+   vote, `<judge>__<candidate>`; the file must carry `judge` and `candidate` equal to its name and
+   an integer `score` on the spec's scale, or the instrument errors it (§4). Why
+   `fork_turns: "none"` (measured 2026-09-04, codex-cli 0.153.3, two child rollouts under
+   `~/.codex/sessions/2026/09/04/`): a `"none"` child (run-1 `01a06f2f-8def-7760-…`) carries
+   exactly one `turn_context`, its own, so its pin is single-valued and unambiguous; a
+   full-history fork (critic control `01a06f47-ae2f-7672-…`) carries the parent's copied turn
+   (`turn_id == root_turn_id`, effort high) **and** its own turn (effort low) — the override
+   applied on the full fork too, so the grounds are context isolation and a clean rollout, not
+   inheritance. `wait_agent` returns on mailbox activity, not on every assignment being done:
+   loop — wait, then check that every assigned file exists — until the stage is complete or an
+   attempt bound is hit (state it in `plan.json`; run 1 used one wave per stage plus one
+   recovery wave), then declare the stage short and reconcile what is there.
 
 4. **Reconcile every fan-out stage before reading it**, with the instrument this adapter ships
    (paths are the installed adapter's, e.g. `~/.agents/skills/tournament/scripts/tourney.mjs`):
@@ -49,16 +68,25 @@ first spawn; its pins and its fan-out → verify discipline govern.
    ```sh
    node scripts/tourney.mjs selftest                                   # once per session, first
    node scripts/tourney.mjs reconcile <rundir>/<stage> --sent <rundir>/<stage>.sent --expect <N>
-   node scripts/tourney.mjs board <rundir>/judge --sent <rundir>/judge.sent --candidates <rundir>/candidates.txt
+   node scripts/tourney.mjs board <rundir>/judge --sent <rundir>/judge.sent --candidates <rundir>/candidates.txt --scale 0..10
    ```
 
-   `reconcile` prints `sent / returned / dropped / errored / unassigned` and `VERDICT: RED` when
-   any sent id has no parseable JSON object file. On RED: re-dispatch the dropped and errored ids
+   `reconcile` prints `sent / returned / dropped / errored / unassigned` (disjoint, summing to
+   sent) and `VERDICT: RED` when any sent id has no parseable JSON object file; a duplicate id in
+   a sent list is RED before anything is counted. On RED: re-dispatch the dropped and errored ids
    once (fresh `task_name`, same message), reconcile again, and if still RED carry
    `needsAdjudication` into the board and the result file — never tally over a short set.
-   `board` refuses to name a winner while any vote is missing or the top is tied. The `selftest`
-   builds known-bad fixtures and must print `VERDICT: GREEN (selftest)` before any GREEN from the
-   other two is believed.
+   `board` validates every vote before tallying — `judge` and `candidate` fields equal to the
+   filename's parts, `score` a JSON integer within `--scale` (the spec's scale; default `0..10`)
+   — and errors anything else with the reason; it refuses a winner while any vote is missing or
+   errored, the top is tied, a candidate has no assigned vote, the sent list is empty, or an
+   **unassigned** file sits in the judge directory. Unassigned files are a child writing outside
+   the accounting: before the board, disposition each one in the result file (a duplicate of an
+   assigned vote — keep the assigned copy and note the twin; a vote nobody asked for — move it to
+   `<rundir>/unassigned/` and say why) and only then re-run `board`. The `selftest` builds the
+   known-bad fixtures (invalid scores, swapped identity, duplicate ids, empty electorate,
+   unassigned file, full-fork rollout) and must print `VERDICT: GREEN (selftest)` before any GREEN
+   from the other two is believed.
 
 5. **Pins are verified from rollouts, not from the parent's account.** After the run:
 
@@ -66,13 +94,20 @@ first spawn; its pins and its fan-out → verify discipline govern.
    node scripts/tourney.mjs rollouts <parent thread id>
    ```
 
-   lists every child of that session with its model, effort, role and sandbox, read from the
-   child's own rollout under `~/.codex/sessions/`. The parent thread id is the `thread.started`
-   line of `codex exec --json`, or the interactive session id. The result file records each
-   stage's pin **as dispatched and as observed**; a stage whose observed effort differs from the
-   plan is reported as "inherits, silently" and the run is not green. The workhorse model id is
-   read from `~/.codex/config.toml` (`model =`) at authoring time and written into `plan.json`;
-   never into this file.
+   lists every child of that session with its model, effort, role and sandbox, read from typed
+   records in the child's own rollout under `~/.codex/sessions/`: the last `turn_context` whose
+   `turn_id != root_turn_id` (the child's own turn — a copied parent turn has them equal), else
+   the `thread_settings_applied` event, else `?` with a WARN. The parent thread id is the
+   `thread.started` line of `codex exec --json`, or the interactive session id. The result file
+   records each stage's pin **as dispatched and as observed**; a child whose own-turn effort or
+   model differs from `plan.json`, or reads `?`, makes the run not green — say which children and
+   why. The model id is read from `~/.codex/config.toml` (`model =`) at authoring time and
+   written into `plan.json`, never into this file. **Tier is unmapped on Codex:**
+   `multi-agent-policy`'s workhorse/scarce vocabulary is decided by rate-limit membership, which
+   nothing here measures; every stage of a Codex run is on the one configured model, and whether
+   that is the workhorse or the scarce tier is not decided by this adapter. The result file and
+   the `rollouts` output hold session ids and local paths — keep the archive out of public
+   repositories.
 
 6. **Size the sandbox before launch; never escalate from inside the run.** Children inherit the
    parent's sandbox. Verdict files land under the run directory, so the parent session must be
@@ -81,10 +116,22 @@ first spawn; its pins and its fan-out → verify discipline govern.
    the run is **report-only**: write the spec and `plan.json` to the reply, say why nothing was
    dispatched, and stop. Do not request escalation.
 
-7. **Agent count.** Project it before launch and write it into `plan.json`:
-   generators + judges + skeptics + 1 synthesis, plus one re-dispatch per stage for recovery.
-   Claude Code's dynamic workflow-size setting does not govern a Codex run; `multi-agent-policy`'s
-   20-agent announce ceiling does. Spawns dispatch a few seconds apart and run concurrently.
+7. **Agent count.** Project it before launch and write it into `plan.json`, in **children**
+   (the dispatch unit), derived from the actual dispatch groups: generate = number of lens
+   items; judge = number of judge children under the grouping chosen in §3 (one per persona, or
+   one per vote = judges × candidates); verify = number of skeptics; synthesize = 1; plus the
+   recovery allowance = one child per fan-out stage (one recovery wave re-dispatching that
+   stage's dropped/errored ids to one child each counts per id — state which). Run 1: 3 + 3 + 2 +
+   1 = 9 base, +4 allowance = 13 projected, 10 spawned. Two ceilings, and the smaller binds:
+   `multi-agent-policy`'s 20-child announce ceiling (Claude Code's dynamic workflow-size setting
+   does not govern a Codex run), and Codex's own concurrency ceiling — config keys
+   `agents.max_concurrent_threads_per_session` / `features.multi_agent_v2.max_concurrent_threads_per_session`,
+   thread status `agent_limit_reached` — whose effective default is not printable by any CLI
+   command (`~/.codex/config.toml` sets neither). A stage that hits `agent_limit_reached` waves:
+   wait for a running child, then dispatch the next; the wave count is the attempt bound of §3.
+   Under non-interactive `codex exec` there is nobody to announce to: a projection over the
+   announce ceiling stops **report-only** (write `plan.json` and the projection to the reply,
+   dispatch nothing). Spawns dispatch a few seconds apart and run concurrently.
 
 8. **Smoke run and elicitation.** Canonical §6's smoke run, at the parameters it names, still
    gates a new or edited spec. Canonical §3's interview is the same, but a
