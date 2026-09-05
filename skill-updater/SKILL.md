@@ -46,8 +46,10 @@ each one in the report, with what you did about it:
    ```
 
    (The plain `codex plugin list` also prints every *available* marketplace plugin — hundreds
-   of lines; the JSON filter is the readable form. Both are read-only: tree hashes of
-   `~/.codex/plugins` and `~/.agents` were identical before and after.) Report it as
+   of lines; the JSON filter is the readable form. Measured 2026-09-04: content hashes of
+   `~/.codex/plugins` and `~/.agents` were identical before and after both forms; writes to
+   `~/.codex/config.toml`, `~/.codex/.tmp` and `~/.cache/codex-runtimes` were not observed
+   either way.) Report it as
    "enumerated, not updated — no update command in this CLI"; with no `codex` on PATH, report
    "skipped: no codex CLI".
 
@@ -117,13 +119,22 @@ exact `apply-plugin` / `apply-skills` commands, and stop. (Why the rule is expli
 
 ### 2. Auto-apply trusted updates
 
-Collect the trusted entries with `updateAvailable: true` and `localEdited` not `true`:
+Collect the trusted entries with `updateAvailable: true` whose local-edit check **passed**:
+`localEdited` is exactly `false` and the `note` does not say the check is not applicable. A
+`null` (no baseline in the lock) or a root-repo skill (`false` with the "not applicable" note)
+is **unverified** — hold it back and list it under "unverified — apply by hand" with its
+command; `true` is held back as above.
 
 - **Plugins** (`trusted: true`): for each, run `python3 ENGINE apply-plugin <id>`.
 - **Skills** (`trusted: true`): collect their `name`s and run ONE batched call:
   `python3 ENGINE apply-skills <name1> <name2> ...`.
 
-Record each result (success/failure from exit code and output).
+Then re-run `python3 ENGINE detect` (no `--refresh`) and read the result back: a skill you
+just applied that is **still** listed with `updateAvailable: true` — or now `localEdited:
+true` — **FAILED**, whatever the exit code and the installer's `✓` said (measured 2026-09-04:
+`npx skills update` reported `✓ Updated agent-browser`, advanced the lock hash, and left the
+folder without the upstream change). Report those by name with the `diff-skill` command.
+Record each result from that re-detect, not from the apply step's output.
 
 ### 3. Confirm community updates
 
