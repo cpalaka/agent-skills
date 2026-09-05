@@ -292,3 +292,37 @@ def test_main_detect_prints_json(monkeypatch, capsys, tmp_path):
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out == {"plugins": [], "skills": [], "newSkills": [], "errors": []}
+
+
+# local_edit_status: one test per return arm. Step 2 of SKILL.md auto-applies only the
+# "clean" arm (False with no note); None and False-with-note are held back as unverified.
+def test_local_edit_status_no_baseline_is_none(monkeypatch):
+    monkeypatch.setattr(skillsync, "local_tree_hash", lambda d: "a" * 40)
+    entry = {"skillPath": "skills/x/SKILL.md"}  # legacy row: no skillFolderHash
+    assert skillsync.local_edit_status("x", entry) == ("a" * 40, None, None)
+
+
+def test_local_edit_status_root_repo_is_false_with_note(monkeypatch):
+    monkeypatch.setattr(skillsync, "local_tree_hash", lambda d: "a" * 40)
+    entry = {"skillPath": "SKILL.md", "skillFolderHash": "b" * 40}
+    lhash, edited, note = skillsync.local_edit_status("x", entry)
+    assert (lhash, edited) == ("a" * 40, False)
+    assert "not applicable" in note
+
+
+def test_local_edit_status_unhashable_local_is_none(monkeypatch):
+    monkeypatch.setattr(skillsync, "local_tree_hash", lambda d: None)
+    entry = {"skillPath": "skills/x/SKILL.md", "skillFolderHash": "b" * 40}
+    assert skillsync.local_edit_status("x", entry) == (None, None, None)
+
+
+def test_local_edit_status_clean_is_false_without_note(monkeypatch):
+    monkeypatch.setattr(skillsync, "local_tree_hash", lambda d: "b" * 40)
+    entry = {"skillPath": "skills/x/SKILL.md", "skillFolderHash": "b" * 40}
+    assert skillsync.local_edit_status("x", entry) == ("b" * 40, False, None)
+
+
+def test_local_edit_status_edited_is_true(monkeypatch):
+    monkeypatch.setattr(skillsync, "local_tree_hash", lambda d: "a" * 40)
+    entry = {"skillPath": "skills/x/SKILL.md", "skillFolderHash": "b" * 40}
+    assert skillsync.local_edit_status("x", entry) == ("a" * 40, True, None)

@@ -36,10 +36,11 @@ _Avoid_: third-party skill, external skill (a Skill installed through a channel 
 it lives under `~/.agents` or `~/.claude/plugins`, not here).
 
 **Ecosystem**:
-One of the two parallel channels a Skill is installed and updated through — **Claude Code
+One of the channels a Skill is installed through — the two update channels **Claude Code
 plugins** (the `claude plugin` CLI) and **agent-skills** (`npx skills`, living under `~/.agents`
-and discoverable by Codex). `skill-updater` reconciles both; a Personal skill belongs to neither
-(it is hand-authored, not installed).
+and discoverable by Codex), plus **Codex plugins** (`codex plugin`, under `~/.codex/plugins`),
+which has no update command. `skill-updater` reconciles the first two and enumerates the third;
+a Personal skill belongs to none of them (it is hand-authored, not installed).
 _Avoid_: marketplace, registry; source (a *source* is a specific origin within an ecosystem, not
 the channel itself).
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""skillsync.py — detect and apply updates for installed Claude skills.
+"""skillsync.py — detect and apply updates for installed skills.
 
-Two ecosystems:
+Two update channels (a third ecosystem, Codex plugins under ~/.codex/plugins, has no update
+command; the skill body enumerates it and this engine does not touch it):
   - Claude Code plugins (claude plugin CLI; ~/.claude/plugins/installed_plugins.json)
   - npx-skills agent-skills (~/.agents/.skill-lock.json, ~/.agents/skills/)
 

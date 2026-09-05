@@ -169,9 +169,10 @@ side-by-side table of every point where a rule for one host is wrong on the othe
 
 ### skill-updater
 
-Checks every installed Skill for upstream updates and installs them, across both ecosystems on a
-machine — Claude Code plugins (`claude plugin`) and agent-skills (`npx skills`, under
-`~/.agents`). Auto-applies updates from trusted sources and confirms community ones. Hand-authored
+Checks every installed Skill for upstream updates and installs them, across the two update
+channels on a machine — Claude Code plugins (`claude plugin`) and agent-skills (`npx skills`, under
+`~/.agents`) — and enumerates the third, Codex plugins (`codex plugin`), which has no update
+command. Auto-applies updates from trusted sources and confirms community ones. Hand-authored
 Skills are never touched. The deterministic work is in `scripts/skillsync.py`, which ships with a
 pytest suite.
 

@@ -1,6 +1,6 @@
 ---
 name: skill-updater
-description: Check installed skills for upstream updates and install them, across every ecosystem on this machine. Use when the user asks to check or update their skills, or invokes /skill-updater in Claude Code or $skill-updater in Codex. Does NOT touch hand-authored personal skills.
+description: Check installed skills for upstream updates and apply them. Use when asked to check or update skills, or on /skill-updater (Claude Code) or $skill-updater (Codex). Never touches hand-authored personal skills.
 ---
 
 # Skill Updater
@@ -90,7 +90,7 @@ and report each one by name:
 > `python3 ENGINE diff-skill <name>`, then re-home the edit (upstream, or into a personal
 > skill) before updating.
 
-`localEdited: false` is pristine. A root-repo skill (one whose `skillPath` is `SKILL.md` at
+`localEdited: false` with no `note` is pristine. A root-repo skill (one whose `skillPath` is `SKILL.md` at
 the repo root) reports `false` with a `note` saying the check doesn't apply to it. `null` means
 there was no usable baseline to compare against (legacy entries) — say that, rather than
 reporting it as pristine.
