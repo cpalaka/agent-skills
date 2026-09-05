@@ -77,6 +77,26 @@ happens to sit above the marker. Two placements:
 Either way a fragment *adds*: it sharpens the engine's generic bullets with this project type's
 specifics rather than restating them.
 
+**A bullet may declare what it presupposes.** One HTML comment on the line above it,
+`<!-- requires: <target>[; <target>…] -->`, names what must already exist in the project for the
+bullet to be true. Four target forms, and no others:
+
+- `<path>` — the file exists. `tests/run_tests.sh`
+- `<path> § <Heading text>` — a `##`/`###` heading in that file whose text **begins with** the given
+  text: the prefix rule Migrate step 4 uses for stub replacement, so `§ godot-ai addon` is met by
+  `## godot-ai addon (vendored, TRACKED)` and by a project's own longer variant.
+  `docs/godot-mcp-guide.md § Host adapters`
+- `contract § <Heading text>` / `contract names <a>, <b>, …` / `contract knob <key> names <token>` —
+  the emitted contract has that heading (same prefix rule) / its text carries every one of those
+  names / the `- <key>:` value in one of its knob blocks contains that token.
+  `contract knob build names godot-export-verifier`
+- `<path> states: <claim>` — read the file; the claim holds. For a fact about a file the engine did
+  not write, such as a preserved `.mcp.json`. `.mcp.json states: no godot-ai entry`
+
+The comment is the Profile's and is never emitted: **every mode strips it on insertion.** A bullet
+with no comment presupposes nothing and is always inserted. Init inserts every bullet (step 1); the
+check that reads the comments is Migrate mode's **fragment target check** (its step 6).
+
 ## The engine-owned Templates
 
 `templates/` beside this file holds the three Templates every Profile emits. They are engine-owned:
@@ -116,7 +136,9 @@ adapter pointing at nothing, with no error at stamp time and none at the other h
 exists, plan to merge/skip — not overwrite. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
 
-**1. Write the contract and the two adapters.**
+**1. Write the contract and the two adapters.** Fragments go in whole: strip every
+`<!-- requires: -->` comment and insert every bullet — init writes the targets those comments name,
+so the fragment target check (Migrate step 6) does not run here.
 
 - **`docs/agents/project-workflow.md` — the shared project contract.** In this order: the engine's
   header (it states that this is the one contract both adapters read and that host mechanics live in
@@ -344,7 +366,8 @@ boilerplate you just wrote buries the findings that matter:
 `templates/CLAUDE.md`, the import-block comment and import lines the file already had (the comment
 is the project's own record of why each import is there: keep it) plus
 `@docs/agents/project-workflow.md`, and, folded into that mechanics section, whatever step 4 moved
-out of the contract.
+out of the contract. The Profile's `claude` fragment goes in here too, each bullet under **the
+fragment target check** step 6 states.
 
 **The project's wording wins, and its facts survive.** Where a moved line and a Template bullet
 cover the same ground, keep the project's line and append whatever fact the Template's carries that
@@ -366,6 +389,20 @@ the Profile's **`codex` adapter fragment**, which is host mechanics this project
 cannot have written down. Same for the `claude` fragment in step 5. A migrated project whose Profile
 has a `codex` fragment must not come out with an `AGENTS.md` that says nothing about that project
 type.
+
+**The fragment target check** gates each adapter bullet, here and in step 5. Before inserting a
+bullet, resolve every target its `<!-- requires: -->` comment names (the four forms are in § What a
+Profile is) against the tree **as this run leaves it** — migrate stamps nothing, so "exists" means
+exists now, and a target init would write counts as absent. Every target resolves → insert the
+bullet whole, comment stripped. Any target fails → **withhold the bullet whole**: nothing else in the
+fragment is stripped, the bullet is not reworded, and no placeholder stands in for it — a line
+saying "not present here" is a claim about this project, which this mode may not author, and one a
+fresh session pays for on every launch. The ledger gets one row per withheld bullet instead:
+`adapter bullet withheld — <the requires text>; found: <what the check found, per target>`, then the
+bullet verbatim as the Profile's current wording, then, where a contract-fragment section offered
+below would create the target, that section's heading. What makes the check observable: the emitted
+adapters contain no bullet whose `requires:` failed, and the ledger shows exactly one row for each
+bullet withheld. A bullet with no comment is inserted as before.
 
 **The Skills fill prompt is filled by transcription or not at all.** Step 7 fails on a surviving
 `*<Fill at init:` prompt, and this mode may not author one. So: transcribe into that bullet the
@@ -396,7 +433,14 @@ launch on the second host, so none of those has been answered yet.
 and adapters now point at — a gotcha-scan wrapper, a reference guide, a domain pointer, a test
 harness, the Codex MCP config — are still absent, and until init runs the contract names files that
 are not there. Init is idempotent and skip-if-exists: over a migrated project it stamps exactly the
-missing ones and touches nothing this mode wrote.
+missing ones and touches nothing this mode wrote. Two things that run does not do, and the handoff
+says both. The stamps it lands are named only by contract-fragment sections this mode offered and did
+not insert — `docs/agents/domain.md` by the Working-in-this-repo bullet, the gotcha-scan wrapper by
+the Running paragraph, `docs/agents/issue-tracker.md` / `triage-labels.md` by `## Board` — so until
+those are adopted the files are present and named by nothing. And it restores no withheld adapter
+bullet: init runs no target check and re-inserts nothing at a consumed marker, and migrate cannot be
+re-run over its own output (step 0), so a bullet whose target the user later creates returns through
+the Profile's parity check, not through either mode.
 
 ## Profiles
 

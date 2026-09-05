@@ -330,8 +330,10 @@ dock auto-starts a uv-managed Python server on `:8000` + `:9500`.)
    claim about this project.
 3. **Both adapter fragments.** In `adapter-claude.md`, drop only the godot-ai half of the MCP
    bullet — **keep the sentence saying `.mcp.json` lists godot-mcp and minimal-godot**, which is the
-   only inventory of that file either adapter carries. In `adapter-codex.md`, drop the godot-ai
-   bullet whole; it is nothing but a pointer at the contract section step 2 just deleted.
+   only inventory of that file either adapter carries — and drop `contract § godot-ai addon` from
+   that bullet's `<!-- requires: -->` comment, or the section step 2 deleted withholds the bullet on
+   every migrate. In `adapter-codex.md`, drop the godot-ai bullet whole, comment included; it is
+   nothing but a pointer at the contract section step 2 just deleted.
 
 `.mcp.json` and `.codex/config.toml` are unaffected — neither ever listed godot-ai.
 
