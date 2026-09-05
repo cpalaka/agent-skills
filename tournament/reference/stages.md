@@ -19,8 +19,10 @@ Every stage snippet reads/writes these exact bindings, so composed stages wire t
 | filter stage (scoreboard mode) | `shortlist` | `number[]` (indices) |
 | tournament/bracket | `champion`, `runnerUp` | `number` (index) |
 | tournament/bracket | `matchLog` | `object[]` |
-| tournament/scoreboard | `board` | `{index,score,...}[]` (desc) |
-| tournament/scoreboard | `winner` | `number` (index) |
+| tournament/scoreboard | `board` | `{index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,...}[]` (desc; `score` is `null`, never `0`, when no ballot was valid) |
+| tournament/scoreboard | `winner` | `number` (index; ties break to the lower index. `null` only when the board is empty) |
+| tournament/scoreboard | `needsAdjudication` | `boolean` (any dropped/errored ballot, any unscored candidate, a tie at the top, or an empty electorate/shortlist) |
+| tournament/scoreboard | `reconciliation` | `object[]` (per candidate: `votesSent`/`votesReturned`/`dropped`/`errored`/`generationFailed`) |
 | verify-champion | `skeptics` | `object[]` |
 | verify-champion | `fatalCount` | `number` |
 | synthesize | `report` (text mode) or `synth` (schema mode) | `string`/`object` |
@@ -163,18 +165,21 @@ const MATCH_SCHEMA = {
 
 Consumed by the scoreboard-mode judge panel. The scale and the two domain-flavoured fields are FILL slots — rename or swap them for your domain's scoring axis.
 
+`persona` and `candidate` are the **identity echo**: the scoreboard stage compares both against the assignment before the score is allowed to move a mean, so a payload that arrives in the wrong slot is bucketed instead of counted. Keep them required, and keep `score`'s scale identical to the stage's `SCORE_SCALE`.
+
 ```js
 const JUDGE_SCHEMA = {
   type: 'object',
   properties: {
-    persona: { type: 'string' },
-    score: { type: 'number', description: '0-10 score from this judge\'s perspective' }, // FILL: adjust scale/name (a wider scale, e.g. 0-50, spreads a clustering panel)
+    persona: { type: 'string', description: 'YOUR assigned role, echoed verbatim' },
+    candidate: { type: 'string', description: 'the CANDIDATE NAME you were given, echoed verbatim' },
+    score: { type: 'number', description: '0-10 score from this judge\'s perspective' }, // FILL: adjust scale/name (a wider scale, e.g. 0-50, spreads a clustering panel) — keep SCORE_SCALE in step
     breakdown: { type: 'string' },
     critique: { type: 'string' },
     mustFix: { type: 'string' }, // FILL: rename to match your domain's critical-issue label
     wouldChoose: { type: 'boolean' }, // FILL: rename to your domain's adoption question, or remove
   },
-  required: ['persona', 'score', 'critique', 'mustFix', 'wouldChoose'],
+  required: ['persona', 'candidate', 'score', 'critique', 'mustFix', 'wouldChoose'],
 }
 ```
 
@@ -642,14 +647,17 @@ log(`CHAMPION: ${candidates[champion].name}`)
 ```js
 // Tournament stage — scoreboard mode
 // Consumes: candidates (Candidate[]), shortlist (number[], indices), renderConcept, JUDGE_SCHEMA
-// Produces: board ({index,score,...}[], sorted desc), winner (number/index = board[0].index)
-// FILL: replace JUDGES with judge personas/rubrics for your domain; adjust score scale comment
+// Produces: board ({index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,...}[], sorted desc),
+//           winner (number/index = board[0].index), needsAdjudication (boolean), reconciliation (object[])
+// FILL: replace JUDGES with judge personas/rubrics for your domain; set SCORE_SCALE from the spec
 // NOTE: pipeline(items, stage1, stage2, ...) passes every stage callback (prevResult, originalItem, index).
 // So pipeline(shortlist, genFn, judgeFn) gives each stage the candidate index as originalItem — no outer map needed.
+// GATE: after editing this stage run `node reference/selftest-scoreboard.mjs` (SKILL.md §6) — it executes
+// this exact block against the known-bad judge payloads that would otherwise flip a winner in silence.
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const shortlist = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
-const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, score: { type: 'number' }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
+const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number' }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
 const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
 const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
 const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
@@ -657,13 +665,29 @@ const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
 const DOMAIN_SB = 'your domain here' // FILL: one-phrase description (already declared at assembly as DOMAIN; rename at assembly)
 const SHARED_SB = `[shared background context for ${DOMAIN_SB}]` // FILL: compose from briefs/verifiedDigest/researchDigest at assembly
 
+const SCORE_SCALE = { min: 0, max: 10, integer: false } // FILL: from the spec; keep JUDGE_SCHEMA's description and every rubric on the same scale
+
 const JUDGES = [ // FILL: replace with judge personas + rubrics for your domain
-  { key: 'judge-a', persona: '[Judge A role]', rubric: 'AXIS A: [what this judge scores on, 0–10]' }, // FILL: keep the scale here identical to JUDGE_SCHEMA's (0-10 as shipped)
+  { key: 'judge-a', persona: '[Judge A role]', rubric: 'AXIS A: [what this judge scores on, 0–10]' }, // FILL: keep the scale here identical to SCORE_SCALE and JUDGE_SCHEMA's (0-10 as shipped)
   { key: 'judge-b', persona: '[Judge B role]', rubric: 'AXIS B: [what this judge scores on, 0–10]' },
   { key: 'judge-c', persona: '[Judge C role]', rubric: 'AXIS C: [what this judge scores on, 0–10]' },
 ]
 
-const judged = (await pipeline(
+// Validate a ballot against its ASSIGNMENT before it can move a mean, and return the reason it is
+// unusable (or null when it is usable). A scoreboard ranks by the mean, so an out-of-scale, non-numeric
+// or misattributed score does not merely add noise — it reorders the board. `x.score || 0` counted all
+// three: `null` scored a zero (demoting its own candidate), a string concatenated
+// ("9" + "7" → mean 62.3), and 100 on a 0–10 scale carried a candidate to the top on one vote.
+const voteFault = (v, judge, cand) => {
+  if (v.persona !== judge.persona) return `persona '${v.persona}' != assigned '${judge.persona}'`
+  if (v.candidate !== cand.name) return `candidate '${v.candidate}' != assigned '${cand.name}'`
+  if (typeof v.score !== 'number' || !Number.isFinite(v.score)) return `score is ${v.score === null ? 'null' : typeof v.score}, not a finite number`
+  if (SCORE_SCALE.integer && !Number.isInteger(v.score)) return `score ${v.score} is not an integer`
+  if (v.score < SCORE_SCALE.min || v.score > SCORE_SCALE.max) return `score ${v.score} outside ${SCORE_SCALE.min}..${SCORE_SCALE.max}`
+  return null
+}
+
+const rawJudged = await pipeline(
   shortlist,
   (idx) => {
     const c = candidates[idx]
@@ -674,23 +698,53 @@ const judged = (await pipeline(
   },
   (generated, idx) => {
     const c = candidates[idx]
-    if (!generated) throw new Error('generation failed for candidate ' + idx)
+    // A failed generation is a BUCKET, not a silent drop: the candidate stays on the board unscored and
+    // sets needsAdjudication, so a vanished candidate can never read as one that simply lost.
+    if (!generated) {
+      log(`⚠ ${c.name}: generation returned nothing — candidate kept on the board UNSCORED; FLAGGED for main-loop review`)
+      return { index: idx, name: c.name, generated: null, judges: [], score: null, votesSent: 0, votesReturned: 0, dropped: 0, errored: [], generationFailed: true }
+    }
     return parallel(JUDGES.map(j => () =>
       agent(
-        `${SHARED_SB}\n\nYou are judging a tournament candidate. YOUR ROLE: ${j.persona}.\n${j.rubric}\n\nCANDIDATE NAME: ${c.name}\nCANDIDATE OUTPUT:\n${renderConcept(generated)}\n\nScore it 0-10 through YOUR lens only. Be tough, specific, and do NOT inflate. Give a breakdown, a sharp critique, the single most important fix (mustFix), and whether YOU personally would choose it.`, // FILL: adjust score scale in prompt to match JUDGE_SCHEMA (0-10)
+        `${SHARED_SB}\n\nYou are judging a tournament candidate. YOUR ROLE: ${j.persona}.\n${j.rubric}\n\nCANDIDATE NAME: ${c.name}\nCANDIDATE OUTPUT:\n${renderConcept(generated)}\n\nScore it ${SCORE_SCALE.min}-${SCORE_SCALE.max} through YOUR lens only${SCORE_SCALE.integer ? ', as a whole number' : ''}. Be tough, specific, and do NOT inflate. Give a breakdown, a sharp critique, the single most important fix (mustFix), and whether YOU personally would choose it. Echo YOUR ROLE verbatim in \`persona\` and the CANDIDATE NAME verbatim in \`candidate\` — a mismatch voids your vote.`, // FILL: adjust the rubric wording; the scale text is derived from SCORE_SCALE, leave it
         { model: WORKHORSE, label: `judge:${c.name}:${j.key}`, phase: 'Tournament', schema: JUDGE_SCHEMA, effort: 'high' }
       )
     )).then(js => {
-      const jj = js.filter(Boolean)
-      const score = jj.length ? jj.reduce((s, x) => s + (x.score || 0), 0) / jj.length : 0
-      return { index: idx, name: c.name, generated, judges: jj, score }
+      // parallel() resolves POSITIONALLY: js[k] is JUDGES[k]'s ballot, or null if that judge errored.
+      const valid = [], errored = []
+      let dropped = 0
+      js.forEach((v, k) => {
+        if (!v) { dropped++; return }
+        const why = voteFault(v, JUDGES[k], c)
+        if (why) errored.push({ judge: JUDGES[k].key, why })
+        else valid.push(v)
+      })
+      // score is null, NEVER 0, when nothing valid came back — a zero is a real rank, an absence is not.
+      const score = valid.length ? valid.reduce((s, x) => s + x.score, 0) / valid.length : null
+      if (dropped || errored.length) log(`⚠ ${c.name}: ${js.length} vote(s) sent, ${valid.length} valid${dropped ? `, ${dropped} DROPPED` : ''}${errored.length ? `, ${errored.length} ERRORED (${errored.map(e => `${e.judge}: ${e.why}`).join('; ')})` : ''}; FLAGGED for main-loop review`)
+      return { index: idx, name: c.name, generated, judges: valid, score, votesSent: js.length, votesReturned: js.length - dropped, dropped, errored, generationFailed: false }
     })
   }
-)).filter(Boolean)
+)
+// pipeline() nulls an item only when a stage THROWS, and the buckets above no longer throw — but an
+// unexpected runtime error still can, so keep the filter AND reconcile what it removed.
+const judged = rawJudged.filter(Boolean)
+const stageDropped = rawJudged.length - judged.length
+if (stageDropped) log(`⚠ ${stageDropped}/${rawJudged.length} candidate(s) fell out of the judging pipeline (a stage threw); FLAGGED for main-loop review`)
 
-const board = judged.sort((a, b) => b.score - a.score)
-const winner = board[0].index
-log(`Leaderboard: ${board.map(b => `${b.name} ${b.score.toFixed(1)}`).join(' | ')}. Winner: ${board[0].name}.`)
+// Rank: an unscored candidate (null) sorts LAST, never as a zero; equal scores break to the lower index.
+const rank = (x) => (x.score === null ? -Infinity : x.score)
+const board = judged.sort((a, b) => (rank(a) === rank(b) ? a.index - b.index : rank(b) - rank(a)))
+// Reconcile SENT vs RETURNED (measured 2026-06-28; identity/scale validation added 2026-09-05): as in
+// bracket mode, the tournament still names a DETERMINISTIC winner — downstream stages index
+// candidates[winner] — and the doubt rides on needsAdjudication rather than on a null nobody checks.
+const tieAtTop = board.length > 1 && board[0].score !== null && board[0].score === board[1].score
+const needsAdjudication = JUDGES.length === 0 || shortlist.length === 0 || stageDropped > 0 || tieAtTop
+  || board.some(b => b.score === null || b.dropped > 0 || b.errored.length > 0)
+const winner = board.length ? board[0].index : null // null ONLY when the board is empty — there is no index to name
+const reconciliation = board.map(b => ({ name: b.name, votesSent: b.votesSent, votesReturned: b.votesReturned, dropped: b.dropped, errored: b.errored, generationFailed: b.generationFailed }))
+if (needsAdjudication) log('⚠ scoreboard needsAdjudication — the leaderboard below is PROVISIONAL; do not crown a winner without main-loop review')
+log(`Leaderboard: ${board.map(b => `${b.name} ${b.score === null ? '(unscored)' : b.score.toFixed(1)}`).join(' | ')}. ${needsAdjudication ? 'Provisional winner' : 'Winner'}: ${board.length ? board[0].name : '(none)'}.`)
 ```
 
 ---
@@ -784,12 +838,13 @@ Produces `synth` (`object`, typed by `SYNTH_SCHEMA`). Grafts winner + runner-up 
 ```js
 // Synthesize stage — schema synth variant (scoreboard mode)
 // Consumes: candidates (Candidate[]), board ({index,score,...}[]), winner (number/index),
-//           skeptics (object[]), fatalCount (number), SYNTH_SCHEMA
+//           needsAdjudication (boolean), skeptics (object[]), fatalCount (number), SYNTH_SCHEMA
 // Produces: synth (object — typed by SYNTH_SCHEMA)
 // FILL: replace SHARED, board field references, and prompt body for your domain
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const board = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const winner = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
+const needsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const SYNTH_SCHEMA = { type: 'object', properties: { summaryMarkdown: { type: 'string' }, parametersMarkdown: { type: 'string' }, changeLog: { type: 'array', items: { type: 'object', properties: { change: { type: 'string' }, why: { type: 'string' } }, required: ['change','why'] } }, graftedFrom: { type: 'array', items: { type: 'string' } } }, required: ['summaryMarkdown','changeLog'] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by Schema Builders section
@@ -801,8 +856,9 @@ const SHARED_SYNTH = `[shared background context for ${DOMAIN_SYNTH}]` // FILL: 
 
 log('Producing final synthesized output...')
 const SYNTH_MODEL = WORKHORSE // OPT-IN: set to SCARCE for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing scarce here and nowhere else in a tournament (multi-agent-policy posture ladder, `full` rung); every other stage stays WORKHORSE.
+const fmtScore = (s) => (s === null || s === undefined ? '(unscored)' : s.toFixed(1)) // an unscored candidate has no mean to print — never render it as 0.0
 const synth = await agent(
-  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${b.score.toFixed(1)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\nWINNER: ${candidates[winner].name}\n\nADVERSARIAL SKEPTIC FINDINGS ON WINNER (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${b.score.toFixed(1)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. Start from the WINNER, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
+  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${fmtScore(b.score)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\n${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'}: ${candidates[winner].name}${needsAdjudication ? '\n\nRECONCILIATION: needsAdjudication is TRUE for this scoreboard — ballots were dropped, voided as invalid, or the top is tied. Say this plainly at the top of summaryMarkdown, present the leader as PROVISIONAL, and do NOT crown a winner.' : ''}\n\nADVERSARIAL SKEPTIC FINDINGS ON WINNER (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${fmtScore(b.score)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. Start from the WINNER, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
   { model: SYNTH_MODEL, label: 'synthesize', phase: 'Synthesize', schema: SYNTH_SCHEMA, effort: 'max' }
 )
 ```
@@ -879,27 +935,37 @@ return {
 
 ### Variant B — Scoreboard mode result shape
 
-Exposes `leaderboard` (array), `winner` (name string), `candidates` (full detail array), `skeptics`, `fatalCount`, `synth` (fields), `qa`, `patched`.
+Exposes `leaderboard` (array), `winner` (name string, **`null` when the run needs adjudication**), `provisionalWinner`, `needsAdjudication`, `reconciliation`, `candidates` (full detail array), `skeptics`, `fatalCount`, `synth` (fields), `qa`, `patched`.
+
+`winner` is the caller-facing refusal: a consumer that reads it gets nothing to crown until a human has looked at `reconciliation`. `provisionalWinner` is always the deterministic top of the board, so the result stays inspectable.
 
 ```js
 // Result shape — scoreboard mode
-// Consumes all upstream bindings: candidates, board, winner, skeptics, fatalCount, synth, qa, patched
+// Consumes all upstream bindings: candidates, board, winner, needsAdjudication, reconciliation,
+//          skeptics, fatalCount, synth, qa, patched
 // FILL: adjust field names/shapes to match your scoreboard tournament's actual judge/generated output shape
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const board = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const winner = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
+const needsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
+const reconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const synth = { summaryMarkdown: '', parametersMarkdown: '', changeLog: [], graftedFrom: [] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by synthesize/schema stage
 const qa = { gatesPassed: true, issues: [], verdict: '' } // STANDALONE PARSE ONLY — DELETE at assembly; produced by QA stage
 const patched = '' // STANDALONE PARSE ONLY — DELETE at assembly; produced by QA stage
 
+const round1 = (s) => (s === null || s === undefined ? null : Number(s.toFixed(1))) // an unscored candidate stays null — never rounds to 0
+
 return {
-  leaderboard: board.map(b => ({ name: candidates[b.index].name, score: Number(b.score.toFixed(1)) })),
-  winner: candidates[winner].name,
+  leaderboard: board.map(b => ({ name: candidates[b.index].name, score: round1(b.score), votesSent: b.votesSent, votesReturned: b.votesReturned })),
+  winner: needsAdjudication ? null : candidates[winner].name, // withheld until a human reconciles
+  provisionalWinner: winner === null ? null : candidates[winner].name,
+  needsAdjudication,
+  reconciliation,
   candidates: board.map(b => ({
     name: candidates[b.index].name,
-    score: Number(b.score.toFixed(1)),
+    score: round1(b.score),
     judges: (b.judges || []).map(j => ({ persona: j.persona, score: j.score, critique: j.critique, mustFix: j.mustFix, wouldChoose: j.wouldChoose })), // FILL: match judge field names to your JUDGE_SCHEMA if you renamed any
     generated: b.generated || null, // FILL: replace with the actual generated-output field name from your scoreboard tournament stage
   })),
