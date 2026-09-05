@@ -43,20 +43,34 @@ const mdPath = process.argv[2] || join(HERE, 'stages.md')
 // ---------------------------------------------------------------- extract
 
 const HEADING = '### Scoreboard mode (generate → judge panel'
+const SCHEMA_HEADING = '### JUDGE_SCHEMA'
 const STANDALONE = 'STANDALONE PARSE ONLY — DELETE at assembly'
 
-function extractStage(md) {
-  const h = md.indexOf(HEADING)
-  if (h < 0) throw new Error(`harness: heading not found in ${mdPath}: ${HEADING}`)
+function fenceAfter(md, heading, what) {
+  const h = md.indexOf(heading)
+  if (h < 0) throw new Error(`harness: heading not found in ${mdPath}: ${heading}`)
   const open = md.indexOf('```js', h)
-  if (open < 0) throw new Error('harness: no ```js fence after the scoreboard heading')
+  if (open < 0) throw new Error(`harness: no \`\`\`js fence after the ${what} heading`)
   const bodyStart = md.indexOf('\n', open) + 1
   const close = md.indexOf('\n```', bodyStart)
-  if (close < 0) throw new Error('harness: unterminated ```js fence for the scoreboard stage')
-  const lines = md.slice(bodyStart, close).split('\n')
+  if (close < 0) throw new Error(`harness: unterminated \`\`\`js fence for the ${what}`)
+  return md.slice(bodyStart, close)
+}
+
+// The harness assembles exactly as SKILL.md §5 says an assembler does: the JUDGE_SCHEMA block FIRST (it
+// declares SCORE_SCALE and JUDGE_SCHEMA for real), then the stage with every STANDALONE stub deleted. That
+// is why neither name is a wrapper argument — a `const` here and a parameter of the same name would be a
+// SyntaxError, and passing them in would let the stage pass while the schema block drifted off the scale.
+function extractStage(md) {
+  const schema = fenceAfter(md, SCHEMA_HEADING, 'JUDGE_SCHEMA block')
+  const lines = fenceAfter(md, HEADING, 'scoreboard stage').split('\n')
   const kept = lines.filter(l => !l.includes(STANDALONE))
   if (kept.length === lines.length) throw new Error('harness: no STANDALONE stub lines found — extraction is off')
-  return kept.join('\n')
+  // Whether SCORE_SCALE exists at all, and which block declares it, is the thing UNDER TEST (the coupling
+  // checks at the end), never an extraction precondition: the pre-fix stage this harness is calibrated
+  // against declares no SCORE_SCALE anywhere, and a harness that cannot run its own known-bad is not
+  // calibrated. Extraction only has to find the two fences and the stub convention.
+  return schema + '\n' + kept.join('\n')
 }
 
 // Source-level mutations. Two fixtures need a slot the stage declares as a `const`, so the harness edits
@@ -94,6 +108,8 @@ const TAIL = `
   winner: typeof winner === 'undefined' ? undefined : winner,
   needsAdjudication: typeof needsAdjudication === 'undefined' ? undefined : needsAdjudication,
   reconciliation: typeof reconciliation === 'undefined' ? undefined : reconciliation,
+  judgeSchema: typeof JUDGE_SCHEMA === 'undefined' ? undefined : JUDGE_SCHEMA,
+  scoreScale: typeof SCORE_SCALE === 'undefined' ? undefined : SCORE_SCALE,
 }
 `
 
@@ -122,11 +138,11 @@ async function runStage(body, fx) {
     return prev
   }))
   const renderConcept = (c) => JSON.stringify(c)
-  const JUDGE_SCHEMA = { type: 'object', properties: {}, required: [] }
+  // NOTE: JUDGE_SCHEMA and SCORE_SCALE are NOT parameters — the assembled body declares both (see extractStage).
   const fn = new AsyncFunction(
-    'candidates', 'shortlist', 'renderConcept', 'JUDGE_SCHEMA',
+    'candidates', 'shortlist', 'renderConcept',
     'agent', 'parallel', 'pipeline', 'log', 'WORKHORSE', body + TAIL)
-  const out = await fn(fx.candidates, fx.shortlist, renderConcept, JUDGE_SCHEMA,
+  const out = await fn(fx.candidates, fx.shortlist, renderConcept,
     agent, parallel, pipeline, log, 'claude-opus-5')
   return { ...out, logs }
 }
@@ -430,6 +446,8 @@ const check = (label, cond) => {
   console.log(`${cond ? 'PASS' : 'FAIL'}  ${label}`)
 }
 
+let pristine = null // the first UNMUTATED fixture's result, used for the scale-coupling checks below
+
 for (const fx of FIXTURES) {
   let body = base
   if (fx.mutation) {
@@ -449,8 +467,27 @@ for (const fx of FIXTURES) {
     res = { __threw: true, error: String(e && e.message || e) }
   }
   if (res.__threw) console.log(`      (stage threw: ${res.error})`)
+  if (!fx.mutation && !pristine) pristine = res
   for (const [label, cond] of [...fx.expect(res), ...universal(res, fx)]) check(`${fx.name} — ${label}`, cond)
 }
+
+// SCALE COUPLING. Two layers enforce a score — the runtime's schema validation and the stage's voteFault —
+// and they must read ONE declaration. When they disagree the failure is silent and misdiagnosed: a spec that
+// widens the stage to 0–50 against a schema still pinned at 10 makes every ballot fail validation, retry,
+// return null and land in `dropped`. The reconciliation then says "dropped", which reads as flaky judges.
+// Two checks, because they catch different things. The VALUE checks catch a live disagreement (a widened
+// SCORE_SCALE against a schema still pinned at the shipped default). The SOURCE check catches a copy that
+// happens to agree TODAY — measured: re-hard-coding `minimum: 0, maximum: 10` while SCORE_SCALE is still
+// 0–10 passes every value check, and is exactly the state the next scale change turns into a dead panel.
+const sc = pristine && pristine.scoreScale
+const sb = pristine && pristine.judgeSchema && pristine.judgeSchema.properties && pristine.judgeSchema.properties.score
+check('[coupling] the assembled body exposes SCORE_SCALE and JUDGE_SCHEMA.properties.score', !!sc && !!sb)
+check('[coupling] JUDGE_SCHEMA.properties.score.minimum agrees with SCORE_SCALE.min',
+  !!sc && !!sb && sb.minimum === sc.min)
+check('[coupling] JUDGE_SCHEMA.properties.score.maximum agrees with SCORE_SCALE.max',
+  !!sc && !!sb && sb.maximum === sc.max)
+check('[coupling] the schema READS SCORE_SCALE rather than repeating a literal bound',
+  /minimum:\s*SCORE_SCALE\.min/.test(base) && /maximum:\s*SCORE_SCALE\.max/.test(base))
 
 const controls = FIXTURES.filter(f => f.name.startsWith('CONTROL')).length
 console.log(fails

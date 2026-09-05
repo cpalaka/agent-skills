@@ -23,6 +23,7 @@ Every stage snippet reads/writes these exact bindings, so composed stages wire t
 | tournament/scoreboard | `winner` | `number` (index; ties break to the lower index. `null` only when the board is empty — every consumer that indexes `candidates[winner]` must handle that) |
 | tournament/scoreboard | `needsAdjudication` | `boolean` (any dropped/errored ballot, any unscored candidate, a candidate lost to a throwing stage, a tie at the top, or an empty electorate/shortlist) |
 | tournament/scoreboard | `reconciliation` | `object[]` (one row per shortlist entry, including candidates whose stage threw: `votesSent`/`votesReturned`/`dropped`/`errored`/`generationFailed`/`stageThrew`) |
+| tournament/scoreboard | `champion` | `number` (index) — **alias of `winner`**, bound at assembly so verify-champion reads one name in both modes; `null` on an empty board, which that stage checks before it fans out |
 | verify-champion | `skeptics` | `object[]` |
 | verify-champion | `fatalCount` | `number` |
 | synthesize | `report` (text mode) or `synth` (schema mode) | `string`/`object` |
@@ -165,15 +166,18 @@ const MATCH_SCHEMA = {
 
 Consumed by the scoreboard-mode judge panel. The scale and the two domain-flavoured fields are FILL slots — rename or swap them for your domain's scoring axis.
 
-`persona` and `candidate` are the **identity echo**: the scoreboard stage compares both against the assignment before the score is allowed to move a mean, so a payload that arrives in the wrong slot is bucketed instead of counted. Keep them required, and keep `score`'s scale identical to the stage's `SCORE_SCALE`.
+`persona` and `candidate` are the **identity echo**: the scoreboard stage compares both against the assignment before the score is allowed to move a mean, so a payload that arrives in the wrong slot is bucketed instead of counted. Keep them required.
+
+**`SCORE_SCALE` is declared here, once, and the schema reads it** — the scoreboard stage consumes the same const rather than repeating the numbers. There are two enforcement layers on a score (the runtime's schema validation, and the stage's own `voteFault`), and a scale that disagrees between them is the worst of both: a spec that widens the stage to 0–50 while the schema still says `maximum: 10` makes *every* ballot fail validation, retry, come back `null` and land in `dropped` — a dead panel whose reconciliation says "dropped", not "your scale is wrong". One declaration, two readers.
 
 ```js
+const SCORE_SCALE = { min: 0, max: 10, integer: false } // FILL: from the spec (a wider scale, e.g. 0-50, spreads a clustering panel); the scoreboard stage and every rubric read THIS
 const JUDGE_SCHEMA = {
   type: 'object',
   properties: {
     persona: { type: 'string', description: 'YOUR assigned role, echoed verbatim' },
     candidate: { type: 'string', description: 'the CANDIDATE NAME you were given, echoed verbatim' },
-    score: { type: 'number', minimum: 0, maximum: 10, description: '0-10 score from this judge\'s perspective' }, // FILL: adjust scale/name (a wider scale, e.g. 0-50, spreads a clustering panel) — keep `minimum`/`maximum` in step with SCORE_SCALE
+    score: { type: 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max, description: `${SCORE_SCALE.min}-${SCORE_SCALE.max} score from this judge's perspective` }, // FILL: rename the field for your domain if you like — the scale comes from SCORE_SCALE above, do not hard-code it here
     breakdown: { type: 'string' },
     critique: { type: 'string' },
     mustFix: { type: 'string' }, // FILL: rename to match your domain's critical-issue label
@@ -646,12 +650,14 @@ log(`CHAMPION: ${candidates[champion].name}`)
 
 ```js
 // Tournament stage — scoreboard mode
-// Consumes: candidates (Candidate[]), shortlist (number[], indices), renderConcept, JUDGE_SCHEMA
+// Consumes: candidates (Candidate[]), shortlist (number[], indices), renderConcept, JUDGE_SCHEMA, SCORE_SCALE
 // Produces: board ({index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,stageThrew,...}[], sorted desc),
 //           winner (number/index = board[0].index; `null` ONLY when the board is empty — downstream stages
 //           must handle that, see the verify-champion and synthesize guards), needsAdjudication (boolean),
 //           reconciliation (object[], one row per shortlist entry)
-// FILL: replace JUDGES with judge personas/rubrics for your domain; set SCORE_SCALE from the spec
+// FILL: replace JUDGES with judge personas/rubrics for your domain. SCORE_SCALE is NOT set here — it is
+// declared once in the JUDGE_SCHEMA block (Schema Builders) so the schema layer and this stage cannot
+// disagree about the scale; set it there, from the spec.
 // NOTE: pipeline(items, stage1, stage2, ...) passes every stage callback (prevResult, originalItem, index).
 // So pipeline(shortlist, genFn, judgeFn) gives each stage the candidate index as originalItem — no outer map needed.
 // GATE: after editing this stage run `node reference/selftest-scoreboard.mjs` (SKILL.md §6) — it executes
@@ -659,7 +665,8 @@ log(`CHAMPION: ${candidates[champion].name}`)
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const shortlist = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
-const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number', minimum: 0, maximum: 10 }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly; keep minimum/maximum in step with SCORE_SCALE
+const SCORE_SCALE = { min: 0, max: 10, integer: false } // STANDALONE PARSE ONLY — DELETE at assembly; declared by the JUDGE_SCHEMA block
+const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
 const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
 const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
 const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
@@ -667,12 +674,10 @@ const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
 const DOMAIN_SB = 'your domain here' // FILL: one-phrase description (already declared at assembly as DOMAIN; rename at assembly)
 const SHARED_SB = `[shared background context for ${DOMAIN_SB}]` // FILL: compose from briefs/verifiedDigest/researchDigest at assembly
 
-const SCORE_SCALE = { min: 0, max: 10, integer: false } // FILL: from the spec; keep JUDGE_SCHEMA's description and every rubric on the same scale
-
 const JUDGES = [ // FILL: replace with judge personas + rubrics for your domain
-  { key: 'judge-a', persona: '[Judge A role]', rubric: 'AXIS A: [what this judge scores on, 0–10]' }, // FILL: keep the scale here identical to SCORE_SCALE and JUDGE_SCHEMA's (0-10 as shipped)
-  { key: 'judge-b', persona: '[Judge B role]', rubric: 'AXIS B: [what this judge scores on, 0–10]' },
-  { key: 'judge-c', persona: '[Judge C role]', rubric: 'AXIS C: [what this judge scores on, 0–10]' },
+  { key: 'judge-a', persona: '[Judge A role]', rubric: `AXIS A: [what this judge scores on, ${SCORE_SCALE.min}–${SCORE_SCALE.max}]` }, // FILL: write the rubric; leave the scale interpolated from SCORE_SCALE rather than typing a range
+  { key: 'judge-b', persona: '[Judge B role]', rubric: `AXIS B: [what this judge scores on, ${SCORE_SCALE.min}–${SCORE_SCALE.max}]` },
+  { key: 'judge-c', persona: '[Judge C role]', rubric: `AXIS C: [what this judge scores on, ${SCORE_SCALE.min}–${SCORE_SCALE.max}]` },
 ]
 
 // Validate a ballot against its ASSIGNMENT before it can move a mean, and return the reason it is

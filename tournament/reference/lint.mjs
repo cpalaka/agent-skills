@@ -106,11 +106,16 @@ if (/\b(winner|consensus|fatalCount)\b/.test(src) && /\.filter\(Boolean\)/.test(
 // not reconciled anything. The regex is case-insensitive and unanchored so a script reconciling under its own
 // identifier names (`judgesDropped`, `candidatesDropped`) counts — that is a real reconciliation in code.
 //
-// BLIND SPOTS: (1) a hand-rolled scoreboard with neither the marker nor a `board` binding is not detected
-// here; it reaches the whole-file WARN above ONLY if the file also uses `.filter(Boolean)` and one of
-// winner/consensus/fatalCount — otherwise nothing fires at all. (2) A marked region whose end is pushed past
-// a later stage by an intervening `winner =` can borrow that stage's tokens. Widen the detector, not the
-// region, if either shows up.
+// BLIND SPOTS — both are false NEGATIVES; neither can produce a false ERROR:
+// (1) A hand-rolled scoreboard with neither the marker nor a `board` binding is not detected here, and it
+//     reaches the whole-file WARN above ONLY if the file also uses `.filter(Boolean)` and one of
+//     winner/consensus/fatalCount — otherwise nothing fires at all.
+// (2) Ending the region at the LAST `winner =` (which is what stops an early `let winner = null` from
+//     collapsing it) is paid for here. Exact shape that escapes: a MARKED, unreconciled scoreboard, followed
+//     — with no stage banner comment between them — by a later block that both reassigns `winner` and uses a
+//     reconciliation token IN CODE. The region then swallows that block and borrows its token. The catalog's
+//     own stages all carry banners, so this is reachable only in a hand-rolled script; the honest cost of
+//     fixing (1)'s sibling false positive. Widen the DETECTOR, never the region, if it shows up for real.
 const SB_TOKENS = /(dropped|errored|votesSent|votesReturned|needsAdjudication)/i
 const MARKER = /^[ \t]*\/\/ Tournament stage — scoreboard mode[ \t]*$/gm
 // A stage banner in this catalog's convention: `// <Name> stage …` / `// <Name>-<x> stage …`. Deliberately

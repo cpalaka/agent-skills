@@ -176,7 +176,10 @@ Each generation agent runs at `effort: high`. Output is the full CANDIDATE_SCHEM
 
 ## Judges
 
-Three judges score each candidate 0–10 through their lens only, in parallel per candidate. Final
+Three judges score each candidate 0–10 through their lens only, in parallel per candidate — the scale
+is `SCORE_SCALE`, set **once** in the JUDGE_SCHEMA block, and the schema's `minimum`/`maximum`, the
+rubric text and the stage's validation all read it (widen it there and nowhere else; a schema pinned to
+a stale bound fails every ballot into `dropped` with no readable reason). Final
 score = mean of the **valid** ballots (a candidate with none scores `null`, never `0`). Scoreboard
 sorted descending; winner = highest mean, ties broken to the lower index, and any dropped or voided
 ballot sets `needsAdjudication` so the result withholds the winner until a human has read the
