@@ -28,7 +28,7 @@
 //       builds known-bad and known-good fixtures under $TMPDIR and asserts each verdict.
 //       Run it before believing any GREEN from reconcile/board.
 
-import { readFileSync, writeFileSync, existsSync, readdirSync, mkdtempSync, mkdirSync, statSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdtempSync, mkdirSync, rmSync } from 'node:fs'
 import { join, basename } from 'node:path'
 import { tmpdir, homedir } from 'node:os'
 
@@ -113,7 +113,7 @@ function buildBoard(dir, sent, candidates) {
       const v = JSON.parse(readFileSync(join(dir, id + '.json'), 'utf8'))
       const s = Number(v.score)
       if (Number.isFinite(s)) { byCand[cand].votesReturned++; byCand[cand].total += s; byCand[cand].scores.push(s) }
-      else r.errored.push(id)
+      else { r.errored.push(id); r.returned.splice(r.returned.indexOf(id), 1) } // buckets stay disjoint
     }
   }
   for (const x of rows) x.mean = x.votesReturned ? x.total / x.votesReturned : null
@@ -198,9 +198,16 @@ function cmdRollouts() {
 // ---------------------------------------------------------------- selftest
 
 function cmdSelftest() {
+  const root = mkdtempSync(join(tmpdir(), 'tourney-selftest-'))
+  let fails
+  try { fails = runSelftest(root) } finally { rmSync(root, { recursive: true, force: true }) }
+  console.log(fails ? `VERDICT: RED — ${fails} selftest assertion(s) failed` : 'VERDICT: GREEN (selftest)')
+  process.exit(fails ? 1 : 0)
+}
+
+function runSelftest(root) {
   let fails = 0
   const check = (name, cond) => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}`); if (!cond) fails++ }
-  const root = mkdtempSync(join(tmpdir(), 'tourney-selftest-'))
 
   // known-bad reconcile: a valid, b malformed, c absent, z unassigned
   const bad = join(root, 'gen'); mkdirSync(bad)
@@ -245,6 +252,8 @@ function cmdSelftest() {
   writeFileSync(join(jd, 'j2__c2.json'), JSON.stringify({ judge: 'j2', candidate: 'c2', rationale: 'no score field' }))
   const b4 = buildBoard(jd, sent, cands)
   check('board: vote without a numeric score -> errored, needsAdjudication', b4.needsAdjudication && b4.r.errored.includes('j2__c2'))
+  const p4 = printReconcile('judge', b4.r)
+  check('board: buckets disjoint on the printed line (returned=3 errored=1 of sent=4)', p4.text.includes('sent=4 returned=3 dropped=0 errored=1') && !b4.r.returned.includes('j2__c2'))
 
   // rollouts: a fixture session dir with one child of parent P and one stranger
   const sess = join(root, 'sessions', '2026', '09', '04'); mkdirSync(sess, { recursive: true })
@@ -259,8 +268,7 @@ function cmdSelftest() {
   try { cmdRollouts() } finally { console.log = origLog; argv.length = 0; argv.push(...saved) }
   check('rollouts: finds the one child of P with effort=low, not the stranger', captured.includes('children of P: 1') && captured.includes('effort=low') && !captured.includes('child-2'))
 
-  console.log(fails ? `VERDICT: RED — ${fails} selftest assertion(s) failed` : 'VERDICT: GREEN (selftest)')
-  process.exit(fails ? 1 : 0)
+  return fails
 }
 
 // ---------------------------------------------------------------- main

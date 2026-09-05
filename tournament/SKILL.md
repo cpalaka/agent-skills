@@ -82,7 +82,7 @@ Exit **0** = clean, **1** = errors (must fix), **2** = usage. It prints `WARN:`/
 ## 7. Launch & relay
 
 1. **Recap:** show the spec recap + the phase outline + the estimated agent-count / cost (§8).
-2. **On approval, the main agent launches the assembled script via the Workflow tool (background).** Do not launch without approval. (Claude Code. Codex has no Workflow runtime: its launch surface is `collaboration.spawn_agent`, and §5–§7 are replaced by the Codex adapter at `codex-skills/tournament/SKILL.md`.)
+2. **On approval, the main agent launches the assembled script via the Workflow tool (background).** Do not launch without approval. (Claude Code. Codex has no Workflow runtime: its launch surface is `collaboration.spawn_agent`, and §5 and §7 are replaced by the Codex adapter at `codex-skills/tournament/SKILL.md`; of §6 only the lint is dropped there, the smoke run stands.)
 3. **Relay results:** report + leaderboard/bracket in chat.
 4. **Write the result file:** `<archive>/<name>.result-<date>.md`, beside the spec (§2).
 5. **Note the `resumeFromRunId` recovery path** — big runs can hit limits mid-flight; resuming from the run id continues rather than restarting.

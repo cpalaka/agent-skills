@@ -10,10 +10,11 @@ This is a thin **Host adapter** for the canonical skill at
 (pipeline), §2 (spec + archive), §3 (elicitation), §4 (candidate schema) and §8 (budget) are
 canonical and apply unchanged; `../../tournament/reference/example-spec.md` is the worked spec.
 
-Its §5–§7 do not apply here: they assemble and launch a **Claude Code Workflow script**, and Codex
-has no Workflow runtime (`reference/stages.md` and `reference/lint.mjs` lint that script; ignore
-them on this host). The substitutions below replace those three sections. Load
-`$multi-agent-policy` before the first spawn; its pins and its fan-out → verify discipline govern.
+Its §5 and §7 assemble and launch a **Claude Code Workflow script**, and Codex has no Workflow
+runtime, so the substitutions below replace those two sections; of §6 only the lint is dropped
+(`reference/stages.md` and `reference/lint.mjs` concern that script — ignore them on this host),
+and **§6's smoke run stands** at the parameters §6 names. Load `$multi-agent-policy` before the
+first spawn; its pins and its fan-out → verify discipline govern.
 
 ## Substitutions
 
@@ -33,7 +34,9 @@ them on this host). The substitutions below replace those three sections. Load
    a `task_name` of `<stage>_<id>` (lowercase, digits, underscores). The `message` is the whole
    brief — domain block, the item's lens or rubric, the candidate text for judges, and the exact
    output path `<rundir>/<stage>/<id>.json` with the JSON shape it must write — because a
-   `fork_turns: "none"` child inherits nothing of the parent's context. The child replies with
+   `fork_turns: "none"` child inherits nothing of the parent's context. Before each spawn, write
+   that message verbatim to `<rundir>/dispatch/<task_name>.md`, so a re-dispatch is diffable
+   against the original (rollouts store spawn payloads encrypted). The child replies with
    the path only. **The file is the verdict; the child's reply is not.** A judge item is one
    vote, `<judge>__<candidate>`, so a judge child writes one file per candidate it scores and
    the judge stage reconciles at the vote level. Measured 2026-09-04 (codex-cli 0.153.3): the
@@ -83,8 +86,8 @@ them on this host). The substitutions below replace those three sections. Load
    Claude Code's dynamic workflow-size setting does not govern a Codex run; `multi-agent-policy`'s
    20-agent announce ceiling does. Spawns dispatch a few seconds apart and run concurrently.
 
-8. **Smoke run and elicitation.** Canonical §6's smoke run (1 lens / 2 candidates / 1 judge / low
-   effort) still gates a new or edited spec. Canonical §3's interview is the same, but a
+8. **Smoke run and elicitation.** Canonical §6's smoke run, at the parameters it names, still
+   gates a new or edited spec. Canonical §3's interview is the same, but a
    `codex exec` run that asks a question ends on it (measured 2026-09-04, ticket 07) — under
    `codex exec` the brief must carry every non-default, or run interactively.
 
