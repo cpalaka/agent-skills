@@ -201,7 +201,9 @@ the transcript-key check; these are the per-host loops.
 - **Claude Code:** a Monitor, `sleep 600` loop, one status line per tick (implementers: elapsed +
   `git log -1 --oneline` + `git status --porcelain | wc -l`; workflows: elapsed + `agent-*.jsonl`
   count). Relay each tick as one line, TaskStop when the delegate reports, re-arm per delegate,
-  timeout 3600s.
+  timeout 3600s. To wait on a delegate without a Monitor, poll its transcript file for the
+  report's final heading with a bounded `sleep 15` loop; a blocking `TaskOutput` that times out
+  pastes the whole transcript into context (2026-09-04).
 - **Codex:** bounded task/agent waits carrying the same payload, relayed at ~10-minute cadence.
   A blocking sleep stalls communication instead of reporting it.
 
