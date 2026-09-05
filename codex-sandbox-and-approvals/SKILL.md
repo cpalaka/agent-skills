@@ -133,13 +133,29 @@ This is the structural difference from Claude Code, which gates by matching a co
   machine).
 
 **`codex exec` has no `--ask-for-approval` flag at all** — measured: `-a` returns
-`error: unexpected argument '-a' found`. So in every non-interactive run there is no escalation
-path: a denial comes back to the model as an ordinary command failure, and the model's only options
-are to work around it or to stop. **Anything you dispatch through `codex exec` must have its
-sandbox sized correctly up front**, because nothing will ask you mid-run.
+`error: unexpected argument '-a' found`. That does **not** mean a non-interactive run has no
+escalation path. Measured 2026-09-04 (codex-cli 0.153.3, this machine, `approvals_reviewer =
+"auto_review"` in `~/.codex/config.toml`): a `codex exec -s workspace-write` run — header
+`approval: on-request` — was told to write a file under `~/Library/Caches/` (outside every
+writable root) and to retry once with escalation if denied. Observed from outside the model:
+the first attempt failed `zsh:1: operation not permitted: …/t07-escalation-probe.txt`, the retry
+ran as an ordinary `exec` line with exit 0, and the file existed afterwards (6 bytes; absent
+before). Control: the same write with no retry instruction is the denial itself. No human was
+present. What the transcript does **not** carry is a tool-parameter record — the parameter name
+(`sandbox_permissions: "require_escalated"`) and the reviewer's identity (`auto_review`) are the
+model's self-report, in its prose before the retry and in its final message. The same shape
+appeared unprompted in a real skill run the same day: `EPERM` on a write to `~/.claude/plugins`,
+then the identical command succeeding on a retry, the file's mtime confirming the write.
 
-The interactive escalation itself — what `on-request` actually prompts for — is **not measured
-here**; only the flag's existence and `exec`'s lack of it are.
+So a denial comes back to the model as an ordinary command failure, and the model can ask for
+escalation — which, with `auto_review`, the automatic reviewer grants or refuses; nothing asks
+*you*. That is the caution, not a licence: **a dispatched run must have its sandbox sized up
+front and must not self-escalate to write outside the workspace.** Whether a run may write to a
+root you did not open is the launcher's decision, made by launching it unsandboxed on purpose;
+a run that requests it for itself moves that decision to a reviewer you do not see.
+
+The interactive escalation — what `on-request` prompts for in the TUI — is still **not measured
+here**.
 
 ## Project trust gates the project's own config
 
