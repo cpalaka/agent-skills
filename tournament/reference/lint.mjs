@@ -1,11 +1,43 @@
 #!/usr/bin/env node
 // Dev tool (plain Node, runs OUTSIDE the Workflow runtime). Lints a generated
 // tournament workflow script against the runtime's hard constraints.
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const HERE = dirname(fileURLToPath(import.meta.url))
 const file = process.argv[2]
-if (!file) { console.error('usage: lint.mjs <script.js>'); process.exit(2) }
+if (!file) { console.error('usage: lint.mjs <script.js> | lint.mjs --selftest'); process.exit(2) }
+
+// --selftest: run this linter over every fixture in reference/fixtures/ and check the naming contract —
+// `bad-*.js` must exit 1, `good-*.js` must exit 0 with no WARN. The fixtures ARE the linter's calibration
+// (a rule nothing reds is a rule nobody has measured); before this they had no runner and drifted unnoticed.
+if (file === '--selftest') {
+  const dir = join(HERE, 'fixtures')
+  let names
+  try { names = readdirSync(dir).filter(f => f.endsWith('.js')).sort() }
+  catch (e) { console.error(`selftest: cannot read ${dir}: ${e.message}`); process.exit(2) }
+  if (!names.length) { console.error(`selftest: no .js fixtures in ${dir}`); process.exit(2) }
+  let fails = 0
+  for (const n of names) {
+    const expectBad = n.startsWith('bad-')
+    if (!expectBad && !n.startsWith('good-')) {
+      console.log(`FAIL  ${n} — fixture name must start with bad- or good-`); fails++; continue
+    }
+    let out = '', code = 0
+    try { out = execFileSync('node', [fileURLToPath(import.meta.url), join(dir, n)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }
+    catch (e) { out = (e.stdout || '') + (e.stderr || ''); code = e.status ?? 1 }
+    const warned = /^WARN: /m.test(out)
+    const ok = expectBad ? code === 1 : code === 0 && !warned
+    if (!ok) fails++
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${n} — exit ${code}${warned ? ', WARN present' : ''} (expected ${expectBad ? 'exit 1' : 'exit 0, no WARN'})`)
+  }
+  console.log(fails ? `VERDICT: RED — ${fails} of ${names.length} lint fixture(s) off contract`
+    : `VERDICT: GREEN (lint --selftest) — ${names.length} fixtures`)
+  process.exit(fails ? 1 : 0)
+}
+
 const src = readFileSync(file, 'utf8')
 const errors = [], warns = []
 
@@ -61,27 +93,90 @@ if (/\b(winner|consensus|fatalCount)\b/.test(src) && /\.filter\(Boolean\)/.test(
 // Two reasons it is not the WARN above: a scoreboard ranks by a MEAN, so one invalid or dropped ballot
 // reorders the board rather than adding noise; and the whole-file test is suppressed by a `dropped` token in
 // ANY other stage, which is exactly how an unreconciled scoreboard linted clean.
-// DETECTOR: the canonical marker line, else the first `const judged`/`pipeline(` in a script that also binds
-// `board` and assigns `winner`. REGION: that start → the end of the first later `winner` assignment.
-// BLIND SPOT: a hand-rolled scoreboard with neither the marker nor a `board` binding is not detected here and
-// falls through to the whole-file WARN above. Widen the detector rather than the region if that shows up.
-// The token test deliberately carries NO leading \b, so a script that reconciles under its own names
-// (`judgesDropped`, `candidatesDropped`) counts as reconciled.
-const SB_TOKENS = /(dropped|errored|votesSent|votesReturned|needsAdjudication)/
-const marker = src.match(/^[ \t]*\/\/ Tournament stage — scoreboard mode[ \t]*$/m)
-let sbStart = marker ? marker.index : -1
-if (sbStart < 0 && /\bboard\b/.test(src) && /(?:const|let|var)\s+winner\s*=/.test(src)) {
-  const fallback = src.match(/(?:const|let|var)\s+judged\s*=|\bpipeline\s*\(/)
-  if (fallback) sbStart = fallback.index
+//
+// DETECTOR — every occurrence of the canonical marker line gets its own region (a script may run more than
+// one scoreboard). With no marker at all, ONE fallback region is derived from the `board` binding: walk
+// BACKWARDS from it to the nearest preceding `pipeline(` / `const judged` / `Promise.all(`, so an earlier
+// stage's tokens stay outside. REGION END: the LAST `winner =` assignment (declared or bare) before the next
+// stage marker/heading comment or EOF — not the first, or an early `let winner = null` collapses the region
+// and a fully reconciled tally reads as unreconciled.
+//
+// TOKEN TEST — run on CODE ONLY (comments and string/template literal TEXT stripped; the expressions inside
+// `${…}` are kept, they are code). A stage that merely mentions "dropped" in a comment or a log string has
+// not reconciled anything. The regex is case-insensitive and unanchored so a script reconciling under its own
+// identifier names (`judgesDropped`, `candidatesDropped`) counts — that is a real reconciliation in code.
+//
+// BLIND SPOTS: (1) a hand-rolled scoreboard with neither the marker nor a `board` binding is not detected
+// here; it reaches the whole-file WARN above ONLY if the file also uses `.filter(Boolean)` and one of
+// winner/consensus/fatalCount — otherwise nothing fires at all. (2) A marked region whose end is pushed past
+// a later stage by an intervening `winner =` can borrow that stage's tokens. Widen the detector, not the
+// region, if either shows up.
+const SB_TOKENS = /(dropped|errored|votesSent|votesReturned|needsAdjudication)/i
+const MARKER = /^[ \t]*\/\/ Tournament stage — scoreboard mode[ \t]*$/gm
+// A stage banner in this catalog's convention: `// <Name> stage …` / `// <Name>-<x> stage …`. Deliberately
+// narrow — a prose comment that merely contains the word "stage" (`// GATE: after editing this stage run …`)
+// must NOT end a region, or the region collapses to nothing and a reconciled stage reads as unreconciled.
+const NEXT_STAGE = /^[ \t]*\/\/ [A-Z][\w-]*(?: [\w-]+)? stage\b[^\n]*$/gm
+const WINNER_ASSIGN = /(?:(?:const|let|var)\s+)?\bwinner\s*=[^=]/g
+const HAS_WINNER = /(?:(?:const|let|var)\s+)?\bwinner\s*=[^=]/
+const BOARD_BIND = /(?:(?:const|let|var)\s+)?\bboard\s*=[^=]/
+
+// Strip comments and string/template literal TEXT, keeping the code (including `${…}` interiors). A lint
+// heuristic, not a parser: it does not tell a regex literal from division, which cannot change this test.
+function codeOnly(s) {
+  let out = '', i = 0
+  const stack = []
+  while (i < s.length) {
+    const top = stack[stack.length - 1]
+    if (top && top.kind === 'tpl') {
+      if (s[i] === '\\') { i += 2; continue }
+      if (s[i] === '`') { stack.pop(); i++; continue }
+      if (s[i] === '$' && s[i + 1] === '{') { stack.push({ kind: 'expr', depth: 0 }); i += 2; out += ' '; continue }
+      if (s[i] === '\n') out += '\n'
+      i++
+      continue
+    }
+    const c = s[i], d = s[i + 1]
+    if (c === '/' && d === '/') { while (i < s.length && s[i] !== '\n') i++; continue }
+    if (c === '/' && d === '*') { i += 2; while (i < s.length && !(s[i] === '*' && s[i + 1] === '/')) i++; i = Math.min(i + 2, s.length); continue }
+    if (c === "'" || c === '"') { const q = c; i++; while (i < s.length && s[i] !== q) { if (s[i] === '\\') i++; i++ } i++; out += ' '; continue }
+    if (c === '`') { stack.push({ kind: 'tpl' }); i++; out += ' '; continue }
+    if (top && top.kind === 'expr') {
+      if (c === '{') top.depth++
+      else if (c === '}') { if (top.depth === 0) { stack.pop(); i++; out += ' '; continue } top.depth-- }
+    }
+    out += c
+    i++
+  }
+  return out
 }
-if (sbStart >= 0) {
-  const rest = src.slice(sbStart)
-  const wa = rest.search(/(?:const|let|var)\s+winner\s*=/)
-  const eol = wa >= 0 ? rest.indexOf('\n', wa) : -1
-  const region = wa < 0 ? rest : rest.slice(0, eol < 0 ? rest.length : eol)
-  if (!SB_TOKENS.test(region)) {
-    const line = src.slice(0, sbStart).split('\n').length
-    errors.push(`scoreboard tally starting line ${line} ranks candidates by a mean with no sent-vs-returned reconciliation in the stage — record dropped/errored/votesSent/votesReturned per candidate and set needsAdjudication (a reconciliation token elsewhere in the script does NOT cover this stage)`)
+
+const idxAll = (re, s) => [...s.matchAll(re)].map(m => m.index)
+const sbStarts = idxAll(MARKER, src)
+if (!sbStarts.length) {
+  const boardAt = src.search(BOARD_BIND)
+  if (boardAt >= 0 && HAS_WINNER.test(src)) {
+    const anchors = idxAll(/(?:const|let|var)\s+judged\s*=|\bpipeline\s*\(|\bPromise\.all\s*\(/g, src.slice(0, boardAt))
+    if (anchors.length) sbStarts.push(anchors[anchors.length - 1]) // NEAREST preceding anchor, never the first in the file
+  }
+}
+const stageBanners = idxAll(NEXT_STAGE, src)
+for (const [n, start] of sbStarts.entries()) {
+  // Boundary: the next scoreboard marker, or the next stage banner after this one, or EOF.
+  const nextMarker = sbStarts[n + 1] ?? src.length
+  const heading = stageBanners.find(i => i > start)
+  const boundary = Math.min(nextMarker, heading ?? src.length)
+  const span = src.slice(start, boundary)
+  const was = idxAll(WINNER_ASSIGN, span)
+  let region = span
+  if (was.length) {
+    const last = was[was.length - 1]
+    const eol = span.indexOf('\n', last)
+    region = span.slice(0, eol < 0 ? span.length : eol)
+  }
+  if (!SB_TOKENS.test(codeOnly(region))) {
+    const line = src.slice(0, start).split('\n').length
+    errors.push(`scoreboard tally starting line ${line} ranks candidates by a mean with no sent-vs-returned reconciliation in the stage — record dropped/errored/votesSent/votesReturned per candidate and set needsAdjudication (a reconciliation token in a comment, in a log string, or in another stage does NOT cover this stage)`)
   }
 }
 
