@@ -1,6 +1,6 @@
 ---
 name: skill-updater
-description: Check installed skills for upstream updates and install them, across the ecosystems this machine has (Claude Code plugins, npx-skills agent-skills; Codex plugins are enumerated, not updated). Use when the user asks to check or update their skills, or invokes /skill-updater in Claude Code or $skill-updater in Codex. Does NOT touch hand-authored personal skills.
+description: Check installed skills for upstream updates and install them, across every ecosystem on this machine. Use when the user asks to check or update their skills, or invokes /skill-updater in Claude Code or $skill-updater in Codex. Does NOT touch hand-authored personal skills.
 ---
 
 # Skill Updater
@@ -18,9 +18,9 @@ you orchestrate.
 ~/.agents/skills/skill-updater/scripts/skillsync.py
 ```
 
-Both entries are symlinks into one checkout, so the engine, its tests and
-`trusted-sources.json` are a single copy read by both hosts. `python3` must be on PATH; the
-engine shells out to `git`, `claude` and `npx`.
+Whatever each path resolves to, the engine reads `trusted-sources.json` from beside its own
+resolved location, so one copy of the engine, its tests and that file serves both hosts.
+`python3` must be on PATH; the engine shells out to `git`, `claude` and `npx`.
 
 ## Ecosystems
 
@@ -105,14 +105,15 @@ empty, report "✓ All skills are up to date" (still naming the three ecosystems
 Always surface anything in `errors` (e.g. a repo that failed to clone) — report it but
 keep going with what succeeded.
 
-**Codex sandbox.** Under `workspace-write` the engine has no network unless
-`sandbox_workspace_write.network_access=true` is set (every clone then lands in `errors`), and
-`~/.claude/plugins` and `~/.agents` are outside the writable roots: the first `--refresh`
-returns `marketplace update failed: … EPERM`. Retry that command with the shell tool's
-escalation (`sandbox_permissions: "require_escalated"`); measured 2026-09-04 on codex-cli
-0.153.3, a `codex exec` run under the default `on-request` policy granted it with no human
-present and the refresh and the trusted `apply-skills` batch both landed. A denial that
-survives escalation makes the run a report: say which step, and print the exact commands.
+**Codex sandbox.** The engine needs network (the clones) and writes under `~/.claude/plugins`
+(`--refresh`) and `~/.agents` (`apply-skills`); under `workspace-write` the first `--refresh`
+returns `marketplace update failed: … EPERM`. In an interactive `codex` session, ask for the
+approval and continue. In a non-interactive `codex exec` run, **do not request escalation
+yourself** — writing to those roots from a dispatched run is a decision the person launching it
+makes, by launching unsandboxed on purpose (`--dangerously-bypass-approvals-and-sandbox`).
+Otherwise the run is report-only from Step 2 on: name the step the denial stopped, print the
+exact `apply-plugin` / `apply-skills` commands, and stop. (Why the rule is explicit:
+`codex-sandbox-and-approvals` — an exec run's own escalation request is granted with no human.)
 
 ### 2. Auto-apply trusted updates
 
@@ -159,7 +160,7 @@ in-place updates to skills the user already chose to install.
 
 Summarize grouped by ecosystem — all three, each with what was applied, skipped (declined,
 held back for local edits — name those, with the `diff-skill` command — or not updatable, with
-the reason), and failed. Then end with this note verbatim, in the host's spelling:
+the reason), and failed. Then end with this note, in the host's spelling:
 
 > **Restart Claude Code / start a new Codex session to load the updated skills.** Plugin
 > updates explicitly require a restart; agent-skills are loaded at session start.
