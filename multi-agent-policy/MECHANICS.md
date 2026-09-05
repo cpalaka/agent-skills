@@ -203,7 +203,7 @@ the transcript-key check; these are the per-host loops.
   count). Relay each tick as one line, TaskStop when the delegate reports, re-arm per delegate,
   timeout 3600s. To wait on a delegate without a Monitor, poll its transcript file for the
   report's final heading with a bounded `sleep 15` loop; a blocking `TaskOutput` that times out
-  pastes the whole transcript into context (2026-09-04).
+  pastes the whole transcript into context (2026-09-04). Without a Monitor, `stat` the subagent transcript (`~/.claude/projects/<proj>/<session>/subagents/agent-<id>.jsonl`): a 40-minute-static mtime whose last tool call was a multi-line `echo`/heredoc Bash command was a hang (2026-09-05). `TaskStop`, then re-dispatch with a heredoc ban and a time budget in the brief.
 - **Codex:** bounded task/agent waits carrying the same payload, relayed at ~10-minute cadence.
   A blocking sleep stalls communication instead of reporting it.
 
