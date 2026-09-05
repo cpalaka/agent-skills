@@ -19,13 +19,18 @@ on outdated code and forces avoidable rebases later. The pull costs nothing when
 already current; skipping it is the only way to lose. Do not skip because the previous
 session "ended cleanly."
 
-**If the current branch has uncommitted work, commit (or stash) it FIRST.** Before
-`git checkout main`, deal with anything in the working tree on the branch you're leaving:
+**If the dirty work is yours, commit (or stash) it FIRST.** Before `git checkout main`,
+deal with anything *you* left in the working tree on the branch you're leaving, staging by
+explicit path (`git-commit-format`):
 
 ```sh
-git status -sb          # is the working tree dirty?
-git add -A && git commit -m "…"   # …on the current branch (or: git stash)
+git status -sb          # is the working tree dirty — and is all of it yours?
+git add <the files you changed> && git commit -m "…"   # …on the current branch (or: git stash)
 ```
+
+If any of it is not yours — another session shares this checkout — stop: do not stash, commit,
+reset, clean or check it out. Ask the peer to commit, or take your own worktree.
+`parallel-work` § "One clone per interactive session" owns the shared-checkout rules.
 
 Uncommitted, non-conflicting changes **follow a branch switch** — so checking out `main`
 with a dirty tree silently carries that work onto `main`. The damage compounds: the

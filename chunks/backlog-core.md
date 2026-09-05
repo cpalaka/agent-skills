@@ -92,7 +92,11 @@ one file fine to hand-edit; `backlog config set` does not expose `definition_of_
 **Mark Done ON THE BRANCH, before the merge.** After the user signs off on the diff, on the
 feature branch run `backlog task edit <id> --check-ac N … --check-dod 1 … -s Done` and
 commit the task-file change there (`auto_commit` stays false so the edit batches with code,
-one task-file change per code commit). Whether the `--notes` summary carries a commit SHA is
+one task-file change per code commit). With two sessions on one checkout, each session commits
+**only its own task file, by explicit path** — `git add -A` or `git add backlog/` sweeps the
+peer's row (and its In Progress edit) into your commit, and the CLI's own writes to a
+*different* task file are not yours to stage (shared-checkout rules: `parallel-work`).
+Whether the `--notes` summary carries a commit SHA is
 **a merge-model decision — follow your imported git-flow variant's notes-SHA policy**
 (`git-flow-squash` vs `git-flow-noff`); this chunk states no SHA rule of its own. Merging
 never auto-closes a task — Done is set by `task edit` only, after sign-off. The task↔commit
