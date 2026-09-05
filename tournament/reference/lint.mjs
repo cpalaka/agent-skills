@@ -57,6 +57,34 @@ if (/\b(winner|consensus|fatalCount)\b/.test(src) && /\.filter\(Boolean\)/.test(
     && !/\b(dropped|votesSent|votesReturned|needsAdjudication)\b/.test(src))
   warns.push('vote-tallying stage (winner/consensus/fatalCount) filters agent results but has no sent-vs-returned reconciliation (dropped/votesSent/needsAdjudication) — a dropped vote can silently flip the outcome (measured 2026-06-28)')
 
+// A SCOREBOARD stage is the same rule at ERROR strength, scoped to the stage (measured 2026-09-05, ticket 14).
+// Two reasons it is not the WARN above: a scoreboard ranks by a MEAN, so one invalid or dropped ballot
+// reorders the board rather than adding noise; and the whole-file test is suppressed by a `dropped` token in
+// ANY other stage, which is exactly how an unreconciled scoreboard linted clean.
+// DETECTOR: the canonical marker line, else the first `const judged`/`pipeline(` in a script that also binds
+// `board` and assigns `winner`. REGION: that start → the end of the first later `winner` assignment.
+// BLIND SPOT: a hand-rolled scoreboard with neither the marker nor a `board` binding is not detected here and
+// falls through to the whole-file WARN above. Widen the detector rather than the region if that shows up.
+// The token test deliberately carries NO leading \b, so a script that reconciles under its own names
+// (`judgesDropped`, `candidatesDropped`) counts as reconciled.
+const SB_TOKENS = /(dropped|errored|votesSent|votesReturned|needsAdjudication)/
+const marker = src.match(/^[ \t]*\/\/ Tournament stage — scoreboard mode[ \t]*$/m)
+let sbStart = marker ? marker.index : -1
+if (sbStart < 0 && /\bboard\b/.test(src) && /(?:const|let|var)\s+winner\s*=/.test(src)) {
+  const fallback = src.match(/(?:const|let|var)\s+judged\s*=|\bpipeline\s*\(/)
+  if (fallback) sbStart = fallback.index
+}
+if (sbStart >= 0) {
+  const rest = src.slice(sbStart)
+  const wa = rest.search(/(?:const|let|var)\s+winner\s*=/)
+  const eol = wa >= 0 ? rest.indexOf('\n', wa) : -1
+  const region = wa < 0 ? rest : rest.slice(0, eol < 0 ? rest.length : eol)
+  if (!SB_TOKENS.test(region)) {
+    const line = src.slice(0, sbStart).split('\n').length
+    errors.push(`scoreboard tally starting line ${line} ranks candidates by a mean with no sent-vs-returned reconciliation in the stage — record dropped/errored/votesSent/votesReturned per candidate and set needsAdjudication (a reconciliation token elsewhere in the script does NOT cover this stage)`)
+  }
+}
+
 for (const w of warns) console.error('WARN: ' + w)
 for (const e of errors) console.error('ERROR: ' + e)
 process.exit(errors.length ? 1 : 0)
