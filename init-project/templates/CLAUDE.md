@@ -15,6 +15,7 @@ What stays in this file is Claude Code mechanics and nothing else.
   Shape and recovery: the `sandbox-auto` chunk.
 - **MCP registration:** `.mcp.json` is this adapter's project-scope MCP config. It takes effect only
   after a Claude Code **restart**; so does any change to the user-scope `~/.claude.json`.
+<!-- requires: .claude/agents -->
 - **Project-local subagents live in `.claude/agents/`** — dispatch them with the `Agent` tool.
 - **Skills fire from context here.** Where the contract names a skill to read when you touch the
   work it covers, this host loads it on its own; everything else is invoked explicitly.

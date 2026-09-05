@@ -1,9 +1,9 @@
 ## Godot toolchain on this host
 
-<!-- requires: tests/run_tests.sh states: captures are written under $TMPDIR, not /tmp -->
+<!-- requires: tests/run_tests.sh states: captures are written under $TMPDIR when it is set -->
 - **Run `tests/run_tests.sh` inside the sandbox** — it needs no bypass; its captures go under
   `$TMPDIR`, which the sandbox permits.
-<!-- requires: .mcp.json states: the servers are godot-mcp and godot (minimal-godot) and there is no godot-ai entry; contract § godot-ai addon -->
+<!-- requires: .mcp.json states: the servers are godot-mcp and godot (minimal-godot) and there is no godot-ai entry; contract § godot-ai addon; contract states: the dock registers godot-ai at user scope -->
 - **`.mcp.json` lists godot-mcp and minimal-godot only.** The godot-ai stdio entry lives at USER
   scope in `~/.claude.json`, with its ports hardcoded there — if the dock walks to another port,
   re-run the dock's client setup rather than editing that file by hand, and apply the same fix to

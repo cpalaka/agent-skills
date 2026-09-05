@@ -79,19 +79,27 @@ specifics rather than restating them.
 
 **A bullet may declare what it presupposes.** One HTML comment on the line above it,
 `<!-- requires: <target>[; <target>…] -->`, names what must already exist in the project for the
-bullet to be true. Four target forms, and no others:
+bullet to be true. It may sit above a fragment bullet or above one of the engine Templates' own
+bullets (`templates/CLAUDE.md`, `templates/AGENTS.md`); the check treats both alike. Four target
+families, and no others:
 
-- `<path>` — the file exists. `tests/run_tests.sh`
+- `<path>` — the file or directory exists. `tests/run_tests.sh`, `.claude/agents`
 - `<path> § <Heading text>` — a `##`/`###` heading in that file whose text **begins with** the given
   text: the prefix rule Migrate step 4 uses for stub replacement, so `§ godot-ai addon` is met by
   `## godot-ai addon (vendored, TRACKED)` and by a project's own longer variant.
   `docs/godot-mcp-guide.md § Host adapters`
-- `contract § <Heading text>` / `contract names <a>, <b>, …` / `contract knob <key> names <token>` —
-  the emitted contract has that heading (same prefix rule) / its text carries every one of those
-  names / the `- <key>:` value in one of its knob blocks contains that token.
-  `contract knob build names godot-export-verifier`
+- `contract § <Heading text>` / `contract names <a>, <b>, …` / `contract knob <key> names <token>` /
+  `contract states: <claim>` — four members: the emitted contract has that heading (same prefix
+  rule) / names every one of those **as a skill name** — a doc path that happens to carry the name,
+  `docs/godot-gotchas.md`, does not count / the `<key>:` value in one of its knob blocks contains
+  that token, where a combined or bolded key line such as `- **typecheck / test / build:**` counts as
+  each key it lists / the claim holds of the contract. `contract knob build names godot-export-verifier`
 - `<path> states: <claim>` — read the file; the claim holds. For a fact about a file the engine did
   not write, such as a preserved `.mcp.json`. `.mcp.json states: no godot-ai entry`
+
+A `states:` claim is decided by reading the file and asking whether the file *behaves* as claimed,
+never by string match; a missing file fails the form; a claim may not contain `;`, which separates
+targets.
 
 The comment is the Profile's and is never emitted: **every mode strips it on insertion.** A bullet
 with no comment presupposes nothing and is always inserted. Init inserts every bullet (step 1); the
@@ -136,9 +144,9 @@ adapter pointing at nothing, with no error at stamp time and none at the other h
 exists, plan to merge/skip — not overwrite. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
 
-**1. Write the contract and the two adapters.** Fragments go in whole: strip every
-`<!-- requires: -->` comment and insert every bullet — init writes the targets those comments name,
-so the fragment target check (Migrate step 6) does not run here.
+**1. Write the contract and the two adapters.** Fragments go in whole — init writes the targets a
+`<!-- requires: -->` comment names (the `requires:` paragraph in § What a Profile is), so the fragment
+target check (Migrate step 6) does not run here.
 
 - **`docs/agents/project-workflow.md` — the shared project contract.** In this order: the engine's
   header (it states that this is the one contract both adapters read and that host mechanics live in
@@ -246,8 +254,9 @@ order and this step for what the freeze does.
 
 **7. Verify-after-write.** Re-inventory the expected outputs; confirm the three emitted files exist;
 confirm each `@import` path resolves through the symlink; confirm no stamped file still carries a
-`{{` token, an unconsumed `<!-- profile:… -->` marker, or a surviving `*<Fill at init:` prompt; if
-the Profile sets a `verify-gate`, run it.
+`{{` token, an unconsumed `<!-- profile:… -->` marker, a `<!-- requires:` comment, or a surviving
+`*<Fill at init:` prompt; confirm no `##` heading in an emitted adapter has nothing under it; if the
+Profile sets a `verify-gate`, run it.
 
 **Two verdicts a scaffold produces that are neither pass nor fail**, and both have been read as a
 pass: a **gate step that hangs** — no exit, banner only — is a **stamp failure**; kill it, report
@@ -390,19 +399,23 @@ cannot have written down. Same for the `claude` fragment in step 5. A migrated p
 has a `codex` fragment must not come out with an `AGENTS.md` that says nothing about that project
 type.
 
-**The fragment target check** gates each adapter bullet, here and in step 5. Before inserting a
-bullet, resolve every target its `<!-- requires: -->` comment names (the four forms are in § What a
-Profile is) against the tree **as this run leaves it** — migrate stamps nothing, so "exists" means
-exists now, and a target init would write counts as absent. Every target resolves → insert the
-bullet whole, comment stripped. Any target fails → **withhold the bullet whole**: nothing else in the
-fragment is stripped, the bullet is not reworded, and no placeholder stands in for it — a line
-saying "not present here" is a claim about this project, which this mode may not author, and one a
-fresh session pays for on every launch. The ledger gets one row per withheld bullet instead:
-`adapter bullet withheld — <the requires text>; found: <what the check found, per target>`, then the
-bullet verbatim as the Profile's current wording, then, where a contract-fragment section offered
-below would create the target, that section's heading. What makes the check observable: the emitted
+**The fragment target check** gates each adapter bullet, here and in step 5, and runs **after**
+step 5's never-emit-both rule: a bullet dropped because a moved bullet covers its ground gets that
+rule's ledger row and no target check; the check runs on the survivors. For each, resolve every
+target its `<!-- requires: -->` comment names (the four forms, the strip rule and the no-comment case
+are the `requires:` paragraph in § What a Profile is) against the tree **as this run leaves it** —
+migrate stamps nothing, so "exists" means exists now, and a target init would write counts as absent.
+Every target resolves → insert the bullet whole. Any target fails → **withhold the bullet whole**:
+nothing else in the fragment is stripped, the bullet is not reworded, and no placeholder stands in
+for it — a line saying "not present here" is a claim about this project, which this mode may not
+author, and one a fresh session pays for on every launch. The ledger gets one row per withheld bullet
+instead: `adapter bullet withheld — <the requires text>`, then on its own line `found: <what the
+check found, per target>`, then the bullet verbatim as the Profile's current wording, then, where a
+contract-fragment section offered below would create the target, that section's heading. A fragment
+section all of whose bullets are withheld is withheld whole, heading included (ledger row: `adapter
+section withheld — every bullet failed its target`). What makes the check observable: the emitted
 adapters contain no bullet whose `requires:` failed, and the ledger shows exactly one row for each
-bullet withheld. A bullet with no comment is inserted as before.
+bullet withheld.
 
 **The Skills fill prompt is filled by transcription or not at all.** Step 7 fails on a surviving
 `*<Fill at init:` prompt, and this mode may not author one. So: transcribe into that bullet the
@@ -412,7 +425,9 @@ user can see beats a list you made up, and step 7's failure is the correct outco
 it. Say in the ledger which of the two happened.
 
 **Do not insert the `contract` fragment**: the project already has its own prose for those sections,
-and this mode moves prose rather than replacing it. Offer it in the ledger instead, in both kinds:
+and this mode moves prose rather than replacing it. Offer it in the ledger instead — the Profile's
+contract fragment and any conditional fragment its recipe would insert where the condition already
+holds in this project (the godot recipe's Board section where `backlog/` exists) — in both kinds:
 
 - A fragment section whose heading **matches** one the migration moved — offered as the Profile's
   current wording for that section, to adopt by hand.
@@ -424,20 +439,22 @@ and this mode moves prose rather than replacing it. Offer it in the ledger inste
 
 **8. Hand off with the ledger and the init handoff.** The ledger: every line moved and where it went,
 every line flagged and why, and every contract-fragment section offered for hand-adoption. A reader
-who disagrees with a move needs to see it, not diff for it. Then init step 8's items (a), (b), (c)
+who disagrees with a move needs to see it, not diff for it. It lives in the project — the
+migration's board row where the project has a board, else the project's notes file — and the
+Profile's parity check reads the withheld and never-emit-both rows from there. Then init step 8's items (a), (b), (c)
 and (e) — the external-includes approval, what it does for headless runs, the Codex directory-trust
 prompt, and the new-session rule — plus the byte figures from step 7. A migrated project is a first
 launch on the second host, so none of those has been answered yet.
 
-**Then tell them to run init once.** Migrate stamps no Templates, so the files the emitted contract
-and adapters now point at — a gotcha-scan wrapper, a reference guide, a domain pointer, a test
-harness, the Codex MCP config — are still absent, and until init runs the contract names files that
-are not there. Init is idempotent and skip-if-exists: over a migrated project it stamps exactly the
-missing ones and touches nothing this mode wrote. Two things that run does not do, and the handoff
-says both. The stamps it lands are named only by contract-fragment sections this mode offered and did
-not insert — `docs/agents/domain.md` by the Working-in-this-repo bullet, the gotcha-scan wrapper by
-the Running paragraph, `docs/agents/issue-tracker.md` / `triage-labels.md` by `## Board` — so until
-those are adopted the files are present and named by nothing. And it restores no withheld adapter
+**Then tell them to run init once.** Migrate stamps no Templates, so whichever of the files the
+emitted contract and adapters now point at — a gotcha-scan wrapper, a reference guide, a domain
+pointer, a test harness, the Codex MCP config — the project lacks is still absent, and until init
+runs the contract names files that are not there. Init is idempotent and skip-if-exists: over a
+migrated project it stamps exactly the missing ones and touches nothing this mode wrote. Two things
+that run does not do, and the handoff says both. The stamps it lands are named only by contract
+sections this mode offered and did not insert, unless the Profile's recipe inserts one itself on that
+run — the Profile's migration section says which stamp each offered section names — so until those
+are adopted the files are present and named by nothing. And it restores no withheld adapter
 bullet: init runs no target check and re-inserts nothing at a consumed marker, and migrate cannot be
 re-run over its own output (step 0), so a bullet whose target the user later creates returns through
 the Profile's parity check, not through either mode.

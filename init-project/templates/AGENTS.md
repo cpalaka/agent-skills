@@ -41,6 +41,7 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   server is broken.
 - MCP servers connect **at session start**. After any config change, start a new session; nothing
   re-reads it mid-session.
+<!-- requires: contract states: which MCP server writes and which only read -->
 - Which server writes and which ones only read is in the contract, § Working in this repo. That
   division is not host-specific; only the tool-name prefix you see is.
 

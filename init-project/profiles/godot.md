@@ -188,13 +188,13 @@ project uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide
 `docs/blender-mcp-guide.md` and `templates/asset-pipeline.md` → `docs/asset-pipeline.md` (that one
 carries a `{{WORKSPACE_ROOT}}` token to ask for at stamp time). They document the same pipeline and
 the pipeline doc points at the MCP guide, so one without the other is a dangling reference, and the
-workspace-root question is meaningless with no Blender source. Where the project has none, **both
-Blender bullets drop from the contract fragment together.**
+workspace-root question is meaningless with no Blender source. Where the project has none, **the
+Blender bullet drops from the contract fragment.**
 
 **A leftover from an earlier run is reported, never deleted.** A project stamped before the pair
 went conditional can hold `docs/asset-pipeline.md` with no Blender source: the engine does not
-remove a project file, so name it in the handoff as a leftover for the user to delete, keep both
-contract bullets dropped, and leave the MCP guide's pointer to it conditional as it is written.
+remove a project file, so name it in the handoff as a leftover for the user to delete, keep the
+Blender contract bullet dropped, and leave the MCP guide's pointer to it conditional as it is written.
 
 Both MCP guides are carried forward as-is and are **due a content-staleness audit at step 6** (they
 track live MCP tool reality / Blender API drift).
@@ -330,10 +330,9 @@ dock auto-starts a uv-managed Python server on `:8000` + `:9500`.)
    claim about this project.
 3. **Both adapter fragments.** In `adapter-claude.md`, drop only the godot-ai half of the MCP
    bullet — **keep the sentence saying `.mcp.json` lists godot-mcp and minimal-godot**, which is the
-   only inventory of that file either adapter carries — and drop `contract § godot-ai addon` from
-   that bullet's `<!-- requires: -->` comment, or the section step 2 deleted withholds the bullet on
-   every migrate. In `adapter-codex.md`, drop the godot-ai bullet whole, comment included; it is
-   nothing but a pointer at the contract section step 2 just deleted.
+   only inventory of that file either adapter carries — and drop both `contract` targets from that
+   bullet's `<!-- requires: -->` comment. In `adapter-codex.md`, drop the godot-ai bullet whole,
+   comment included; it is nothing but a pointer at the contract section step 2 just deleted.
 
 `.mcp.json` and `.codex/config.toml` are unaffected — neither ever listed godot-ai.
 
@@ -434,8 +433,10 @@ Tell the user, in addition to the engine's external-includes-approval note:
    (`addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai MCP
    client entry is user-scope, so a clone on a NEW machine gets it only after the dock's first
    enable — step 4.4). `.codex/config.toml` is gitignored too, so a clone re-creates it from the
-   block in `docs/godot-mcp-guide.md` § Host adapters with its own absolute root. Neither host
-   picks up an MCP change without a new session.
+   Profile Template (`init-project/profiles/godot/templates/codex/config.toml`, wherever the skill
+   is installed), or from the block in `docs/godot-mcp-guide.md` § Host adapters where this
+   project's guide carries it, with its own absolute root. Neither host picks up an MCP change
+   without a new session.
 5. If the user-level Claude Code settings don't already allow the godot-mcp tools, the
    user may get permission prompts — user-level perms are out of scope here (this profile sets
    project-level perms only). Codex has no such allowlist; its sandbox and approval policy are
@@ -443,14 +444,24 @@ Tell the user, in addition to the engine's external-includes-approval note:
 
 ## Migrating a pre-contract Godot project
 
-Run the engine's `## Migrate mode` first; it moves the prose. Two things are godot-specific:
+Run the engine's `## Migrate mode` first; it moves the prose. Four things are godot-specific:
 
 - **The knob value migrate flags is this Profile's `tools/agent/godot-gotchas-scan.sh`.** A
   pre-contract project's `VERIFY_EXAMPLES` and DoD item 2 name
   `~/.claude/skills/godot-gotchas/scripts/precommit-scan.sh` — a path that resolves on one host and
   silently misses on the other. Migrate reports it; the replacement is the stamped wrapper, with the
   read-the-VERDICT-line and give-it-a-scope wording the knobs above carry.
-- **Then run init once.** Migrate emits no Templates, so the wrapper itself, `.codex/config.toml`,
-  `docs/agents/domain.md` and (with a board) `docs/agents/triage-labels.md` are still absent after
-  it. Init is idempotent and skip-if-exists, so a second run over a migrated project stamps exactly
-  the missing files and touches nothing migrate wrote.
+- **The fragment target check (engine step 6) withholds most of this Profile's adapter bullets** over
+  a pre-contract tree — their targets are contract sections and stamps a fresh init writes — and each
+  returns through `audit-godot-parity` pair 9 once its target exists.
+- **Then run init once.** Migrate emits no Templates, so whichever of the wrapper itself,
+  `.codex/config.toml`, `docs/agents/domain.md` and (with a board) `docs/agents/triage-labels.md` /
+  `issue-tracker.md` the project lacks is still absent after it. Init is idempotent and
+  skip-if-exists, so a second run over a migrated project stamps exactly the missing files and
+  touches nothing migrate wrote. Two of those stamps get a reader only when an offered contract
+  section is adopted by hand: `docs/agents/domain.md` is named by § Working in this repo bullet 1,
+  `tools/agent/godot-gotchas-scan.sh` by the § Running gotcha-scan paragraph. The Board pair is
+  `profiles/backlog.md`'s (its `adapters:` comment); the Board (conditional) step inserts `## Board`
+  on the init run where `backlog/` exists, so those two get their reader from init.
+- **`docs/godot-mcp-guide.md` § Host adapters is the one guide gap neither mode fills** — migrate
+  moves no guide and init skips the existing one; pair 1 of the parity check (the guide diff) owns it.

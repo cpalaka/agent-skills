@@ -100,6 +100,14 @@ owners: `init-project/templates/` holds the three **engine-owned** ones every Pr
 three `adapters:` fragments the engine inserts into those three at their markers.
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
+**Fragment target check**:
+Migrate mode's gate on a fragment or Template bullet. The bullet's `<!-- requires: -->` comment
+names its *targets* — what must already exist in the project for the bullet to be true. Every
+target resolves → the bullet is inserted, comment stripped; any fails → the bullet is *withheld*
+whole to the migration ledger, never reworded ([ADR 0010](docs/adr/0010-fragment-bullets-declare-their-targets.md)).
+Init strips the comments and inserts every bullet, because it writes the targets they name.
+_Avoid_: fill gate, existence check.
+
 ### Chunks & composition
 
 **Chunk**:
