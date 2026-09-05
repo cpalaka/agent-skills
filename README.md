@@ -33,10 +33,10 @@ ln -s "$PWD/verification-discipline" ~/.claude/skills/verification-discipline   
 ln -s "$PWD/verification-discipline" ~/.agents/skills/verification-discipline   # Codex
 ```
 
-**Two Skills ship a Codex host adapter** — `godot-architecture-review` and `refresh-context`. A
-host adapter is a thin directory that reads the canonical body and states only what its host
-needs differently (invocation spelling, tool surface). For those two, point the Codex link at the
-adapter rather than the root directory:
+**Three Skills ship a Codex host adapter** — `godot-architecture-review`, `refresh-context` and
+`tournament`. A host adapter is a thin directory that reads the canonical body and states only
+what its host needs differently (invocation spelling, tool surface, the fan-out surface). For
+those three, point the Codex link at the adapter rather than the root directory:
 
 ```sh
 ln -s "$PWD/refresh-context"              ~/.claude/skills/refresh-context
@@ -214,7 +214,9 @@ runtime forbids several JS built-ins, so each run emits a fresh literal script, 
 **When to use:** produce many candidates, screen and rank them, run a judge bracket, stress-test
 the winner, synthesize a final answer.
 
-[`SKILL.md`](tournament/SKILL.md)
+[`SKILL.md`](tournament/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/tournament/SKILL.md)
+(no Workflow runtime there — the fan-out runs on `collaboration.spawn_agent`, and
+`codex-skills/tournament/scripts/tourney.mjs` reconciles every stage's sent-vs-returned)
 
 ### unslop
 
