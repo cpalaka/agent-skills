@@ -177,7 +177,10 @@ Each generation agent runs at `effort: high`. Output is the full CANDIDATE_SCHEM
 ## Judges
 
 Three judges score each candidate 0–10 through their lens only, in parallel per candidate. Final
-score = mean of the three. Scoreboard sorted descending; winner = highest mean.
+score = mean of the **valid** ballots (a candidate with none scores `null`, never `0`). Scoreboard
+sorted descending; winner = highest mean, ties broken to the lower index, and any dropped or voided
+ballot sets `needsAdjudication` so the result withholds the winner until a human has read the
+reconciliation.
 
 **Judge: fairness** (`key: fairness`)
 Persona: Distributed-systems engineer who has debugged a limiter that admitted 3× its configured
@@ -202,8 +205,11 @@ retry storms (jitter, spread expiry) rather than merely surviving them. Penalize
 cannot be expressed in the required headers and anything that requires reading documentation to
 predict.
 
-Judge schema output: `{persona, score, breakdown, critique, mustFix, wouldChoose}`. All fields
-required except `breakdown`. Judges see the shared context plus the candidate's `designMarkdown`.
+Judge schema output: `{persona, candidate, score, breakdown, critique, mustFix, wouldChoose}`. All
+fields required except `breakdown`. `persona` and `candidate` are the **identity echo**: the judge
+repeats its assigned role and the candidate name it was given, verbatim, and the scoreboard stage
+buckets any ballot whose echo, type or scale disagrees with the assignment as `errored` — never
+tallied. Judges see the shared context plus the candidate's `designMarkdown`.
 
 ## Synthesize Spec
 

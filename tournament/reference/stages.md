@@ -19,10 +19,10 @@ Every stage snippet reads/writes these exact bindings, so composed stages wire t
 | filter stage (scoreboard mode) | `shortlist` | `number[]` (indices) |
 | tournament/bracket | `champion`, `runnerUp` | `number` (index) |
 | tournament/bracket | `matchLog` | `object[]` |
-| tournament/scoreboard | `board` | `{index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,...}[]` (desc; `score` is `null`, never `0`, when no ballot was valid) |
-| tournament/scoreboard | `winner` | `number` (index; ties break to the lower index. `null` only when the board is empty) |
-| tournament/scoreboard | `needsAdjudication` | `boolean` (any dropped/errored ballot, any unscored candidate, a tie at the top, or an empty electorate/shortlist) |
-| tournament/scoreboard | `reconciliation` | `object[]` (per candidate: `votesSent`/`votesReturned`/`dropped`/`errored`/`generationFailed`) |
+| tournament/scoreboard | `board` | `{index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,stageThrew,...}[]` (desc; `score` is `null`, never `0`, when no ballot was valid. The three vote buckets are DISJOINT: `votesSent = votesReturned + dropped + errored.length`, so `votesReturned` counts only ballots that passed validation) |
+| tournament/scoreboard | `winner` | `number` (index; ties break to the lower index. `null` only when the board is empty — every consumer that indexes `candidates[winner]` must handle that) |
+| tournament/scoreboard | `needsAdjudication` | `boolean` (any dropped/errored ballot, any unscored candidate, a candidate lost to a throwing stage, a tie at the top, or an empty electorate/shortlist) |
+| tournament/scoreboard | `reconciliation` | `object[]` (one row per shortlist entry, including candidates whose stage threw: `votesSent`/`votesReturned`/`dropped`/`errored`/`generationFailed`/`stageThrew`) |
 | verify-champion | `skeptics` | `object[]` |
 | verify-champion | `fatalCount` | `number` |
 | synthesize | `report` (text mode) or `synth` (schema mode) | `string`/`object` |
@@ -30,7 +30,7 @@ Every stage snippet reads/writes these exact bindings, so composed stages wire t
 
 Each snippet is valid JS with default slot values; the skill replaces `// FILL:`-marked slots. Compose only the stages the spec needs, in pipeline order.
 
-The snippets were normalized out of real tournament scripts. Those scripts are **environment-specific** — local corpus paths, one domain's field names, one machine's layout — so they are not shipped here and nothing in this catalog depends on them. Read `reference/example-spec.md` for the end-to-end worked example, and `reference/fixtures/` for the three tiny scripts `lint.mjs` is calibrated against.
+The snippets were normalized out of real tournament scripts. Those scripts are **environment-specific** — local corpus paths, one domain's field names, one machine's layout — so they are not shipped here and nothing in this catalog depends on them. Read `reference/example-spec.md` for the end-to-end worked example, and `reference/fixtures/` for the tiny scripts `lint.mjs` is calibrated against (`node reference/lint.mjs --selftest` runs the whole directory).
 
 ---
 
@@ -173,7 +173,7 @@ const JUDGE_SCHEMA = {
   properties: {
     persona: { type: 'string', description: 'YOUR assigned role, echoed verbatim' },
     candidate: { type: 'string', description: 'the CANDIDATE NAME you were given, echoed verbatim' },
-    score: { type: 'number', description: '0-10 score from this judge\'s perspective' }, // FILL: adjust scale/name (a wider scale, e.g. 0-50, spreads a clustering panel) — keep SCORE_SCALE in step
+    score: { type: 'number', minimum: 0, maximum: 10, description: '0-10 score from this judge\'s perspective' }, // FILL: adjust scale/name (a wider scale, e.g. 0-50, spreads a clustering panel) — keep `minimum`/`maximum` in step with SCORE_SCALE
     breakdown: { type: 'string' },
     critique: { type: 'string' },
     mustFix: { type: 'string' }, // FILL: rename to match your domain's critical-issue label
@@ -647,8 +647,10 @@ log(`CHAMPION: ${candidates[champion].name}`)
 ```js
 // Tournament stage — scoreboard mode
 // Consumes: candidates (Candidate[]), shortlist (number[], indices), renderConcept, JUDGE_SCHEMA
-// Produces: board ({index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,...}[], sorted desc),
-//           winner (number/index = board[0].index), needsAdjudication (boolean), reconciliation (object[])
+// Produces: board ({index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,stageThrew,...}[], sorted desc),
+//           winner (number/index = board[0].index; `null` ONLY when the board is empty — downstream stages
+//           must handle that, see the verify-champion and synthesize guards), needsAdjudication (boolean),
+//           reconciliation (object[], one row per shortlist entry)
 // FILL: replace JUDGES with judge personas/rubrics for your domain; set SCORE_SCALE from the spec
 // NOTE: pipeline(items, stage1, stage2, ...) passes every stage callback (prevResult, originalItem, index).
 // So pipeline(shortlist, genFn, judgeFn) gives each stage the candidate index as originalItem — no outer map needed.
@@ -657,7 +659,7 @@ log(`CHAMPION: ${candidates[champion].name}`)
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const shortlist = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
-const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number' }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
+const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number', minimum: 0, maximum: 10 }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly; keep minimum/maximum in step with SCORE_SCALE
 const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
 const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
 const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
@@ -678,9 +680,13 @@ const JUDGES = [ // FILL: replace with judge personas + rubrics for your domain
 // or misattributed score does not merely add noise — it reorders the board. `x.score || 0` counted all
 // three: `null` scored a zero (demoting its own candidate), a string concatenated
 // ("9" + "7" → mean 62.3), and 100 on a 0–10 scale carried a candidate to the top on one vote.
+// The identity echo is compared AFTER normalising both sides: a judge that echoes its role with a
+// trailing space or a different case has still identified itself, and voiding that ballot would throw
+// away a valid vote for a formatting difference. A different name still fails.
+const sameId = (a, b) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase()
 const voteFault = (v, judge, cand) => {
-  if (v.persona !== judge.persona) return `persona '${v.persona}' != assigned '${judge.persona}'`
-  if (v.candidate !== cand.name) return `candidate '${v.candidate}' != assigned '${cand.name}'`
+  if (!sameId(v.persona, judge.persona)) return `persona '${v.persona}' != assigned '${judge.persona}'`
+  if (!sameId(v.candidate, cand.name)) return `candidate '${v.candidate}' != assigned '${cand.name}'`
   if (typeof v.score !== 'number' || !Number.isFinite(v.score)) return `score is ${v.score === null ? 'null' : typeof v.score}, not a finite number`
   if (SCORE_SCALE.integer && !Number.isInteger(v.score)) return `score ${v.score} is not an integer`
   if (v.score < SCORE_SCALE.min || v.score > SCORE_SCALE.max) return `score ${v.score} outside ${SCORE_SCALE.min}..${SCORE_SCALE.max}`
@@ -702,7 +708,7 @@ const rawJudged = await pipeline(
     // sets needsAdjudication, so a vanished candidate can never read as one that simply lost.
     if (!generated) {
       log(`⚠ ${c.name}: generation returned nothing — candidate kept on the board UNSCORED; FLAGGED for main-loop review`)
-      return { index: idx, name: c.name, generated: null, judges: [], score: null, votesSent: 0, votesReturned: 0, dropped: 0, errored: [], generationFailed: true }
+      return { index: idx, name: c.name, generated: null, judges: [], score: null, votesSent: 0, votesReturned: 0, dropped: 0, errored: [], generationFailed: true, stageThrew: false }
     }
     return parallel(JUDGES.map(j => () =>
       agent(
@@ -722,15 +728,24 @@ const rawJudged = await pipeline(
       // score is null, NEVER 0, when nothing valid came back — a zero is a real rank, an absence is not.
       const score = valid.length ? valid.reduce((s, x) => s + x.score, 0) / valid.length : null
       if (dropped || errored.length) log(`⚠ ${c.name}: ${js.length} vote(s) sent, ${valid.length} valid${dropped ? `, ${dropped} DROPPED` : ''}${errored.length ? `, ${errored.length} ERRORED (${errored.map(e => `${e.judge}: ${e.why}`).join('; ')})` : ''}; FLAGGED for main-loop review`)
-      return { index: idx, name: c.name, generated, judges: valid, score, votesSent: js.length, votesReturned: js.length - dropped, dropped, errored, generationFailed: false }
+      // The three buckets are DISJOINT: votesSent = votesReturned + dropped + errored.length. An invalid
+      // ballot came BACK but is not a RETURNED VOTE — counting it as one hides the void from every consumer
+      // that reads the reconciliation (the Codex instrument keeps the same split, tourney.mjs buildBoard).
+      return { index: idx, name: c.name, generated, judges: valid, score, votesSent: js.length, votesReturned: valid.length, dropped, errored, generationFailed: false, stageThrew: false }
     })
   }
 )
 // pipeline() nulls an item only when a stage THROWS, and the buckets above no longer throw — but an
-// unexpected runtime error still can, so keep the filter AND reconcile what it removed.
-const judged = rawJudged.filter(Boolean)
-const stageDropped = rawJudged.length - judged.length
-if (stageDropped) log(`⚠ ${stageDropped}/${rawJudged.length} candidate(s) fell out of the judging pipeline (a stage threw); FLAGGED for main-loop review`)
+// unexpected runtime error still can. pipeline() resolves POSITIONALLY, so rawJudged[k] belongs to
+// shortlist[k]: rebuild the row from that index rather than filtering it away, or the reconciliation
+// cannot NAME the candidate it lost and a vanished candidate reads as one that simply lost.
+const stageDropped = rawJudged.length - rawJudged.filter(Boolean).length
+const judged = rawJudged.map((r, k) => r || {
+  index: shortlist[k], name: (candidates[shortlist[k]] || {}).name || `(shortlist position ${k})`,
+  generated: null, judges: [], score: null, votesSent: 0, votesReturned: 0, dropped: 0, errored: [],
+  generationFailed: true, stageThrew: true,
+})
+if (stageDropped) log(`⚠ ${stageDropped}/${rawJudged.length} candidate(s) fell out of the judging pipeline (a stage threw) — kept on the board UNSCORED; FLAGGED for main-loop review`)
 
 // Rank: an unscored candidate (null) sorts LAST, never as a zero; equal scores break to the lower index.
 const rank = (x) => (x.score === null ? -Infinity : x.score)
@@ -742,7 +757,7 @@ const tieAtTop = board.length > 1 && board[0].score !== null && board[0].score =
 const needsAdjudication = JUDGES.length === 0 || shortlist.length === 0 || stageDropped > 0 || tieAtTop
   || board.some(b => b.score === null || b.dropped > 0 || b.errored.length > 0)
 const winner = board.length ? board[0].index : null // null ONLY when the board is empty — there is no index to name
-const reconciliation = board.map(b => ({ name: b.name, votesSent: b.votesSent, votesReturned: b.votesReturned, dropped: b.dropped, errored: b.errored, generationFailed: b.generationFailed }))
+const reconciliation = board.map(b => ({ name: b.name, votesSent: b.votesSent, votesReturned: b.votesReturned, dropped: b.dropped, errored: b.errored, generationFailed: b.generationFailed, stageThrew: b.stageThrew }))
 if (needsAdjudication) log('⚠ scoreboard needsAdjudication — the leaderboard below is PROVISIONAL; do not crown a winner without main-loop review')
 log(`Leaderboard: ${board.map(b => `${b.name} ${b.score === null ? '(unscored)' : b.score.toFixed(1)}`).join(' | ')}. ${needsAdjudication ? 'Provisional winner' : 'Winner'}: ${board.length ? board[0].name : '(none)'}.`)
 ```
@@ -760,7 +775,7 @@ Runs skeptic lenses in `parallel` (genuine barrier — all skeptics must complet
 // FILL: replace SKEPTIC_LENSES with lenses appropriate for your domain
 // SWAP RULE (default): if fatalCount >= 2, downstream synthesize should recommend runnerUp instead
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
-const champion = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage
+const champion = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage (scoreboard mode: bind champion = winner, which is `null` on an empty board)
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
 const SKEPTIC_SCHEMA = { type: 'object', properties: { refuted: { type: 'boolean' }, severity: { type: 'string', enum: ['fatal','serious','minor'] }, concerns: { type: 'array', items: { type: 'string' } }, fixes: { type: 'array', items: { type: 'string' } } }, required: ['refuted','severity','concerns','fixes'] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by Schema Builders section
 const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
@@ -777,7 +792,12 @@ const SKEPTIC_LENSES = [ // FILL: replace with lenses for your domain; each has 
   { key: 'lens-c', brief: () => briefs.topicC || '', instr: 'Attack DIMENSION C: [describe the adversarial angle for this skeptic lens]' }, // FILL: replace
 ]
 
-const skepticResults = await parallel(SKEPTIC_LENSES.map(s => () =>
+// A scoreboard run binds champion = winner, and winner is `null` on an empty board. There is nothing to
+// refute then: skip the fan-out rather than interpolating `undefined` into every skeptic prompt and
+// reading the resulting fatalCount of 0 as "no fatal flaw found". Bracket mode always names an index.
+const noChampion = champion === null || champion === undefined || !candidates[champion]
+if (noChampion) log('⚠ verify-champion: no champion to refute (empty/unresolved board) — skeptic panel SKIPPED; fatalCount 0 here means UNTESTED, not clean. FLAGGED for main-loop review')
+const skepticResults = noChampion ? [] : await parallel(SKEPTIC_LENSES.map(s => () =>
   agent(
     `You are a professional skeptic. Your job is to REFUTE this champion before committing to it. Default to refuted=true only for genuinely FATAL flaws; use severity for the rest. Always propose concrete fixes where they exist.\n\n${HARD}\n\n${s.instr}\n\nREFERENCE BRIEF:\n${s.brief()}\n\nTHE CHAMPION:\n${renderConcept(candidates[champion])}`,
     { model: WORKHORSE, label: `skeptic:${s.key}`, phase: 'Verify', schema: SKEPTIC_SCHEMA }
@@ -857,8 +877,21 @@ const SHARED_SYNTH = `[shared background context for ${DOMAIN_SYNTH}]` // FILL: 
 log('Producing final synthesized output...')
 const SYNTH_MODEL = WORKHORSE // OPT-IN: set to SCARCE for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing scarce here and nowhere else in a tournament (multi-agent-policy posture ladder, `full` rung); every other stage stays WORKHORSE.
 const fmtScore = (s) => (s === null || s === undefined ? '(unscored)' : s.toFixed(1)) // an unscored candidate has no mean to print — never render it as 0.0
+// winner is `null` on an empty board (stages.md contract) — never index candidates[winner] unguarded.
+const leader = winner === null || winner === undefined ? null : candidates[winner]
+const leaderName = leader ? leader.name : '(no leader — the board is empty)'
+// Name only the causes that are ACTUALLY set: a prompt that asserts "ballots were dropped" when the real
+// cause was a tie teaches the synthesis agent a fact the run never measured.
+const ADJ_REASONS = [ // FILL: keep in step with the scoreboard stage's needsAdjudication expression if you edit it
+  [board.some(b => b.dropped > 0), 'one or more ballots were DROPPED (a judge returned nothing)'],
+  [board.some(b => (b.errored || []).length > 0), 'one or more ballots were VOIDED as invalid (wrong persona/candidate echo, or a score off type or scale)'],
+  [board.some(b => b.score === null), 'at least one candidate has NO valid score'],
+  [board.some(b => b.stageThrew), 'at least one candidate was lost to a stage that threw'],
+  [board.length > 1 && board[0].score !== null && board[0].score === board[1].score, 'the top two candidates are TIED'],
+  [board.length === 0, 'the board is EMPTY'],
+].filter(([on]) => on).map(([, why]) => why)
 const synth = await agent(
-  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${fmtScore(b.score)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\n${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'}: ${candidates[winner].name}${needsAdjudication ? '\n\nRECONCILIATION: needsAdjudication is TRUE for this scoreboard — ballots were dropped, voided as invalid, or the top is tied. Say this plainly at the top of summaryMarkdown, present the leader as PROVISIONAL, and do NOT crown a winner.' : ''}\n\nADVERSARIAL SKEPTIC FINDINGS ON WINNER (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${fmtScore(b.score)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. Start from the WINNER, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
+  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${fmtScore(b.score)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\n${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'}: ${leaderName}${needsAdjudication ? `\n\nRECONCILIATION: needsAdjudication is TRUE for this scoreboard — ${ADJ_REASONS.join('; ') || 'the run flagged itself for review'}. Say this plainly at the top of summaryMarkdown, present the board and the leader as PROVISIONAL, and do NOT crown a winner.` : ''}\n\nADVERSARIAL SKEPTIC FINDINGS ON ${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'} (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${fmtScore(b.score)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. ${needsAdjudication ? 'Start from the PROVISIONAL LEADER and label it as such throughout — name no winner' : 'Start from the WINNER'}, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
   { model: SYNTH_MODEL, label: 'synthesize', phase: 'Synthesize', schema: SYNTH_SCHEMA, effort: 'max' }
 )
 ```
@@ -937,7 +970,7 @@ return {
 
 Exposes `leaderboard` (array), `winner` (name string, **`null` when the run needs adjudication**), `provisionalWinner`, `needsAdjudication`, `reconciliation`, `candidates` (full detail array), `skeptics`, `fatalCount`, `synth` (fields), `qa`, `patched`.
 
-`winner` is the caller-facing refusal: a consumer that reads it gets nothing to crown until a human has looked at `reconciliation`. `provisionalWinner` is always the deterministic top of the board, so the result stays inspectable.
+`winner` is the caller-facing refusal: a consumer that reads it gets nothing to crown until a human has looked at `reconciliation`. `provisionalWinner` is the deterministic top of the board for a non-empty board, and `null` when the board is empty — so the result stays inspectable without ever pretending a leader exists.
 
 ```js
 // Result shape — scoreboard mode
@@ -956,11 +989,12 @@ const qa = { gatesPassed: true, issues: [], verdict: '' } // STANDALONE PARSE ON
 const patched = '' // STANDALONE PARSE ONLY — DELETE at assembly; produced by QA stage
 
 const round1 = (s) => (s === null || s === undefined ? null : Number(s.toFixed(1))) // an unscored candidate stays null — never rounds to 0
+const leaderName = winner === null || winner === undefined ? null : candidates[winner].name // `null` on an empty board
 
 return {
-  leaderboard: board.map(b => ({ name: candidates[b.index].name, score: round1(b.score), votesSent: b.votesSent, votesReturned: b.votesReturned })),
-  winner: needsAdjudication ? null : candidates[winner].name, // withheld until a human reconciles
-  provisionalWinner: winner === null ? null : candidates[winner].name,
+  leaderboard: board.map(b => ({ name: candidates[b.index].name, score: round1(b.score), votesSent: b.votesSent, votesReturned: b.votesReturned, dropped: b.dropped, errored: (b.errored || []).length })),
+  winner: needsAdjudication ? null : leaderName, // withheld until a human reconciles
+  provisionalWinner: leaderName,
   needsAdjudication,
   reconciliation,
   candidates: board.map(b => ({

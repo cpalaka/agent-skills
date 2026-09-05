@@ -24,9 +24,15 @@
 //     Here the electorate is a positional `parallel()` over `JUDGES`, so there is no id to duplicate.
 //   * "unassigned file in the judge dir" — same reason: there are no files, only array positions, so a
 //     vote nobody asked for has nowhere to arrive from.
-// Everything else in that selftest is ported below (score 100 / null / string / 7.5-under-integer,
-// swapped candidate, wrong judge, empty electorate, uncovered candidate, tie at the top), each with its
-// control beside it.
+// Everything else in that selftest is ported below (score 100 / null / string / 7.5-under-integer /
+// below-min, swapped candidate, wrong judge, empty electorate, uncovered candidate, a stage that threw,
+// a tie at the top). CONTROLS — this is a whole-panel property, not a per-fixture one: the fixtures named
+// `CONTROL …` are the known-goods (a clean panel, 7.5 valid on the default non-integer scale, an echo that
+// differs only by whitespace/case, and a genuine 0 outranking an unscored candidate). Every other fixture
+// is a known-bad, and each one REDs against the pre-fix stage
+// (`git show f4ef258:tournament/reference/stages.md`) — that calibration, not a paired control per row, is
+// what says these fixtures discriminate. Counts are printed in the VERDICT line; keep them there rather
+// than in this comment, which cannot be checked.
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -91,6 +97,10 @@ const TAIL = `
 }
 `
 
+// A fixture answer of THROW makes that agent() call throw a PLAIN error — the only way to reach the
+// runtime's "a stage threw, so the item is null" path, which is what `stageThrew` reconciles.
+const THROW = Symbol('agent throws')
+
 async function runStage(body, fx) {
   const logs = []
   const log = (m) => logs.push(String(m))
@@ -98,6 +108,7 @@ async function runStage(body, fx) {
     const label = opts && opts.label
     if (!Object.prototype.hasOwnProperty.call(fx.answers, label))
       throw harnessError(`fixture "${fx.name}" has no answer for label ${JSON.stringify(label)}`)
+    if (fx.answers[label] === THROW) throw new Error(`simulated agent failure for ${label}`)
     return fx.answers[label]
   }
   const parallel = async (fns) => Promise.all(fns.map(async (f) => {
@@ -147,6 +158,28 @@ const scores = (cand, ...ss) => ss.map((s, k) => (s === null ? null : ballot(can
 
 const row = (res, name) => (res.board || []).find(x => x && x.name === name)
 const idxOf = (res, name) => (res.board || []).findIndex(x => x && x.name === name)
+const warnFor = (res, name) => (res.logs || []).some(l => l.includes('⚠') && l.includes(name))
+const adjWarn = (res) => (res.logs || []).some(l => l.includes('⚠') && l.includes('needsAdjudication'))
+
+// Asserted on EVERY fixture: the reconciliation object and the two ⚠ logs are stage-wide properties, so
+// they are checked once here instead of being restated in each expect list. A silent reconciliation is
+// worth as little as none — these are what catch a mutation that drops the binding or either log line.
+const universal = (r, fx) => {
+  const rows = Array.isArray(r.reconciliation) ? r.reconciliation : null
+  const counted = (x) => !!x && typeof x.votesSent === 'number' && typeof x.votesReturned === 'number'
+    && typeof x.dropped === 'number' && Array.isArray(x.errored)
+  const noisy = (r.board || []).filter(b => b && (b.dropped > 0 || (b.errored || []).length > 0))
+  return [
+    ['[all] reconciliation has one row per shortlist entry', !!rows && rows.length === fx.shortlist.length],
+    ['[all] every reconciliation row carries votesSent/votesReturned/dropped/errored', !!rows && rows.every(counted)],
+    ['[all] vote buckets are disjoint (sent = returned + dropped + errored)',
+      Array.isArray(r.board) && r.board.every(b => b.votesSent === b.votesReturned + b.dropped + (b.errored || []).length)],
+    ['[all] the needsAdjudication ⚠ log appears iff the flag is set', adjWarn(r) === (r.needsAdjudication === true)],
+    ['[all] every candidate with a dropped/errored ballot is NAMED in a ⚠ log', noisy.every(b => warnFor(r, b.name))],
+    ['[all] a Leaderboard log line is emitted and labelled to match the flag',
+      (r.logs || []).some(l => l.startsWith('Leaderboard:') && l.includes(r.needsAdjudication ? 'Provisional winner' : 'Winner'))],
+  ]
+}
 
 const FIXTURES = [
   // ---- control: a clean panel. Every assertion here must hold both before and after the fix EXCEPT the
@@ -172,7 +205,7 @@ const FIXTURES = [
       ['out-of-scale 100 is not tallied — beta mean stays 5', row(r, 'beta')?.score === 5],
       ['winner is still alpha (index 0)', r.winner === 0],
       ['beta has an errored vote from judge-c', (row(r, 'beta')?.errored || []).some(e => e.judge === 'judge-c')],
-      ['beta votesSent 3 / votesReturned 3', row(r, 'beta')?.votesSent === 3 && row(r, 'beta')?.votesReturned === 3],
+      ['beta votesSent 3 / votesReturned 2 (the void is NOT a returned vote)', row(r, 'beta')?.votesSent === 3 && row(r, 'beta')?.votesReturned === 2],
       ['needsAdjudication === true', r.needsAdjudication === true],
     ],
   },
@@ -204,9 +237,21 @@ const FIXTURES = [
     answers: answers(scores('alpha', 8, 8, 8), scores('beta', 7.5, 7.5, 7.5)),
     expect: (r) => [
       ['beta mean is 7.5', row(r, 'beta')?.score === 7.5],
-      ['beta has no errored vote', (row(r, 'beta')?.errored || []).length === 0],
+      // `(x || []).length === 0` would also pass when the field is missing entirely — assert the shape.
+      ['beta has an errored ARRAY and it is empty', Array.isArray(row(r, 'beta')?.errored) && row(r, 'beta').errored.length === 0],
       ['winner is alpha (index 0)', r.winner === 0],
       ['needsAdjudication === false', r.needsAdjudication === false],
+    ],
+  },
+  {
+    name: 'L1 score -1 (below the scale minimum)',
+    candidates: CANDS, shortlist: [0, 1],
+    answers: answers(scores('alpha', 4, 4, 4), [ballot('beta', 0, 6), ballot('beta', 1, 6), ballot('beta', 2, -1)]),
+    expect: (r) => [
+      ['the below-min -1 is not tallied — beta mean stays 6', row(r, 'beta')?.score === 6],
+      ['winner is beta (index 1), not dragged under alpha by the -1', r.winner === 1],
+      ['beta has an errored vote from judge-c', (row(r, 'beta')?.errored || []).some(e => e.judge === 'judge-c')],
+      ['needsAdjudication === true', r.needsAdjudication === true],
     ],
   },
   {
@@ -242,6 +287,23 @@ const FIXTURES = [
       ['winner is alpha (index 0)', r.winner === 0],
       ['beta has an errored vote from judge-c', (row(r, 'beta')?.errored || []).some(e => e.judge === 'judge-c')],
       ['needsAdjudication === true', r.needsAdjudication === true],
+    ],
+  },
+  {
+    // F19: the echo identifies the judge; it does not authenticate it. Voiding a ballot over a trailing
+    // space or a capital letter throws away a real vote for a formatting difference — normalise, then compare.
+    name: 'CONTROL L2 echo differs only by whitespace/case — still the same judge and candidate',
+    candidates: CANDS, shortlist: [0, 1],
+    answers: answers(scores('alpha', 8, 8, 8), [
+      ballot('beta', 0, 5, { persona: PERSONAS[0] + ' ' }),
+      ballot('beta', 1, 5, { persona: PERSONAS[1].toUpperCase() }),
+      ballot(' Beta ', 2, 5),
+    ]),
+    expect: (r) => [
+      ['all three ballots count — beta mean is 5', row(r, 'beta')?.score === 5],
+      ['beta has no errored vote', Array.isArray(row(r, 'beta')?.errored) && row(r, 'beta').errored.length === 0],
+      ['beta votesSent 3 / votesReturned 3', row(r, 'beta')?.votesSent === 3 && row(r, 'beta')?.votesReturned === 3],
+      ['needsAdjudication === false', r.needsAdjudication === false],
     ],
   },
   // ---- L3: the electorate
@@ -291,13 +353,55 @@ const FIXTURES = [
       ['needsAdjudication === true', r.needsAdjudication === true],
     ],
   },
+  {
+    // The runtime's other null path: a stage THREW, so pipeline() nulled that item. The row has to be
+    // rebuilt positionally from shortlist[k] or the reconciliation cannot name what the run lost — and
+    // the sort must not meet a bare null.
+    // KNOWN EQUIVALENT MUTANT: making the `stageDropped > 0` disjunct of needsAdjudication inert does NOT
+    // red anything, and no fixture can make it. A rebuilt row always carries `score: null`, so
+    // `board.some(b => b.score === null)` already covers it — the disjunct is defence in depth against a
+    // future edit that gives those rows a score, not an independently observable term. Don't chase it.
+    name: 'L4 the judging stage THROWS for one candidate',
+    candidates: CANDS, shortlist: [0, 1],
+    answers: answers(scores('alpha', 4, 4, 4), [], { beta: THROW }),
+    expect: (r) => [
+      ['the stage completes without throwing (no bare null reached the sort)', !r.__threw],
+      ['beta is still ON the board, by name', (r.board || []).length === 2 && !!row(r, 'beta')],
+      ['beta is flagged stageThrew', row(r, 'beta')?.stageThrew === true],
+      ['beta score is null', row(r, 'beta')?.score === null],
+      ['beta ranks below alpha', idxOf(r, 'alpha') < idxOf(r, 'beta')],
+      ['reconciliation NAMES beta', (r.reconciliation || []).some(x => x.name === 'beta')],
+      ['a ⚠ log reports the candidate that fell out of the judging pipeline',
+        (r.logs || []).some(l => l.includes('⚠') && l.includes('fell out of the judging pipeline'))],
+      ['needsAdjudication === true', r.needsAdjudication === true],
+    ],
+  },
+  {
+    // A real 0 and "no valid vote" are different facts. The rank sentinel has to keep them apart, or a
+    // candidate nobody could score outranks one the panel actually scored zero. The UNSCORED candidate is
+    // deliberately the LOWER index: a sentinel of 0 instead of -Infinity would then tie the two and hand
+    // the top to the unscored one on the index tie-break — the discriminator this fixture exists for.
+    name: 'L4 an unscored candidate must rank BELOW a candidate that genuinely scored 0',
+    candidates: CANDS, shortlist: [0, 1],
+    answers: answers(scores('alpha', 100, 100, 100), scores('beta', 0, 0, 0)),
+    expect: (r) => [
+      ['beta mean is 0 (a real score, not an absence)', row(r, 'beta')?.score === 0],
+      ['alpha is unscored (null), all three ballots voided', row(r, 'alpha')?.score === null && (row(r, 'alpha')?.errored || []).length === 3],
+      ['the genuine 0 outranks the unscored candidate', idxOf(r, 'beta') < idxOf(r, 'alpha')],
+      ['winner is beta (index 1), NOT the unscored lower index', r.winner === 1],
+      ['needsAdjudication === true', r.needsAdjudication === true],
+    ],
+  },
   // ---- L5: tie at the top
   {
-    name: 'L5 tie at the top',
-    candidates: CANDS, shortlist: [0, 1],
+    // shortlist is deliberately [1, 0] — beta arrives FIRST. A stable sort alone would then leave beta on
+    // top, so this fixture only passes if the comparator really breaks the tie to the lower index.
+    name: 'L5 tie at the top (shortlist reversed: beta first)',
+    candidates: CANDS, shortlist: [1, 0],
     answers: answers(scores('alpha', 7, 7, 7), scores('beta', 7, 7, 7)),
     expect: (r) => [
       ['winner breaks to the LOWER index (alpha)', r.winner === 0],
+      ['alpha sits at the TOP of the board despite arriving second', (r.board || [])[0]?.name === 'alpha'],
       ['both means are 7', row(r, 'alpha')?.score === 7 && row(r, 'beta')?.score === 7],
       ['needsAdjudication === true', r.needsAdjudication === true],
     ],
@@ -306,8 +410,19 @@ const FIXTURES = [
 
 // ---------------------------------------------------------------- run
 
-const md = readFileSync(mdPath, 'utf8')
-const base = extractStage(md)
+// Extraction failures are a USAGE class (exit 2), never a RED (exit 1): a renamed heading or a moved
+// fence means the harness pointed at the wrong thing, and reporting that as "the stage is broken" is the
+// failure mode this gate exists to prevent. Same convention as lint.mjs.
+let md, base
+try {
+  md = readFileSync(mdPath, 'utf8')
+  base = extractStage(md)
+} catch (e) {
+  const msg = String(e && e.message || e)
+  console.error(msg.startsWith('harness:') ? msg : `harness: ${msg}`)
+  console.error('VERDICT: HARNESS ERROR — the scoreboard stage could not be extracted; no assertion was run')
+  process.exit(2)
+}
 let fails = 0, total = 0
 const check = (label, cond) => {
   total++
@@ -334,10 +449,11 @@ for (const fx of FIXTURES) {
     res = { __threw: true, error: String(e && e.message || e) }
   }
   if (res.__threw) console.log(`      (stage threw: ${res.error})`)
-  for (const [label, cond] of fx.expect(res)) check(`${fx.name} — ${label}`, cond)
+  for (const [label, cond] of [...fx.expect(res), ...universal(res, fx)]) check(`${fx.name} — ${label}`, cond)
 }
 
+const controls = FIXTURES.filter(f => f.name.startsWith('CONTROL')).length
 console.log(fails
   ? `VERDICT: RED — ${fails} of ${total} selftest assertion(s) failed`
-  : `VERDICT: GREEN (selftest-scoreboard) — ${total} assertions over ${FIXTURES.length} fixtures`)
+  : `VERDICT: GREEN (selftest-scoreboard) — ${total} assertions over ${FIXTURES.length} fixtures (${FIXTURES.length - controls} known-bads, ${controls} controls)`)
 process.exit(fails ? 1 : 0)
