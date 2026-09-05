@@ -17,11 +17,13 @@
 //                 completes "successfully" otherwise — multi-agent-policy § Fan-out → verify)
 //       The buckets are disjoint and sum to sent. Exit 0 GREEN, 1 RED, 2 usage.
 //
-//   board <judge-dir> --sent <ids-file> --candidates <ids-file> [--scale MIN..MAX]
+//   board <judge-dir> --sent <ids-file> --candidates <ids-file> [--scale MIN..MAX] [--integer]
 //       judge item id = "<judge>__<candidate>", file = {judge, candidate, score, rationale}
 //       A vote counts only if: its `judge` and `candidate` fields equal the filename's two
-//       parts (payload identity), and `score` is a JSON number, an integer, within --scale
-//       (default 0..10). Anything else → errored with the reason printed, never tallied.
+//       parts (payload identity), and `score` is a JSON number within --scale (default
+//       0..10; the canonical JUDGE_SCHEMA is `number`, so integer-ness is NOT required unless
+//       --integer is passed — pass it when the spec says integer). Anything else → errored
+//       with the reason printed, never tallied.
 //       Scoreboard per candidate: votesSent, votesReturned, total, mean. needsAdjudication
 //       (no winner, exit 1) when any vote is missing or errored, the top is tied, any
 //       candidate has votesSent == 0, the sent list is empty, or unassigned files exist
@@ -74,7 +76,7 @@ function parseScale(s) {
 }
 function usage() {
   console.error('usage: tourney.mjs reconcile <stage-dir> --sent <file> [--expect N]\n' +
-    '       tourney.mjs board <judge-dir> --sent <file> --candidates <file> [--scale MIN..MAX]\n' +
+    '       tourney.mjs board <judge-dir> --sent <file> --candidates <file> [--scale MIN..MAX] [--integer]\n' +
     '       tourney.mjs rollouts <parent-thread-id> [--sessions <dir>]\n' +
     '       tourney.mjs selftest')
   process.exit(2)
@@ -140,8 +142,8 @@ function cmdReconcile() {
 function validVote(v, judge, cand, scale) {
   if (v.judge !== judge) return `payload judge '${v.judge}' != assignment '${judge}'`
   if (v.candidate !== cand) return `payload candidate '${v.candidate}' != assignment '${cand}'`
-  if (typeof v.score !== 'number') return `score is ${v.score === null ? 'null' : typeof v.score}, not a number`
-  if (!Number.isInteger(v.score)) return `score ${v.score} is not an integer`
+  if (typeof v.score !== 'number' || !Number.isFinite(v.score)) return `score is ${v.score === null ? 'null' : typeof v.score}, not a number`
+  if (scale.integer && !Number.isInteger(v.score)) return `score ${v.score} is not an integer (--integer)`
   if (v.score < scale.min || v.score > scale.max) return `score ${v.score} outside ${scale.min}..${scale.max}`
   return null
 }
@@ -200,7 +202,7 @@ function printBoard(b) {
 function cmdBoard() {
   const dir = argv[1]; const sentFile = opt('--sent'); const candFile = opt('--candidates')
   if (!dir || !sentFile || !candFile) usage()
-  const scale = parseScale(opt('--scale'))
+  const scale = parseScale(opt('--scale')); scale.integer = argv.includes('--integer')
   const b = buildBoard(dir, readIdsOrDie(sentFile, 'sent'), readIdsOrDie(candFile, 'candidate'), scale)
   console.log(printBoard(b))
   process.exit(b.needsAdjudication ? 1 : 0)
@@ -338,14 +340,18 @@ function runSelftest(root) {
   check('board: buckets disjoint on the printed line (returned=3 errored=1 of sent=4)', p4.text.includes('sent=4 returned=3 dropped=0 errored=1') && !b4.r.returned.includes('j2__c2'))
 
   // L1: invalid scores are errored, never tallied — each would otherwise flip c2 over c1
-  for (const [label, s] of [['score 100', 100], ['score null', null], ['score "7" (string)', '7'], ['score 7.5 (non-integer)', 7.5]]) {
+  for (const [label, s] of [['score 100', 100], ['score null', null], ['score "7" (string)', '7']]) {
     vote(jd, 'j2', 'c2', { score: s })
     const b = buildBoard(jd, sent, cands)
     const line = printBoard(b)
     check(`L1 ${label} -> errored, RED (${b.r.reasons['j2__c2'] ?? 'no reason'})`, b.needsAdjudication && b.r.errored.includes('j2__c2') && line.includes('VERDICT: RED (board)') && b.ranked.find(x => x.candidate === 'c2').votesReturned === 1)
   }
+  vote(jd, 'j2', 'c2', { score: 7.5 })
+  check('L1 score 7.5 -> GREEN by default (canonical JUDGE_SCHEMA score is number)', !buildBoard(jd, sent, cands).needsAdjudication)
+  const b75 = buildBoard(jd, sent, cands, { min: 0, max: 10, integer: true })
+  check(`L1 score 7.5 -> errored, RED under --integer (${b75.r.reasons['j2__c2'] ?? 'no reason'})`, b75.needsAdjudication && b75.r.errored.includes('j2__c2'))
   vote(jd, 'j2', 'c2', { score: 6 })
-  check('L1 control: valid integer in scale -> GREEN again', !buildBoard(jd, sent, cands).needsAdjudication)
+  check('L1 control: valid number in scale -> GREEN again', !buildBoard(jd, sent, cands).needsAdjudication)
   vote(jd, 'j2', 'c2', { score: 42 })
   check('L1 --scale 0..50 admits 42', !buildBoard(jd, sent, cands, { min: 0, max: 50 }).needsAdjudication)
   vote(jd, 'j2', 'c2', { score: 6 })

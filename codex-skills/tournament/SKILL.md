@@ -14,8 +14,9 @@ Its §5 and §7 assemble and launch a **Claude Code Workflow script**, and Codex
 runtime, so the substitutions below replace those two sections' *mechanics*; of §6 only the lint
 is dropped (`reference/stages.md` and `reference/lint.mjs` concern that script — ignore them on
 this host), and **§6's smoke run stands** at the parameters §6 names. §5's host-neutral rules
-still bind on Codex: item 7 (vote-tallying stages reconcile SENT vs RETURNED — here it is the
-instrument below), item 9 (skeptic/verify schemas carry ≥4 severity tiers; an "evidence-fit" axis
+still bind on Codex: item 6 (model and effort pinned on every agent — here the configured model
+and an explicit per-call `reasoning_effort` on every spawn), item 7 (vote-tallying stages
+reconcile SENT vs RETURNED — here it is the instrument below), item 9 (skeptic/verify schemas carry ≥4 severity tiers; an "evidence-fit" axis
 measures quote fidelity, not claim support; funders and 0-cost options get their own class), and
 §1's bracket-or-scoreboard choice (this adapter's `board` is the scoreboard variant; a bracket run
 reconciles each match's votes the same way per file, but no bracket runner ships here yet). Load
@@ -50,17 +51,18 @@ reconciles each match's votes the same way per file, but no bracket runner ships
    against the original (rollouts store spawn payloads encrypted). The child replies with
    the path only. **The file is the verdict; the child's reply is not.** A judge item is one
    vote, `<judge>__<candidate>`; the file must carry `judge` and `candidate` equal to its name and
-   an integer `score` on the spec's scale, or the instrument errors it (§4). Why
+   a `score` that is a JSON number on the spec's scale (pass `--integer` when the spec says
+   integer), or the instrument errors it (§4). Why
    `fork_turns: "none"` (measured 2026-09-04, codex-cli 0.153.3, two child rollouts under
    `~/.codex/sessions/2026/09/04/`): a `"none"` child (run-1 `01a06f2f-8def-7760-…`) carries
    exactly one `turn_context`, its own, so its pin is single-valued and unambiguous; a
    full-history fork (critic control `01a06f47-ae2f-7672-…`) carries the parent's copied turn
-   (`turn_id == root_turn_id`, effort high) **and** its own turn (effort low) — the override
-   applied on the full fork too, so the grounds are context isolation and a clean rollout, not
-   inheritance. `wait_agent` returns on mailbox activity, not on every assignment being done:
-   loop — wait, then check that every assigned file exists — until the stage is complete or an
-   attempt bound is hit (state it in `plan.json`; run 1 used one wave per stage plus one
-   recovery wave), then declare the stage short and reconcile what is there.
+   (`turn_id == root_turn_id`, effort high) **and** its own turn (effort low) — the *effort*
+   override applied on the full fork too (the control pinned only `reasoning_effort`; the model
+   half is unmeasured), so the grounds are context isolation and a clean rollout, not
+   inheritance. `wait_agent` returns on mailbox activity, not on every assignment being done —
+   so: wait, then reconcile. §4's reconcile → re-dispatch once → reconcile **is** the completion
+   check; there is no second loop.
 
 4. **Reconcile every fan-out stage before reading it**, with the instrument this adapter ships
    (paths are the installed adapter's, e.g. `~/.agents/skills/tournament/scripts/tourney.mjs`):
@@ -77,8 +79,8 @@ reconciles each match's votes the same way per file, but no bracket runner ships
    once (fresh `task_name`, same message), reconcile again, and if still RED carry
    `needsAdjudication` into the board and the result file — never tally over a short set.
    `board` validates every vote before tallying — `judge` and `candidate` fields equal to the
-   filename's parts, `score` a JSON integer within `--scale` (the spec's scale; default `0..10`)
-   — and errors anything else with the reason; it refuses a winner while any vote is missing or
+   filename's parts, `score` a JSON number within `--scale` (the spec's scale; default `0..10`;
+   add `--integer` when the spec says integer) — and errors anything else with the reason; it refuses a winner while any vote is missing or
    errored, the top is tied, a candidate has no assigned vote, the sent list is empty, or an
    **unassigned** file sits in the judge directory. Unassigned files are a child writing outside
    the accounting: before the board, disposition each one in the result file (a duplicate of an
@@ -126,9 +128,11 @@ reconciles each match's votes the same way per file, but no bracket runner ships
    `multi-agent-policy`'s 20-child announce ceiling (Claude Code's dynamic workflow-size setting
    does not govern a Codex run), and Codex's own concurrency ceiling — config keys
    `agents.max_concurrent_threads_per_session` / `features.multi_agent_v2.max_concurrent_threads_per_session`,
-   thread status `agent_limit_reached` — whose effective default is not printable by any CLI
-   command (`~/.codex/config.toml` sets neither). A stage that hits `agent_limit_reached` waves:
-   wait for a running child, then dispatch the next; the wave count is the attempt bound of §3.
+   thread status `agent_limit_reached`. No CLI command prints the effective default, but the
+   binary's own hint — "Consider setting `features.multi_agent_v2.max_concurrent_threads_per_session`
+   below 8" — is printable evidence it is ≥ 8 (`~/.codex/config.toml` sets neither key). A stage
+   that hits `agent_limit_reached` waves: wait for a running child, then dispatch the next, and
+   reconcile at the end as §4 says.
    Under non-interactive `codex exec` there is nobody to announce to: a projection over the
    announce ceiling stops **report-only** (write `plan.json` and the projection to the reply,
    dispatch nothing). Spawns dispatch a few seconds apart and run concurrently.
