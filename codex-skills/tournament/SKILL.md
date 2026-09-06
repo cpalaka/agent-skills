@@ -11,9 +11,9 @@ This is a thin **Host adapter** for the canonical skill at
 canonical and apply unchanged; `../../tournament/reference/example-spec.md` is the worked spec.
 
 Its §5 and §7 assemble and launch a **Claude Code Workflow script**, and Codex has no Workflow
-runtime, so the substitutions below replace those two sections' *mechanics*; of §6 the lint and the
-scoreboard selftest are dropped (`reference/stages.md`, `reference/lint.mjs` and
-`reference/selftest-scoreboard.mjs` concern that script — ignore them on this host), and **§6's
+runtime, so the substitutions below replace those two sections' *mechanics*; of §6 the lint and both stage
+selftests are dropped (`reference/stages.md`, `reference/lint.mjs`, `reference/selftest-scoreboard.mjs`
+and `reference/selftest-filter.mjs` concern that script — ignore them on this host), and **§6's
 smoke run stands** at the parameters §6 names. §5's host-neutral rules
 still bind on Codex: item 6 (model and effort pinned on every agent — here the configured model
 and an explicit per-call `reasoning_effort` on every spawn), item 7 (vote-tallying stages

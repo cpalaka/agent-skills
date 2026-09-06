@@ -12,13 +12,19 @@ Every stage snippet reads/writes these exact bindings, so composed stages wire t
 | generate stage | `candidates` | `Candidate[]` |
 | generate stage | `seedIndices` | `number[]` |
 | render helpers | `renderConcept(c)`, `renderIndexed(idxs)` | fns → `string` |
-| filter stage | `kept` | `number[]` (indices) |
-| filter stage | `totals` | `Map<number,number>` |
-| filter stage | `ranked` | `number[]` (indices, desc) |
+| schema builders (`SCORES_SCHEMA` block) | `SCREEN_SCALE` | `{min,max,integer}` — declared **once**, there; `SCORES_SCHEMA`, the screener prompt and the filter stage all read it, never a literal range |
+| schema builders (`JUDGE_SCHEMA` block) | `SCORE_SCALE` | `{min,max,integer}` — declared **once**, there; `JUDGE_SCHEMA`, the rubric prompts and the scoreboard stage all read it, never a literal range (the same construct as `SCREEN_SCALE`, one stage later) |
+| filter stage | `kept` | `number[]` (indices — validated: every entry is an integer in `0..candidates.length-1`, seeds included) |
+| filter stage | `totals` | `Map<number, number\|null>` (`null`, never `0`, when no axis returned a valid score for that index — an absence is not a rank) |
+| filter stage | `ranked` | `number[]` (indices, desc by total; `null` totals sort LAST, equal totals break to the lower index) |
+| filter stage | `filterReconciliation` | `object[]` (one row per kept index: `{index, axesSent, axesReturned, dropped, errored: string[], missing, total}`. Per axis a kept index lands in exactly one of returned/dropped/missing, so `axesSent = axesReturned + dropped + missing`; `errored` is the reason list and can be longer than `missing` — two entries for one index on one axis error the second while the first still counts) |
+| filter stage | `filterOrphans` | `string[]` (reasons that belong to no reconciliation row: a screener entry scoring an index the kept set does not hold, and a seed index rejected as not a valid candidate index. Empty on a clean run; every entry also sets the flag) |
+| filter stage | `filterNeedsAdjudication` | `boolean` (no axes, no kept candidates, any index short of its axes, any voided screener entry, any `filterOrphans` entry, or — bracket mode — a tie in total across the REALISED cut line or a `bracket` that is not `BRACKET_SIZE` long. The bracket/shortlist is still produced, PROVISIONAL) |
 | filter stage (bracket mode) | `bracket` | `number[]` (indices, seeded) |
 | filter stage (scoreboard mode) | `shortlist` | `number[]` (indices) |
 | tournament/bracket | `champion`, `runnerUp` | `number` (index) |
-| tournament/bracket | `matchLog` | `object[]` |
+| tournament/bracket | `matchLog` | `object[]` (one row per match: `{round, a, b, winner, votesSent, votesReturned, dropped, errored, tie, needsAdjudication, votes}` — the per-MATCH flag; bracket mode has no run-level one upstream of the result shape) |
+| result shape (bracket mode) | `needsAdjudication` | `boolean` — **composed there**, `filterNeedsAdjudication \|\| matchLog.some(m => m.needsAdjudication)`, because bracket mode's producers each carry only their own flag. Synthesize Variant A composes the same expression as `adjNeeded`; keep the two in step |
 | tournament/scoreboard | `board` | `{index,name,score,votesSent,votesReturned,dropped,errored,generationFailed,stageThrew,...}[]` (desc; `score` is `null`, never `0`, when no ballot was valid. The three vote buckets are DISJOINT: `votesSent = votesReturned + dropped + errored.length`, so `votesReturned` counts only ballots that passed validation) |
 | tournament/scoreboard | `winner` | `number` (index; ties break to the lower index. `null` only when the board is empty — every consumer that indexes `candidates[winner]` must handle that) |
 | tournament/scoreboard | `needsAdjudication` | `boolean` (any dropped/errored ballot, any unscored candidate, a candidate lost to a throwing stage, a tie at the top, or an empty electorate/shortlist) |
@@ -122,7 +128,14 @@ const KEEP_SCHEMA = {
 
 Consumed by the filter stage's per-axis screeners.
 
+**`SCREEN_SCALE` is declared here, once, and the schema reads it** — the filter stage and the screener prompt consume the same const rather than repeating the numbers. Same two-layer argument as `SCORE_SCALE` below: the runtime's schema validation and the stage's own `screenFault` both enforce a screener score, and a scale that disagrees between them is the worst of both — a spec that widens the stage to 0–50 while the schema still says `maximum: 10` makes every screener payload fail validation, retry, come back `null` and land in `dropped`, which reads as flaky screeners rather than as a wrong scale. One declaration, three readers.
+
+**Know the BLAST RADIUS of the schema layer before you narrow the scale.** Under the Workflow runtime, schema validation is WHOLE-PAYLOAD: one off-scale entry does not get stripped out of an otherwise good payload — it fails the whole axis, which retries, comes back `null`, and lands in `dropped` for *every* kept candidate. A raw-JSON runner with no schema layer errors only the one entry (the stage's own `screenFault` voids it and the axis still scores everyone else). So the failure to design against is not a scale that *disagrees* between the two layers; it is a scale the screeners **overshoot** — a spec that sets `{min:1,max:5}` while the model occasionally answers `0` turns an occasional voided entry into a whole lost axis, and the reconciliation reports `dropped`, not "your scale is too narrow". Set the scale wide enough that a screener has to be wrong, not merely enthusiastic, to fall off it.
+
+`minItems` is deliberately absent: coverage is not a schema property here. A screener that skips a candidate is reconciled by the stage as `missing` against the kept set, which names *which* candidate went unscored — a `minItems` rejection would only retry the whole axis and, on a second failure, drop it.
+
 ```js
+const SCREEN_SCALE = { min: 0, max: 10, integer: false } // FILL: from the spec (a wider scale spreads a clustering screener); the SCORES_SCHEMA below, the screener prompt and the filter stage all read THIS
 const SCORES_SCHEMA = {
   type: 'object',
   properties: {
@@ -132,7 +145,7 @@ const SCORES_SCHEMA = {
         type: 'object',
         properties: {
           index: { type: 'integer' },
-          score: { type: 'number', description: '0-10, use the full range' },
+          score: { type: SCREEN_SCALE.integer ? 'integer' : 'number', minimum: SCREEN_SCALE.min, maximum: SCREEN_SCALE.max, description: `${SCREEN_SCALE.min}-${SCREEN_SCALE.max}, use the full range` }, // type AND bounds come from SCREEN_SCALE above, do not hard-code either here
           reason: { type: 'string', description: 'one sentence' },
         },
         required: ['index', 'score', 'reason'],
@@ -177,7 +190,7 @@ const JUDGE_SCHEMA = {
   properties: {
     persona: { type: 'string', description: 'YOUR assigned role, echoed verbatim' },
     candidate: { type: 'string', description: 'the CANDIDATE NAME you were given, echoed verbatim' },
-    score: { type: 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max, description: `${SCORE_SCALE.min}-${SCORE_SCALE.max} score from this judge's perspective` }, // FILL: rename the field for your domain if you like — the scale comes from SCORE_SCALE above, do not hard-code it here
+    score: { type: SCORE_SCALE.integer ? 'integer' : 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max, description: `${SCORE_SCALE.min}-${SCORE_SCALE.max} score from this judge's perspective` }, // FILL: rename the field for your domain if you like — type AND bounds come from SCORE_SCALE above, do not hard-code either here
     breakdown: { type: 'string' },
     critique: { type: 'string' },
     mustFix: { type: 'string' }, // FILL: rename to match your domain's critical-issue label
@@ -295,7 +308,7 @@ const QA_SCHEMA = {
 `renderConcept` iterates `Object.entries(c)` rather than naming fields, so it works for any candidate schema without modification — do not replace it with a hardcoded field list.
 
 ```js
-const candidates = [] // STANDALONE PARSE ONLY — DELETE this line at assembly; the generate stage declares candidates
+const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; the generate stage declares candidates
 
 const renderConcept = (c) =>
   Object.entries(c)
@@ -459,18 +472,32 @@ for (const r of seedDevs.filter(Boolean)) for (const c of (r.candidates || [])) 
 
 ## Filter Stage
 
-Consumes `candidates`, `seedIndices`, `briefs`, `renderIndexed`. Produces `kept` (`number[]`), `totals` (`Map<number,number>`), `ranked` (`number[]` desc), and either `bracket` (`number[]` seeded, bracket mode) **or** `shortlist` (`number[]`, scoreboard mode). Seeds are force-kept in both modes.
+Consumes `candidates`, `seedIndices`, `briefs`, `renderIndexed`, `SCREEN_SCALE`, `KEEP_SCHEMA`, `SCORES_SCHEMA`. Produces `kept` (`number[]`), `totals` (`Map<number, number|null>`), `ranked` (`number[]` desc), `filterReconciliation` (`object[]`), `filterOrphans` (`string[]`), `filterNeedsAdjudication` (`boolean`), and either `bracket` (`number[]` seeded, bracket mode) **or** `shortlist` (`number[]`, scoreboard mode). Seeds are force-kept in both modes provided they are valid candidate indices (kept, and always present in the bracket — their *position* in `bracket` is by total, because the tournament stage's pairings read `bracket` as sorted desc); a seed index that is not one is rejected into `filterOrphans` rather than force-kept into a crash.
+
+This stage **validates every screener entry before it can move a total**, on the same argument as the scoreboard stage: a filter that ranks by a SUM does not merely add noise when an entry is bad — it reorders the seeding and the shortlist, and everything downstream inherits that order. **GATE: after editing either mode block below run `node reference/selftest-filter.mjs`** (SKILL.md §6) — it executes both blocks against the known-bad screener payloads that would otherwise move a rank in silence.
 
 ### Bracket mode (select a fixed-size bracket for head-to-head tournament)
 
 ```js
 // Filter stage — bracket mode
+// Consumes: candidates (Candidate[]), seedIndices (number[]), briefs, renderIndexed (fn),
+//           SCREEN_SCALE ({min,max,integer}), KEEP_SCHEMA, SCORES_SCHEMA
+// Produces: kept (number[]), totals (Map<number, number|null>), ranked (number[]),
+//           filterReconciliation (object[]), filterOrphans (string[]),
+//           filterNeedsAdjudication (boolean), bracket (number[], seeded, BRACKET_SIZE long)
+// GATE: after editing this stage run `node reference/selftest-filter.mjs` (SKILL.md §6) — it executes
+// this exact block against the known-bad screener payloads that would otherwise move a rank in silence.
 // FILL: replace AXES, DOMAIN, HARD, bracket size (default 8), and prompt bodies
 const DOMAIN = 'your domain here' // FILL: one-phrase description (already declared at assembly; here for standalone parse)
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const seedIndices = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const briefs = {} // STANDALONE PARSE ONLY — DELETE at assembly
 const renderIndexed = (idxs) => idxs.map(i => `[${i}] ${JSON.stringify(candidates[i])}`).join('\n\n') // STANDALONE PARSE ONLY — DELETE at assembly
+const SCREEN_SCALE = { min: 0, max: 10, integer: false } // STANDALONE PARSE ONLY — DELETE at assembly; declared by the SCORES_SCHEMA block
+const SCORES_SCHEMA = { type: 'object', properties: { scores: { type: 'array', items: { type: 'object', properties: { index: { type: 'integer' }, score: { type: SCREEN_SCALE.integer ? 'integer' : 'number', minimum: SCREEN_SCALE.min, maximum: SCREEN_SCALE.max }, reason: { type: 'string' } }, required: ['index','score','reason'] } } }, required: ['scores'] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by Schema Builders section
+const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
+const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
+const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
 
 const HARD = `HARD CONSTRAINTS for ${DOMAIN}: [list must-satisfy constraints here]` // FILL: replace with your domain's hard constraints
 
@@ -480,9 +507,19 @@ const dedup = await agent(
   { model: WORKHORSE, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
 )
 
-let kept = (dedup && dedup.keep ? dedup.keep : allIdx).filter(i => i >= 0 && i < candidates.length)
-for (const s of seedIndices) if (!kept.includes(s)) kept.push(s)
+// VALIDATE THE KEPT SET ITSELF, not just the entries scored against it. `kept` is INDICES, and every
+// stage after this one does `candidates[i]` with them: a `null`, a `1.5` or a `99` rides through the
+// totals, the bracket and the shortlist and throws at the result shape. A bare range test is not enough —
+// `null >= 0` is true. The same predicate governs the seed list, which the dedup agent never touches.
+const validIdx = (i) => Number.isInteger(i) && i >= 0 && i < candidates.length
+const seedFaults = [] // seed indices rejected as unusable — they cannot be force-kept into a crash
+let kept = (dedup && Array.isArray(dedup.keep) ? dedup.keep : allIdx).filter(validIdx)
+for (const s of seedIndices) {
+  if (!validIdx(s)) { seedFaults.push(`seed ${JSON.stringify(s)} is not a valid candidate index (0..${candidates.length - 1}) — NOT force-kept`); continue }
+  if (!kept.includes(s)) kept.push(s)
+}
 kept = [...new Set(kept)]
+if (seedFaults.length) log(`⚠ filter: ${seedFaults.length} seed index(es) REJECTED (${seedFaults.join('; ')}); FLAGGED for main-loop review`)
 
 const AXES = [ // FILL: replace axes for your domain; each axis has key, brief (context string), and instr (scoring instruction)
   { key: 'axis-a', brief: briefs.topicA || '', instr: 'AXIS A: [describe what to score on this axis]' }, // FILL: replace
@@ -491,35 +528,160 @@ const AXES = [ // FILL: replace axes for your domain; each axis has key, brief (
 
 const screeningResults = await parallel(AXES.map(a => () =>
   agent(
-    `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below 0-10 on your axis ONLY. Use the full range — be a harsh discriminator, no clustering at 7. One sentence of reasoning each.\n\n${renderIndexed(kept)}`,
+    `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below ${SCREEN_SCALE.min}-${SCREEN_SCALE.max} on your axis ONLY${SCREEN_SCALE.integer ? ', as a whole number' : ''}. Use the full range — be a harsh discriminator, no clustering in the middle. Score every index EXACTLY ONCE and score no index you were not given. One sentence of reasoning each.\n\n${renderIndexed(kept)}`, // FILL: adjust the wording; the scale text is derived from SCREEN_SCALE, leave it
     { model: WORKHORSE, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
   )
 ))
 
-const totals = new Map(kept.map(i => [i, 0]))
-for (const res of screeningResults.filter(Boolean)) for (const s of (res.scores || [])) {
-  if (totals.has(s.index)) totals.set(s.index, totals.get(s.index) + s.score)
+// Validate a screener entry against its ASSIGNMENT before it can move a total, and return the reason it
+// is unusable (or null when it is usable). The filter RANKS BY A SUM, so a bad entry does not add noise —
+// it reorders the seeding and the shortlist, and every stage after this one inherits that order. Measured
+// on the pre-fix stage (2026-09-05): one axis returning nothing moved a candidate from rank 1 to rank 4, a
+// duplicate index double-counted, and a single score of 1000 took the top of the bracket.
+// DUPLICATE RULE: the FIRST entry for an index on an axis stands; the second and later ones are errored.
+// A screener that emits two entries for one candidate has given one usable answer plus noise, and voiding
+// both would throw away the usable one — with the corollary that a first entry which is itself invalid
+// errors, and then the second errors as a duplicate: two entries for one index on one axis is a screener
+// that lost track of its assignment, and neither reading of it is trustworthy. The reservation is what
+// makes that corollary true in CODE and not only in this comment — see `seenOnAxis` below, which an
+// invalid entry joins as well, while only a VALID one joins `scoredOnAxis`.
+// A TYPE fault and a MEMBERSHIP fault are different accusations and get different strings: `index "1" is
+// not an integer` says the screener mistyped an index that exists; `index 7 is not in the kept set` says
+// it scored something dedup killed. Filing the first as the second points a human at dedup instead of at
+// the screener.
+const screenFault = (s, keptSet, seenOnAxis) => {
+  if (!s || typeof s !== 'object') return `entry is ${s === null ? 'null' : typeof s}, not an object`
+  if (!Number.isInteger(s.index)) return `index ${JSON.stringify(s.index)} is not an integer`
+  if (!keptSet.has(s.index)) return `index ${s.index} is not in the kept set`
+  if (seenOnAxis.has(s.index)) return `duplicate entry for index ${s.index} on this axis`
+  if (typeof s.score !== 'number' || !Number.isFinite(s.score)) return `index ${s.index}: score is ${s.score === null ? 'null' : typeof s.score}, not a finite number`
+  if (SCREEN_SCALE.integer && !Number.isInteger(s.score)) return `index ${s.index}: score ${s.score} is not an integer`
+  if (s.score < SCREEN_SCALE.min || s.score > SCREEN_SCALE.max) return `index ${s.index}: score ${s.score} outside ${SCREEN_SCALE.min}..${SCREEN_SCALE.max}`
+  return null
 }
-const ranked = [...kept].sort((x, y) => totals.get(y) - totals.get(x))
+
+// Reconcile AXES SENT vs AXES RETURNED, per kept candidate. Per axis a kept index lands in exactly one of
+// three buckets — returned (a valid entry), dropped (the whole axis came back empty), missing (the axis
+// answered but never validly scored this one) — so axesSent = axesReturned + dropped + missing. `errored`
+// is the reason list beside them and can be longer, since a duplicate errors without creating a shortfall.
+const keptSet = new Set(kept)
+const screenRows = new Map(kept.map(i => [i, { index: i, axesSent: AXES.length, axesReturned: 0, dropped: 0, errored: [], missing: 0, total: null }]))
+const screenOrphans = [] // entries for an index that is NOT in the kept set — they never create a totals key
+// Which reconciliation row a FAULTED entry belongs to. A type fault on an index that still NAMES a kept
+// candidate (`"1"` for 1) is the screener's error and belongs on that candidate's row; only an entry that
+// names nothing in the kept set is an orphan, so the orphan log really does point at dedup.
+const rowFor = (s) => {
+  if (!s || typeof s !== 'object') return null
+  if (screenRows.has(s.index)) return screenRows.get(s.index)
+  const n = typeof s.index === 'string' && s.index.trim() !== '' ? Number(s.index) : s.index
+  return screenRows.has(n) ? screenRows.get(n) : null
+}
+screeningResults.forEach((res, k) => {
+  const axisKey = AXES[k] ? AXES[k].key : `axis-${k}`
+  // parallel() resolves POSITIONALLY: screeningResults[k] is AXES[k]'s payload, or null if it errored or
+  // its schema retries were exhausted. A null axis is a DROP for every kept candidate, not a zero for any.
+  // Validate the CONTAINER, not only the entries: a truthy non-payload (`'ok'`) would otherwise iterate to
+  // nothing and be filed as `missing` for everyone — "the axis skipped this one" when the truth is "the
+  // axis was lost" — and a non-iterable `scores` throws AFTER parallel()'s barrier, where nothing catches
+  // it and the whole run dies.
+  if (!res || !Array.isArray(res.scores)) {
+    for (const r of screenRows.values()) r.dropped += 1
+    log(`⚠ filter: axis ${axisKey} ${res ? 'returned a payload with no scores ARRAY' : 'returned nothing'} — DROPPED for all ${kept.length} kept candidate(s)`)
+    return
+  }
+  const seenOnAxis = new Set()   // every index this axis CLAIMED — an invalid first entry reserves its
+                                 // index here, so a second entry for it errors as a duplicate
+  const scoredOnAxis = new Set() // indices this axis VALIDLY scored — coverage, which is what `missing`
+                                 // counts, so the three buckets stay disjoint
+  for (const s of res.scores) {
+    const why = screenFault(s, keptSet, seenOnAxis)
+    const row = rowFor(s)
+    // Reserve by the ROW's index, not by the raw value the screener sent — reserved whether or not the
+    // entry validated. `rowFor` coerces a non-empty string index to a number, so `'1'` is routed to
+    // candidate 1's row; reserving the raw `'1'` left a later `{index: 1}` on the same axis looking fresh,
+    // and it validated and was TALLIED. That is the defect the duplicate rule above forbids, re-created one
+    // layer out by the coercion (measured 2026-09-05).
+    if (s && typeof s === 'object') seenOnAxis.add(row ? row.index : s.index)
+    if (why) {
+      if (row) row.errored.push(`${axisKey}: ${why}`)
+      else screenOrphans.push(`${axisKey}: ${why}`)
+      continue
+    }
+    scoredOnAxis.add(s.index)
+    row.axesReturned += 1 // a VALID entry always has a row: screenFault has already required kept membership
+    // total is null, NEVER 0, until a valid score lands — a real 0 is a rank, an absence is not.
+    row.total = (row.total === null ? 0 : row.total) + s.score
+  }
+  for (const r of screenRows.values()) if (!scoredOnAxis.has(r.index)) r.missing += 1
+})
+
+const filterReconciliation = kept.map(i => screenRows.get(i))
+// Faults that belong to no reconciliation row — a screener entry naming an index the kept set does not
+// hold, and a rejected seed. Exported, because a run that flags itself and names no cause in any exported
+// binding sends its reader looking through clean reconciliation rows for a reason that is not there.
+const filterOrphans = [...seedFaults, ...screenOrphans]
+const totals = new Map(filterReconciliation.map(r => [r.index, r.total]))
+// Rank: an unscored candidate (null total) sorts LAST, never as a zero; equal totals break to the LOWER
+// index, so the order is deterministic (same rule as the scoreboard board).
+const rankOf = (i) => { const t = totals.get(i); return t === null || t === undefined ? -Infinity : t }
+const ranked = [...kept].sort((x, y) => (rankOf(x) === rankOf(y) ? x - y : rankOf(y) - rankOf(x)))
 
 // bracket: seeds guaranteed + top-scoring others fill remaining slots
 const BRACKET_SIZE = 8 // FILL: adjust bracket size (must be a power of 2 for standard single-elimination)
-const bracket = []
-for (const s of seedIndices) bracket.push(s)
+const bracketSeeds = [...new Set(seedIndices.filter(validIdx))]
+const bracket = [...bracketSeeds]
 for (const i of ranked) { if (bracket.length >= BRACKET_SIZE) break; if (!bracket.includes(i)) bracket.push(i) }
-bracket.sort((x, y) => totals.get(y) - totals.get(x))
+bracket.sort((x, y) => (rankOf(x) === rankOf(y) ? x - y : rankOf(y) - rankOf(x)))
+
+// A tie in total ACROSS THE CUT LINE decides who is in the bracket at all on nothing but index order.
+// Measure it at the REALISED cut, not at ranked[BRACKET_SIZE-1] vs ranked[BRACKET_SIZE]: a reserved seed
+// is admitted regardless of total and MOVES the boundary, so with one seed the ranking decides seven
+// slots, not eight — checking the unadjusted position both misses the real tie and invents one between
+// two candidates that were never in contention. The bracket is still filled deterministically; the doubt
+// rides on the flag, as everywhere else here.
+const seedSet = new Set(bracketSeeds)
+const contenders = ranked.filter(i => !seedSet.has(i)) // the only candidates the cut line decides between
+const slots = Math.max(0, BRACKET_SIZE - bracketSeeds.length) // non-seed slots the ranking actually fills
+const lastIn = slots > 0 && contenders.length >= slots ? contenders[slots - 1] : null
+const firstOut = contenders.length > slots ? contenders[slots] : null
+const cutTie = lastIn !== null && firstOut !== null && rankOf(lastIn) === rankOf(firstOut)
+// The tournament stage's pairings are hard-wired to bracket[0..BRACKET_SIZE-1]. A SHORT bracket (fewer
+// survivors than slots) makes it read `candidates[undefined]` and THROW; an OVERSIZE one (as many
+// reserved seeds as slots) silently never plays its tail, so those seeds are in the emitted bracket and
+// in no match. Seeds are the user's own and are never truncated to fit — the mismatch is surfaced
+// instead of quietly repaired.
+const bracketSizeFault = bracket.length !== BRACKET_SIZE
+const filterNeedsAdjudication = AXES.length === 0 || kept.length === 0 || cutTie || bracketSizeFault
+  || filterOrphans.length > 0
+  || filterReconciliation.some(r => r.axesReturned < r.axesSent || r.errored.length > 0)
+if (screenOrphans.length) log(`⚠ filter: ${screenOrphans.length} screener entr(ies) scored an index outside the kept set — NOT tallied (${screenOrphans.join('; ')}); FLAGGED for main-loop review`)
+if (bracketSizeFault) log(`⚠ filter: bracket is ${bracket.length} long, not BRACKET_SIZE ${BRACKET_SIZE} — ${bracket.length < BRACKET_SIZE ? `only ${kept.length} candidate(s) survived dedup and the tournament stage indexes bracket[0..${BRACKET_SIZE - 1}], so it will THROW` : `${bracketSeeds.length} reserved seed(s) overflow the ${BRACKET_SIZE} slots and the tail never plays a match`}; FLAGGED for main-loop review`)
+if (filterNeedsAdjudication) log(`⚠ filter needsAdjudication — the screening totals and this bracket are PROVISIONAL: ${filterReconciliation.filter(r => r.axesReturned < r.axesSent || r.errored.length).map(r => `[${r.index}] ${r.axesReturned}/${r.axesSent} axes${r.dropped ? `, ${r.dropped} DROPPED` : ''}${r.missing ? `, ${r.missing} missing` : ''}${r.errored.length ? `, ERRORED (${r.errored.join('; ')})` : ''}`).join(' | ') || `${AXES.length} axes over ${kept.length} kept candidate(s)${cutTie ? ', TIED across the bracket cut line' : ''}${bracketSizeFault ? `, bracket ${bracket.length}/${BRACKET_SIZE}` : ''}${filterOrphans.length ? `, ${filterOrphans.length} orphan entr(ies)` : ''}`}; FLAGGED for main-loop review`)
+log(`Bracket of ${bracket.length}: ${bracket.map(i => `[${i}] ${totals.get(i) === null || totals.get(i) === undefined ? '(unscored)' : totals.get(i).toFixed(1)}`).join(' | ')}`)
 ```
 
 ### Scoreboard mode (rank all survivors for a scoring-panel tournament)
 
 ```js
 // Filter stage — scoreboard mode (dedup + screening identical to bracket mode)
+// Consumes: candidates (Candidate[]), seedIndices (number[]), briefs, renderIndexed (fn),
+//           SCREEN_SCALE ({min,max,integer}), KEEP_SCHEMA, SCORES_SCHEMA
+// Produces: kept (number[]), totals (Map<number, number|null>), ranked (number[]),
+//           filterReconciliation (object[]), filterOrphans (string[]),
+//           filterNeedsAdjudication (boolean), shortlist (number[])
+// GATE: after editing this stage run `node reference/selftest-filter.mjs` (SKILL.md §6) — it executes
+// this exact block against the known-bad screener payloads that would otherwise move a rank in silence.
 // FILL: same slots as bracket mode above; delete bracket block, add shortlist
 const DOMAIN = 'your domain here' // FILL: one-phrase description (already declared at assembly; here for standalone parse)
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const seedIndices = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const briefs = {} // STANDALONE PARSE ONLY — DELETE at assembly
 const renderIndexed = (idxs) => idxs.map(i => `[${i}] ${JSON.stringify(candidates[i])}`).join('\n\n') // STANDALONE PARSE ONLY — DELETE at assembly
+const SCREEN_SCALE = { min: 0, max: 10, integer: false } // STANDALONE PARSE ONLY — DELETE at assembly; declared by the SCORES_SCHEMA block
+const SCORES_SCHEMA = { type: 'object', properties: { scores: { type: 'array', items: { type: 'object', properties: { index: { type: 'integer' }, score: { type: SCREEN_SCALE.integer ? 'integer' : 'number', minimum: SCREEN_SCALE.min, maximum: SCREEN_SCALE.max }, reason: { type: 'string' } }, required: ['index','score','reason'] } } }, required: ['scores'] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by Schema Builders section
+const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
+const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
+const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
 
 const HARD_SB = `HARD CONSTRAINTS for ${DOMAIN}: [list must-satisfy constraints here]` // FILL: replace (renamed to HARD_SB to avoid collision in standalone parse)
 
@@ -529,9 +691,18 @@ const dedupSB = await agent(
   { model: WORKHORSE, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
 )
 
-let keptSB = (dedupSB && dedupSB.keep ? dedupSB.keep : allIdxSB).filter(i => i >= 0 && i < candidates.length)
-for (const s of seedIndices) if (!keptSB.includes(s)) keptSB.push(s)
+// Validate the kept set ITSELF and the seed list, on the same argument as bracket mode: `kept` is indices
+// and every downstream stage does `candidates[i]` with them, and `null >= 0` is true so a bare range test
+// admits a `null` key that reaches the result shape and throws.
+const validIdxSB = (i) => Number.isInteger(i) && i >= 0 && i < candidates.length
+const seedFaultsSB = [] // seed indices rejected as unusable — they cannot be force-kept into a crash
+let keptSB = (dedupSB && Array.isArray(dedupSB.keep) ? dedupSB.keep : allIdxSB).filter(validIdxSB)
+for (const s of seedIndices) {
+  if (!validIdxSB(s)) { seedFaultsSB.push(`seed ${JSON.stringify(s)} is not a valid candidate index (0..${candidates.length - 1}) — NOT force-kept`); continue }
+  if (!keptSB.includes(s)) keptSB.push(s)
+}
 keptSB = [...new Set(keptSB)]
+if (seedFaultsSB.length) log(`⚠ filter: ${seedFaultsSB.length} seed index(es) REJECTED (${seedFaultsSB.join('; ')}); FLAGGED for main-loop review`)
 
 const AXES_SB = [ // FILL: replace axes for your domain
   { key: 'axis-a', brief: briefs.topicA || '', instr: 'AXIS A: [describe what to score on this axis]' },
@@ -540,24 +711,95 @@ const AXES_SB = [ // FILL: replace axes for your domain
 
 const screeningResultsSB = await parallel(AXES_SB.map(a => () =>
   agent(
-    `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below 0-10 on your axis ONLY. Use the full range — no clustering at 7. One sentence of reasoning each.\n\n${renderIndexed(keptSB)}`,
+    `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below ${SCREEN_SCALE.min}-${SCREEN_SCALE.max} on your axis ONLY${SCREEN_SCALE.integer ? ', as a whole number' : ''}. Use the full range — no clustering in the middle. Score every index EXACTLY ONCE and score no index you were not given. One sentence of reasoning each.\n\n${renderIndexed(keptSB)}`, // FILL: adjust the wording; the scale text is derived from SCREEN_SCALE, leave it
     { model: WORKHORSE, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
   )
 ))
 
-const totalsSB = new Map(keptSB.map(i => [i, 0]))
-for (const res of screeningResultsSB.filter(Boolean)) for (const s of (res.scores || [])) {
-  if (totalsSB.has(s.index)) totalsSB.set(s.index, totalsSB.get(s.index) + s.score)
+// Validation and reconciliation are IDENTICAL to bracket mode — see that block's comments for the full
+// argument. Short version: this stage ranks by a SUM, so an out-of-scale, duplicate, misfiled or missing
+// screener entry reorders the shortlist rather than adding noise. Per axis a kept index lands in exactly
+// one of returned/dropped/missing, so axesSent = axesReturned + dropped + missing; `errored` is the
+// reason list beside them (the FIRST entry for an index on an axis stands, later ones error — including
+// when the first is itself invalid, because an invalid entry still RESERVES its index on the axis).
+const screenFaultSB = (s, keptSet, seenOnAxis) => {
+  if (!s || typeof s !== 'object') return `entry is ${s === null ? 'null' : typeof s}, not an object`
+  if (!Number.isInteger(s.index)) return `index ${JSON.stringify(s.index)} is not an integer`
+  if (!keptSet.has(s.index)) return `index ${s.index} is not in the kept set`
+  if (seenOnAxis.has(s.index)) return `duplicate entry for index ${s.index} on this axis`
+  if (typeof s.score !== 'number' || !Number.isFinite(s.score)) return `index ${s.index}: score is ${s.score === null ? 'null' : typeof s.score}, not a finite number`
+  if (SCREEN_SCALE.integer && !Number.isInteger(s.score)) return `index ${s.index}: score ${s.score} is not an integer`
+  if (s.score < SCREEN_SCALE.min || s.score > SCREEN_SCALE.max) return `index ${s.index}: score ${s.score} outside ${SCREEN_SCALE.min}..${SCREEN_SCALE.max}`
+  return null
 }
-const rankedSB = [...keptSB].sort((x, y) => totalsSB.get(y) - totalsSB.get(x))
+
+const keptSetSB = new Set(keptSB)
+const screenRowsSB = new Map(keptSB.map(i => [i, { index: i, axesSent: AXES_SB.length, axesReturned: 0, dropped: 0, errored: [], missing: 0, total: null }]))
+const screenOrphansSB = [] // entries for an index that is NOT in the kept set — they never create a totals key
+// A type fault on an index that still NAMES a kept candidate belongs on that candidate's row, not in the
+// orphan list — see bracket mode's `rowFor` for the argument.
+const rowForSB = (s) => {
+  if (!s || typeof s !== 'object') return null
+  if (screenRowsSB.has(s.index)) return screenRowsSB.get(s.index)
+  const n = typeof s.index === 'string' && s.index.trim() !== '' ? Number(s.index) : s.index
+  return screenRowsSB.has(n) ? screenRowsSB.get(n) : null
+}
+screeningResultsSB.forEach((res, k) => {
+  const axisKey = AXES_SB[k] ? AXES_SB[k].key : `axis-${k}`
+  // parallel() resolves POSITIONALLY. A null axis is a DROP for every kept candidate, not a zero for any.
+  // The CONTAINER is validated too: a truthy non-payload would otherwise be filed as `missing` for
+  // everyone, and a non-iterable `scores` throws after the barrier where nothing can catch it.
+  if (!res || !Array.isArray(res.scores)) {
+    for (const r of screenRowsSB.values()) r.dropped += 1
+    log(`⚠ filter: axis ${axisKey} ${res ? 'returned a payload with no scores ARRAY' : 'returned nothing'} — DROPPED for all ${keptSB.length} kept candidate(s)`)
+    return
+  }
+  const seenOnAxis = new Set()   // every index this axis CLAIMED (reserved even by an invalid entry)
+  const scoredOnAxis = new Set() // indices this axis VALIDLY scored — what `missing` counts
+  for (const s of res.scores) {
+    const why = screenFaultSB(s, keptSetSB, seenOnAxis)
+    const row = rowForSB(s)
+    // Reserve by the ROW's index, not the raw value sent — see bracket mode for the argument.
+    if (s && typeof s === 'object') seenOnAxis.add(row ? row.index : s.index)
+    if (why) {
+      if (row) row.errored.push(`${axisKey}: ${why}`)
+      else screenOrphansSB.push(`${axisKey}: ${why}`)
+      continue
+    }
+    scoredOnAxis.add(s.index)
+    row.axesReturned += 1 // a VALID entry always has a row: screenFaultSB has already required kept membership
+    // total is null, NEVER 0, until a valid score lands — a real 0 is a rank, an absence is not.
+    row.total = (row.total === null ? 0 : row.total) + s.score
+  }
+  for (const r of screenRowsSB.values()) if (!scoredOnAxis.has(r.index)) r.missing += 1
+})
+
+const filterReconciliationSB = keptSB.map(i => screenRowsSB.get(i))
+const filterOrphansSB = [...seedFaultsSB, ...screenOrphansSB] // faults that belong to no reconciliation row
+const totalsSB = new Map(filterReconciliationSB.map(r => [r.index, r.total]))
+const rankOfSB = (i) => { const t = totalsSB.get(i); return t === null || t === undefined ? -Infinity : t }
+const rankedSB = [...keptSB].sort((x, y) => (rankOfSB(x) === rankOfSB(y) ? x - y : rankOfSB(y) - rankOfSB(x)))
+
+// No cut line in scoreboard mode — every survivor is shortlisted — so there is no cut-line tie term and
+// no bracket-size term here; both belong to a fixed-size bracket and neither exists in this mode.
+const filterNeedsAdjudicationSB = AXES_SB.length === 0 || keptSB.length === 0 || filterOrphansSB.length > 0
+  || filterReconciliationSB.some(r => r.axesReturned < r.axesSent || r.errored.length > 0)
+if (screenOrphansSB.length) log(`⚠ filter: ${screenOrphansSB.length} screener entr(ies) scored an index outside the kept set — NOT tallied (${screenOrphansSB.join('; ')}); FLAGGED for main-loop review`)
+if (filterNeedsAdjudicationSB) log(`⚠ filter needsAdjudication — the screening totals and this shortlist are PROVISIONAL: ${filterReconciliationSB.filter(r => r.axesReturned < r.axesSent || r.errored.length).map(r => `[${r.index}] ${r.axesReturned}/${r.axesSent} axes${r.dropped ? `, ${r.dropped} DROPPED` : ''}${r.missing ? `, ${r.missing} missing` : ''}${r.errored.length ? `, ERRORED (${r.errored.join('; ')})` : ''}`).join(' | ') || `${AXES_SB.length} axes over ${keptSB.length} kept candidate(s)${filterOrphansSB.length ? `, ${filterOrphansSB.length} orphan entr(ies)` : ''}`}; FLAGGED for main-loop review`)
 
 // Export scoreboard-mode bindings (alias to contract names for assembly)
 const kept = keptSB
 const totals = totalsSB
 const ranked = rankedSB
+const filterReconciliation = filterReconciliationSB
+const filterOrphans = filterOrphansSB
+const filterNeedsAdjudication = filterNeedsAdjudicationSB
 
-// shortlist: seeds guaranteed + all ranked survivors (scoreboard tournament needs all)
-const shortlist = [...new Set([...seedIndices, ...ranked])]
+// shortlist: seeds guaranteed + all ranked survivors (scoreboard tournament needs all). The seeds are
+// filtered through the SAME predicate as `kept` — reading raw `seedIndices` here would put an index the
+// kept set rejected back into the shortlist, where the tournament stage does `candidates[i]` with it.
+const shortlist = [...new Set([...seedIndices.filter(validIdxSB), ...ranked])]
+log(`Shortlist of ${shortlist.length}: ${shortlist.map(i => `[${i}] ${totals.get(i) === null || totals.get(i) === undefined ? '(unscored)' : totals.get(i).toFixed(1)}`).join(' | ')}`)
 ```
 
 ---
@@ -570,6 +812,8 @@ const shortlist = [...new Set([...seedIndices, ...ranked])]
 // Tournament stage — bracket mode
 // Consumes: candidates (Candidate[]), bracket (number[], seeded desc), renderConcept, MATCH_SCHEMA
 // Produces: champion (number/index), runnerUp (number/index), matchLog (object[])
+// GATE: after editing this stage's vote tally run `node reference/selftest-filter.mjs` (SKILL.md §6) —
+// that harness executes this exact block end to end (all seven matches) against the known-bad ballots.
 // FILL: replace JUDGE_LENSES with judge lenses appropriate for your domain; each lens has key/brief/instr
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const bracket = [] // STANDALONE PARSE ONLY — DELETE at assembly
@@ -598,15 +842,21 @@ const runMatch = async (ai, bi, round) => {
       { model: WORKHORSE, label: `judge:${round}:${j.key}`, phase: 'Tournament', schema: MATCH_SCHEMA }
     )
   ))
-  const valid = votes.filter(Boolean)
-  const dropped = votes.length - valid.length // judges that errored/returned null
+  // Count only the CLOSED FIELD the schema declares. `valid.length - aVotes` treated every non-'A'
+  // ballot as a vote for B, so a payload with `winner: 'C'` (or a missing field) advanced B in silence.
+  // MATCH_SCHEMA's enum forecloses that on the Claude runtime — but the enum is the only thing standing
+  // between the tally and a miscount, and a raw-JSON runner (a Codex bracket, a hand-rolled script that
+  // drops the schema) has no such guarantee. Bucket it as `errored`, beside `dropped`, and never as a vote.
+  const valid = votes.filter(v => v && (v.winner === 'A' || v.winner === 'B'))
+  const errored = votes.filter(v => v && !(v.winner === 'A' || v.winner === 'B')).length // came back, but off the enum
+  const dropped = votes.length - valid.length - errored // judges that errored/returned null
   const aVotes = valid.filter(v => v.winner === 'A').length
   const bVotes = valid.length - aVotes
   const tie = aVotes === bVotes
   const winner = aVotes >= bVotes ? ai : bi // deterministic seed tie-break (higher seed = A); a bracket must still advance someone — surfaced via the flag below
-  // Reconcile SENT vs RETURNED (measured 2026-06-28): a bracket that advances the wrong finalist corrupts the whole result, so a tie or a dropped judge is surfaced loudly, never silent.
-  const needsAdjudication = dropped > 0 || tie
-  if (needsAdjudication) log(`⚠ ${round}: ${a.name} vs ${b.name} advanced ${candidates[winner].name} on ${tie ? 'a TIE' : 'a majority'}${dropped ? ` with ${dropped}/${votes.length} judge vote(s) DROPPED` : ''} → decided by seed tie-break; FLAGGED for main-loop review`)
+  // Reconcile SENT vs RETURNED (measured 2026-06-28; the errored bucket added 2026-09-05): a bracket that advances the wrong finalist corrupts the whole result, so a tie, a dropped judge or a voided ballot is surfaced loudly, never silent.
+  const needsAdjudication = dropped > 0 || errored > 0 || tie
+  if (needsAdjudication) log(`⚠ ${round}: ${a.name} vs ${b.name} advanced ${candidates[winner].name} on ${tie ? 'a TIE' : 'a majority'}${dropped ? ` with ${dropped}/${votes.length} judge vote(s) DROPPED` : ''}${errored ? ` with ${errored}/${votes.length} ballot(s) VOIDED (winner off the A/B enum)` : ''} → decided by seed tie-break; FLAGGED for main-loop review`)
   matchLog.push({
     round,
     a: a.name,
@@ -615,13 +865,16 @@ const runMatch = async (ai, bi, round) => {
     votesSent: votes.length,
     votesReturned: valid.length,
     dropped,
+    errored,
     tie,
     needsAdjudication,
     votes: JUDGE_LENSES.map((j, k) => votes[k]
-      ? `${j.key}: ${votes[k].winner === 'A' ? a.name : b.name} — ${votes[k].reason}`
+      ? (votes[k].winner === 'A' || votes[k].winner === 'B'
+        ? `${j.key}: ${votes[k].winner === 'A' ? a.name : b.name} — ${votes[k].reason}`
+        : `${j.key}: (VOIDED — winner ${JSON.stringify(votes[k].winner)} is off the A/B enum)`)
       : `${j.key}: (no vote)`)
   })
-  log(`${round}: ${a.name} vs ${b.name} → ${candidates[winner].name} (A ${aVotes} / B ${bVotes}${dropped ? `, ${dropped} dropped` : ''})`)
+  log(`${round}: ${a.name} vs ${b.name} → ${candidates[winner].name} (A ${aVotes} / B ${bVotes}${dropped ? `, ${dropped} dropped` : ''}${errored ? `, ${errored} errored` : ''})`)
   return winner
 }
 
@@ -666,7 +919,7 @@ const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const shortlist = [] // STANDALONE PARSE ONLY — DELETE at assembly
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
 const SCORE_SCALE = { min: 0, max: 10, integer: false } // STANDALONE PARSE ONLY — DELETE at assembly; declared by the JUDGE_SCHEMA block
-const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
+const JUDGE_SCHEMA = { type: 'object', properties: { persona: { type: 'string' }, candidate: { type: 'string' }, score: { type: SCORE_SCALE.integer ? 'integer' : 'number', minimum: SCORE_SCALE.min, maximum: SCORE_SCALE.max }, breakdown: { type: 'string' }, critique: { type: 'string' }, mustFix: { type: 'string' }, wouldChoose: { type: 'boolean' } }, required: ['persona','candidate','score','critique','mustFix','wouldChoose'] } // STANDALONE PARSE ONLY — DELETE at assembly
 const agent = async () => null // STANDALONE PARSE ONLY — DELETE at assembly
 const parallel = async (fns) => Promise.all(fns.map(f => f())) // STANDALONE PARSE ONLY — DELETE at assembly
 const log = () => {} // STANDALONE PARSE ONLY — DELETE at assembly
@@ -825,12 +1078,13 @@ Two variants — pick the one matching your tournament mode. Both graft winner +
 
 ### Variant A — Text report (bracket mode → `report`)
 
-Produces `report` (`string`). No schema; the agent's final message IS the report. Sections are fully slotted for your domain.
+Produces `report` (`string`). No schema; the agent's final message IS the report. Sections are fully slotted for your domain. The prompt is conditional on a composed `adjNeeded` — the filter's flag OR any flagged match — so a run that needs adjudication produces a report that says so and crowns nobody, the same refusal Variant B makes for the scoreboard.
 
 ```js
 // Synthesize stage — text report variant (bracket mode)
 // Consumes: candidates (Candidate[]), champion (number), runnerUp (number), seedIndices (number[]),
-//           matchLog (object[]), skeptics (object[]), fatalCount (number), briefs, renderConcept
+//           matchLog (object[]), filterNeedsAdjudication (boolean), filterReconciliation (object[]),
+//           filterOrphans (string[]), skeptics (object[]), fatalCount (number), briefs, renderConcept
 // Produces: report (string)
 // FILL: replace HARD, brief references, and section prompts for your domain
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
@@ -838,6 +1092,9 @@ const champion = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by 
 const runnerUp = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage
 const seedIndices = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const matchLog = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage
+const filterNeedsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterReconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterOrphans = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const renderConcept = (c) => JSON.stringify(c) // STANDALONE PARSE ONLY — DELETE at assembly
@@ -850,8 +1107,21 @@ const briefs = {} // STANDALONE PARSE ONLY — DELETE at assembly
 
 log('Writing final recommendation...')
 const SYNTH_MODEL = WORKHORSE // OPT-IN: set to SCARCE for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing scarce here and nowhere else in a tournament (multi-agent-policy posture ladder, `full` rung); every other stage stays WORKHORSE.
+// Bracket mode has no single upstream `needsAdjudication` binding, so compose one from the two producers
+// that do carry flags: the FILTER that seeded this bracket, and the matches themselves. Without this the
+// report crowns a champion off a half-screened seeding, in a document a human reads instead of the JSON.
+const adjNeeded = filterNeedsAdjudication || matchLog.some(m => m.needsAdjudication)
+// Name only the causes that are ACTUALLY set: a prompt that asserts "an axis was lost" when the real
+// cause was a tied match teaches the synthesis agent a fact the run never measured.
+const ADJ_REASONS = [ // FILL: keep in step with the filter stage's needsAdjudication expression and the bracket stage's per-match one if you edit either
+  [filterReconciliation.some(r => r.dropped > 0 || r.missing > 0), 'the SCREENING that seeded this bracket lost one or more axes (a screener returned nothing, or skipped a candidate) — the seeding itself is provisional'],
+  [filterReconciliation.some(r => (r.errored || []).length > 0), 'one or more SCREENING entries were VOIDED as invalid (an index outside the kept set, a duplicate on one axis, or a score off type or scale)'],
+  [filterReconciliation.some(r => r.total === null), 'at least one bracket slot was seeded with NO valid screening score at all'],
+  [filterOrphans.length > 0, `the filter recorded ORPHAN faults that belong to no candidate row: ${filterOrphans.join('; ')}`],
+  [matchLog.some(m => m.needsAdjudication), `these MATCHES were flagged (a tie, a dropped judge, or a ballot voided off the A/B enum): ${matchLog.filter(m => m.needsAdjudication).map(m => m.round).join(', ')}`],
+].filter(([on]) => on).map(([, why]) => why)
 const report = await agent(
-  `You are the synthesis lead for a tournament deciding: ${DOMAIN}. Write the FINAL RECOMMENDATION REPORT in markdown. Your final message IS the report — no meta-commentary.\n\n${HARD}\n\nCHAMPION:\n${renderConcept(candidates[champion])}\n(user-seed concept: ${seedIndices.includes(champion)})\n\nRUNNER-UP:\n${renderConcept(candidates[runnerUp])}\n(user-seed concept: ${seedIndices.includes(runnerUp)})\n\nFULL MATCH LOG (judge reasoning):\n${JSON.stringify(matchLog, null, 1)}\n\nADVERSARIAL SKEPTIC FINDINGS ON CHAMPION (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nWrite these sections:\n1. **Recommendation** — the choice to make and the one-paragraph case. If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, recommend the runner-up instead and say why.\n2. **The winner in full** — refined pitch incorporating skeptic FIXES and the best grafts from runner-up (name each graft and its source).\n3. **Why it beat the field** — the decisive judge arguments, honestly including close calls.\n4. **Skeptic findings & mitigations** — every serious+ concern with its concrete mitigation.\n5. **Scope sketch** — milestone outline against your time/budget yardstick, with the hardest constraint explicitly budgeted.\n6. **Kill criteria** — 3 testable conditions early in execution that should kill/pivot the project.\n7. **The full bracket** — one-line results of every match.`, // FILL: adjust section list, scope yardstick, and kill-criteria framing for your domain
+  `You are the synthesis lead for a tournament deciding: ${DOMAIN}. Write the FINAL RECOMMENDATION REPORT in markdown. Your final message IS the report — no meta-commentary.\n\n${HARD}\n\n${adjNeeded ? 'PROVISIONAL CHAMPION' : 'CHAMPION'}:\n${renderConcept(candidates[champion])}\n(user-seed concept: ${seedIndices.includes(champion)})\n\nRUNNER-UP:\n${renderConcept(candidates[runnerUp])}\n(user-seed concept: ${seedIndices.includes(runnerUp)})\n\nFULL MATCH LOG (judge reasoning):\n${JSON.stringify(matchLog, null, 1)}\n${adjNeeded ? `\nRECONCILIATION: needsAdjudication is TRUE for this run — ${ADJ_REASONS.join('; ') || 'the run flagged itself for review'}. Say this plainly at the top of the report, present the bracket and its leader as PROVISIONAL throughout, and do NOT crown a champion.\n` : ''}\nADVERSARIAL SKEPTIC FINDINGS ON ${adjNeeded ? 'PROVISIONAL CHAMPION' : 'CHAMPION'} (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nWrite these sections:\n1. **Recommendation** — ${adjNeeded ? 'the provisional choice and the one-paragraph case, opening with what needs adjudicating and why nothing here is final' : 'the choice to make and the one-paragraph case'}. If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, recommend the runner-up instead and say why.\n2. **The winner in full** — refined pitch incorporating skeptic FIXES and the best grafts from runner-up (name each graft and its source).\n3. **Why it beat the field** — the decisive judge arguments, honestly including close calls.\n4. **Skeptic findings & mitigations** — every serious+ concern with its concrete mitigation.\n5. **Scope sketch** — milestone outline against your time/budget yardstick, with the hardest constraint explicitly budgeted.\n6. **Kill criteria** — 3 testable conditions early in execution that should kill/pivot the project.\n7. **The full bracket** — one-line results of every match.`, // FILL: adjust section list, scope yardstick, and kill-criteria framing for your domain
   { model: SYNTH_MODEL, label: 'synthesis', phase: 'Synthesize' }
 )
 ```
@@ -863,13 +1133,17 @@ Produces `synth` (`object`, typed by `SYNTH_SCHEMA`). Grafts winner + runner-up 
 ```js
 // Synthesize stage — schema synth variant (scoreboard mode)
 // Consumes: candidates (Candidate[]), board ({index,score,...}[]), winner (number/index),
-//           needsAdjudication (boolean), skeptics (object[]), fatalCount (number), SYNTH_SCHEMA
+//           needsAdjudication (boolean), filterNeedsAdjudication (boolean), filterReconciliation (object[]),
+//           filterOrphans (string[]), skeptics (object[]), fatalCount (number), SYNTH_SCHEMA
 // Produces: synth (object — typed by SYNTH_SCHEMA)
 // FILL: replace SHARED, board field references, and prompt body for your domain
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const board = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const winner = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const needsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
+const filterNeedsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterReconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterOrphans = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const SYNTH_SCHEMA = { type: 'object', properties: { summaryMarkdown: { type: 'string' }, parametersMarkdown: { type: 'string' }, changeLog: { type: 'array', items: { type: 'object', properties: { change: { type: 'string' }, why: { type: 'string' } }, required: ['change','why'] } }, graftedFrom: { type: 'array', items: { type: 'string' } } }, required: ['summaryMarkdown','changeLog'] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by Schema Builders section
@@ -885,18 +1159,27 @@ const fmtScore = (s) => (s === null || s === undefined ? '(unscored)' : s.toFixe
 // winner is `null` on an empty board (stages.md contract) — never index candidates[winner] unguarded.
 const leader = winner === null || winner === undefined ? null : candidates[winner]
 const leaderName = leader ? leader.name : '(no leader — the board is empty)'
+// The FILTER stage carries its own flag: the screening totals chose this shortlist, so a provisional
+// shortlist makes a provisional board no matter how clean the panel was. OR the two rather than reading
+// only the panel's — and keep the filter reasons in ADJ_REASONS below, or the prompt names a cause the
+// run never measured while the real one stays silent.
+const adjNeeded = needsAdjudication || filterNeedsAdjudication
 // Name only the causes that are ACTUALLY set: a prompt that asserts "ballots were dropped" when the real
 // cause was a tie teaches the synthesis agent a fact the run never measured.
-const ADJ_REASONS = [ // FILL: keep in step with the scoreboard stage's needsAdjudication expression if you edit it
+const ADJ_REASONS = [ // FILL: keep in step with the scoreboard stage's AND the filter stage's needsAdjudication expressions if you edit either
   [board.some(b => b.dropped > 0), 'one or more ballots were DROPPED (a judge returned nothing)'],
   [board.some(b => (b.errored || []).length > 0), 'one or more ballots were VOIDED as invalid (wrong persona/candidate echo, or a score off type or scale)'],
   [board.some(b => b.score === null), 'at least one candidate has NO valid score'],
   [board.some(b => b.stageThrew), 'at least one candidate was lost to a stage that threw'],
   [board.length > 1 && board[0].score !== null && board[0].score === board[1].score, 'the top two candidates are TIED'],
   [board.length === 0, 'the board is EMPTY'],
+  [filterReconciliation.some(r => r.dropped > 0 || r.missing > 0), 'the SCREENING that chose this shortlist lost one or more axes (a screener returned nothing, or skipped a candidate) — the shortlist itself is provisional'],
+  [filterReconciliation.some(r => (r.errored || []).length > 0), 'one or more SCREENING entries were VOIDED as invalid (index outside the kept set, a duplicate on one axis, or a score off type or scale)'],
+  [filterReconciliation.some(r => r.total === null), 'at least one candidate was shortlisted with NO valid screening score at all'],
+  [filterOrphans.length > 0, `the filter recorded ORPHAN faults that belong to no candidate row (a screener scored an index dedup had killed, or a seed index was rejected as out of range): ${filterOrphans.join('; ')}`],
 ].filter(([on]) => on).map(([, why]) => why)
 const synth = await agent(
-  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${fmtScore(b.score)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\n${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'}: ${leaderName}${needsAdjudication ? `\n\nRECONCILIATION: needsAdjudication is TRUE for this scoreboard — ${ADJ_REASONS.join('; ') || 'the run flagged itself for review'}. Say this plainly at the top of summaryMarkdown, present the board and the leader as PROVISIONAL, and do NOT crown a winner.` : ''}\n\nADVERSARIAL SKEPTIC FINDINGS ON ${needsAdjudication ? 'PROVISIONAL LEADER' : 'WINNER'} (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${fmtScore(b.score)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. ${needsAdjudication ? 'Start from the PROVISIONAL LEADER and label it as such throughout — name no winner' : 'Start from the WINNER'}, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
+  `${SHARED_SYNTH}\n\nTOURNAMENT RESULTS (best first):\n${board.map(b => `- ${candidates[b.index].name}: ${fmtScore(b.score)} | judges: ${(b.judges || []).map(j => `[${j.persona}] score ${j.score}, critique: ${j.critique} (mustFix: ${j.mustFix})`).join('  ||  ')}`).join('\n')}\n\n${adjNeeded ? 'PROVISIONAL LEADER' : 'WINNER'}: ${leaderName}${adjNeeded ? `\n\nRECONCILIATION: needsAdjudication is TRUE for this run — ${ADJ_REASONS.join('; ') || 'the run flagged itself for review'}. Say this plainly at the top of summaryMarkdown, present the board and the leader as PROVISIONAL, and do NOT crown a winner.` : ''}\n\nADVERSARIAL SKEPTIC FINDINGS ON ${adjNeeded ? 'PROVISIONAL LEADER' : 'WINNER'} (${fatalCount}/${skeptics.length} voted fatal):\n${JSON.stringify(skeptics, null, 1)}\n\nALL CANDIDATES (for grafting the best ideas):\n${board.map(b => `\n===== ${candidates[b.index].name} (${fmtScore(b.score)}) =====\n${JSON.stringify(b.generated || candidates[b.index], null, 1)}`).join('\n')}\n\nNow produce the FINAL synthesized output. ${adjNeeded ? 'Start from the PROVISIONAL LEADER and label it as such throughout — name no winner' : 'Start from the WINNER'}, GRAFT IN the best verified ideas from other candidates, and resolve EVERY judge mustFix. Output summaryMarkdown (complete, detailed, ready-to-use), parametersMarkdown (key tunable parameters), changeLog (each change with why and what it came from), and graftedFrom (source concept names). If ${fatalCount >= 2 ? fatalCount : 0}+ skeptics voted fatal, address their concerns explicitly in the changeLog.`, // FILL: tailor prompt — replace field names (b.thesis, b.generated etc.) to match your scoreboard-mode tournament's actual output shape
   { model: SYNTH_MODEL, label: 'synthesize', phase: 'Synthesize', schema: SYNTH_SCHEMA, effort: 'max' }
 )
 ```
@@ -941,12 +1224,15 @@ The final top-level `return {...}` that exposes all outputs. Two variants matchi
 
 ### Variant A — Bracket mode result shape
 
-Exposes `champion` (object), `runnerUp` (name string), `bracket` (array), `matchLog`, `skeptics`, `fatalCount`, `report`.
+Exposes `champion` (object, **`null` when the run needs adjudication**), `provisionalChampion`, `runnerUp` (name string), `bracket` (array), `needsAdjudication`, `matchLog`, `filterNeedsAdjudication`, `filterReconciliation`, `filterOrphans`, `skeptics`, `fatalCount`, `report`.
+
+`screenScore` is `null` for a candidate no axis validly scored — never `0` — and `filterNeedsAdjudication` says the seeding that built this bracket is PROVISIONAL. Bracket mode has no run-level `needsAdjudication` binding of its own (each match carries one in `matchLog`), so this shape COMPOSES one — the filter flag OR any flagged match — and refuses at the same boundary scoreboard mode does: `champion` is withheld (`null`) until a human has read the reconciliation, with `provisionalChampion` beside it so the result stays inspectable without pretending a winner exists. The verify-champion and synthesize stages still read the `champion` *index* binding upstream of this shape, so nothing downstream loses its subject.
 
 ```js
 // Result shape — bracket mode
 // Consumes all upstream bindings: candidates, champion, runnerUp, seedIndices, bracket, totals,
-//          matchLog, skeptics, fatalCount, report
+//          filterNeedsAdjudication, filterReconciliation, filterOrphans, matchLog, skeptics, fatalCount,
+//          report
 // FILL: add/remove fields as your spec requires; keep binding names verbatim
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const champion = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage
@@ -954,16 +1240,28 @@ const runnerUp = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by 
 const seedIndices = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const bracket = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter/bracket stage
 const totals = new Map() // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterNeedsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterReconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterOrphans = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
 const matchLog = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/bracket stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const report = '' // STANDALONE PARSE ONLY — DELETE at assembly; produced by synthesize/text stage
 
+// The RUN's flag, composed here because bracket mode has no single upstream producer of one: the filter
+// that seeded this bracket, OR any match that flagged itself (a tie, a dropped judge, a voided ballot).
+const needsAdjudication = filterNeedsAdjudication || matchLog.some(m => m.needsAdjudication)
+
 return {
-  champion: candidates[champion],
+  champion: needsAdjudication ? null : candidates[champion], // withheld until a human reconciles
+  provisionalChampion: candidates[champion],
   championIsUserSeed: seedIndices.includes(champion),
+  needsAdjudication,
   runnerUp: candidates[runnerUp].name, // FILL: emits the runnerUp name; use candidates[runnerUp] if you need the full object
-  bracket: bracket.map(i => ({ name: candidates[i].name, screenScore: totals.get(i), isSeed: seedIndices.includes(i) })),
+  bracket: bracket.map(i => ({ name: candidates[i].name, screenScore: totals.get(i) ?? null, isSeed: seedIndices.includes(i) })), // `null`, never 0, when no axis validly scored this one
+  filterNeedsAdjudication, // the SEEDING is provisional when true — see filterReconciliation for which candidate lost which axis
+  filterReconciliation,
+  filterOrphans, // reasons with no reconciliation row: an entry scoring a killed index, a rejected seed
   matchLog,
   skeptics,
   fatalCount,
@@ -977,16 +1275,22 @@ Exposes `leaderboard` (array), `winner` (name string, **`null` when the run need
 
 `winner` is the caller-facing refusal: a consumer that reads it gets nothing to crown until a human has looked at `reconciliation`. `provisionalWinner` is the deterministic top of the board for a non-empty board, and `null` when the board is empty — so the result stays inspectable without ever pretending a leader exists.
 
+The emitted `needsAdjudication` is the **run's**, not the panel's: it ORs the filter stage's flag into the scoreboard's, because the screening totals chose this shortlist and a provisional shortlist makes a provisional board however clean the panel was. `filterReconciliation` sits beside `reconciliation` so a reader can tell the two apart.
+
 ```js
 // Result shape — scoreboard mode
 // Consumes all upstream bindings: candidates, board, winner, needsAdjudication, reconciliation,
-//          skeptics, fatalCount, synth, qa, patched
+//          filterNeedsAdjudication, filterReconciliation, filterOrphans, skeptics, fatalCount, synth,
+//          qa, patched
 // FILL: adjust field names/shapes to match your scoreboard tournament's actual judge/generated output shape
 const candidates = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by generate stage
 const board = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const winner = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const needsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
 const reconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by tournament/scoreboard stage
+const filterNeedsAdjudication = false // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterReconciliation = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
+const filterOrphans = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by filter stage
 const skeptics = [] // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const fatalCount = 0 // STANDALONE PARSE ONLY — DELETE at assembly; produced by verify-champion stage
 const synth = { summaryMarkdown: '', parametersMarkdown: '', changeLog: [], graftedFrom: [] } // STANDALONE PARSE ONLY — DELETE at assembly; produced by synthesize/schema stage
@@ -994,14 +1298,18 @@ const qa = { gatesPassed: true, issues: [], verdict: '' } // STANDALONE PARSE ON
 const patched = '' // STANDALONE PARSE ONLY — DELETE at assembly; produced by QA stage
 
 const round1 = (s) => (s === null || s === undefined ? null : Number(s.toFixed(1))) // an unscored candidate stays null — never rounds to 0
-const leaderName = winner === null || winner === undefined ? null : candidates[winner].name // `null` on an empty board
+const resultLeaderName = winner === null || winner === undefined ? null : candidates[winner].name // `null` on an empty board
+const runNeedsAdjudication = needsAdjudication || filterNeedsAdjudication // the RUN's flag: panel OR the filter that chose the shortlist
 
 return {
   leaderboard: board.map(b => ({ name: candidates[b.index].name, score: round1(b.score), votesSent: b.votesSent, votesReturned: b.votesReturned, dropped: b.dropped, errored: (b.errored || []).length })),
-  winner: needsAdjudication ? null : leaderName, // withheld until a human reconciles
-  provisionalWinner: leaderName,
-  needsAdjudication,
+  winner: runNeedsAdjudication ? null : resultLeaderName, // withheld until a human reconciles
+  provisionalWinner: resultLeaderName,
+  needsAdjudication: runNeedsAdjudication,
   reconciliation,
+  filterNeedsAdjudication,
+  filterReconciliation,
+  filterOrphans, // reasons with no reconciliation row: an entry scoring a killed index, a rejected seed
   candidates: board.map(b => ({
     name: candidates[b.index].name,
     score: round1(b.score),

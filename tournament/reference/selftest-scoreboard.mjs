@@ -486,8 +486,14 @@ check('[coupling] JUDGE_SCHEMA.properties.score.minimum agrees with SCORE_SCALE.
   !!sc && !!sb && sb.minimum === sc.min)
 check('[coupling] JUDGE_SCHEMA.properties.score.maximum agrees with SCORE_SCALE.max',
   !!sc && !!sb && sb.maximum === sc.max)
-check('[coupling] the schema READS SCORE_SCALE rather than repeating a literal bound',
-  /minimum:\s*SCORE_SCALE\.min/.test(base) && /maximum:\s*SCORE_SCALE\.max/.test(base))
+// The TYPE is part of the same declaration and was the one half not coupled: an integer scale the stage
+// enforced and the schema did not is a bound the runtime never applied (measured 2026-09-05, ticket 15,
+// on the sibling SCREEN_SCALE). Same two checks, value and source.
+check('[coupling] JUDGE_SCHEMA.properties.score.type follows SCORE_SCALE.integer',
+  !!sc && !!sb && sb.type === (sc.integer ? 'integer' : 'number'))
+check('[coupling] the schema READS SCORE_SCALE rather than repeating a literal bound or type',
+  /minimum:\s*SCORE_SCALE\.min/.test(base) && /maximum:\s*SCORE_SCALE\.max/.test(base)
+  && /type:\s*SCORE_SCALE\.integer\s*\?\s*'integer'\s*:\s*'number'/.test(base))
 
 const controls = FIXTURES.filter(f => f.name.startsWith('CONTROL')).length
 console.log(fails
