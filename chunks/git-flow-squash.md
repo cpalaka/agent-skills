@@ -49,8 +49,14 @@ that there, then squash-merge so the code change and the Done-stamp become a sin
 
   Verify before pushing, and derive each verdict rather than assuming it: the parent must equal
   `origin/main`, and `git diff $SQ HEAD` must be **empty** (the commit's tree is the reviewed
-  branch's tree, so the approval still covers exactly what ships). Pushing the SHA rather than the
-  branch also means a sibling's unpushed commit sitting on your local `main` cannot ride along.
+  branch's tree, so the approval still covers exactly what ships). Both of those hold by
+  construction for any input, though, so they are paste guards: the base-moved verdict is
+  `git merge-base --is-ancestor origin/main HEAD` after a `git fetch origin`, and it must exit 0
+  before you build `SQ` — otherwise rebase and re-run the verify gate first (that gate, not
+  `--is-ancestor`, is what re-establishes the approval; see below), because `SQ` carries your
+  branch's tree and pushing it on a moved base reverts what the peer landed. Pushing the SHA
+  rather than the branch also means a sibling's unpushed commit on your local `main` cannot ride
+  along.
   The other checkout simply fast-forwards on its next pull.
 - **A sign-off approves a TREE, not a branch name. If the base moved between approval and merge,
   RE-RUN THE VERIFY GATE on the rebased result first.** In a multi-session repo `main` routinely
@@ -73,7 +79,9 @@ shape — keep the variants from cross-shipping).
 
 **(c) NO commit SHA in the backlog `--notes`.** When the task is marked Done it is marked
 **on the branch, before the squash-merge** — so the squash commit **does not exist yet** and
-its SHA cannot be recorded. Therefore `--notes` carries the summary only, never a hash. The
+its SHA is not recorded then — and this variant does not append it afterwards either, by policy:
+the task↔commit link is already the subject scope + `Refs task-NNN` footer below, so a recorded
+SHA buys nothing. Therefore `--notes` carries the summary only, never a hash. The
 task↔commit link is the subject scope + `Refs task-NNN` footer (`git log --grep`), not a
 recorded SHA. `backlog-core` is merge-agnostic and **defers the notes-SHA policy to this
 file** — under this variant the policy is: omit it.

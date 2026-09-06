@@ -93,7 +93,7 @@ one file fine to hand-edit; `backlog config set` does not expose `definition_of_
 **Mark Done ON THE BRANCH, before the merge.** After the user signs off on the diff, on the
 feature branch run `backlog task edit <id> --check-ac N … --check-dod 1 … -s Done` and
 commit the task-file change there (`auto_commit` stays false so the edit batches with code,
-one task-file change per code commit). Whether the `--notes` summary carries a commit SHA is
+one task-file change per code commit). Whether the task notes carry a commit SHA, and when, is
 **a merge-model decision — follow your imported git-flow variant's notes-SHA policy**
 (`git-flow-squash` vs `git-flow-noff`); this chunk states no SHA rule of its own. With two
 sessions on one checkout, each session commits only the task-file edits **it made** — its own
