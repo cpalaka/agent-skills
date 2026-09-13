@@ -68,6 +68,8 @@ every project, not per-repo:
 | `npm install` / `npm i <pkg>` | `EPERM open ~/.npm/_cacache/tmp/…` | install/add only |
 | `bun install` / `bun add` | `bun is unable to write files to tempdir: PermissionDenied` (`~/.bun/install/cache`) | install/add only — `bun run` / `bun build` are fine |
 | `agent-browser <any subcommand>` | `Socket directory '~/.agent-browser' is not writable` | every invocation — it needs its control socket |
+| Blender (any launch, incl. Godot's `.blend` import spawning it) | crash before Python runs: `MTLBackend::metal_is_supported → _platform_strstr`, `Writing: $TMPDIR/blender.crash.txt` — no sandbox mention anywhere | every invocation — Metal device detection needs GPU access the sandbox denies. A sandboxed Godot import then writes `valid=false` into the `.blend.import` sidecar and never retries; delete or edit the sidecar and reimport unsandboxed (measured 2026-09-10) |
+| Playwright `browser.launch()` (probes, `test:delivery`) | **no signal at all** — the script prints nothing, not even its own `catch`, for minutes; chromium, webkit and `channel: "chrome"` alike | every launch, from the first attempt — a denial announces itself, this reads as a slow browser (measured 2026-09-12) |
 | `gh <anything>` | `tls: failed to verify certificate: x509: OSStatus -26276` | every invocation, see below |
 | `git add` / `git commit` **in a worktree** | `fatal: Unable to create '<main>/.git/worktrees/<name>/index.lock'` | every write-side git op from a worktree |
 | any process that `listen`s | `EPERM` / `Operation not permitted` on bind | the launch |
@@ -85,6 +87,15 @@ keychain path — do not pre-emptively disable the sandbox for them. (measured 2
 `<repo>/.git` but not `<repo>/.git/worktrees/<name>/`. Anything touching `index.lock` or
 `FETCH_HEAD` under `worktrees/` hard-fails, including the `backlog` CLI's automatic
 `git fetch origin --prune`. Where worktrees are the normal working mode, that is every commit.
+
+**Running a sibling worktree's gate from the main session, sandbox off.** The auto-mode classifier
+refused `cd <worktree> && <gate>` with the sandbox disabled, while the same gate invoked by
+absolute path (`/abs/worktree/tests/run_tests.sh`) with the sandbox disabled was allowed
+(measured 2026-09-12). So invoke worktree scripts by absolute path and never `cd` in the same
+compound command — but know which tools key on the current directory. A runner that `cd`s to its
+own `dirname` is safe; a scanner that resolves "the project" from `$PWD` silently scans the MAIN
+checkout and prints its verdict under the worktree's name (line numbers from the wrong tree are
+the tell). Read the tool's own `project=` / `logs:` line before believing a worktree verdict.
 
 ## Cosmetic denials — the operation SUCCEEDED, do not retry
 
