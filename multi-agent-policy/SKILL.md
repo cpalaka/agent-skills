@@ -41,7 +41,7 @@ No durable role-to-model mapping exists anywhere, because a stale one misroutes 
 
 **Confirm headroom on both usage windows**, the weekly one and the five-hour session window, before committing the tier to a stage. A fan-out of N xhigh scarce agents can drain the session window in minutes. The failure is clean (journal rows read `failed`), so relaunch fresh after the reset rather than resuming (2026-09-01). When a window is about to expire with budget unspent, the guard inverts: spend it.
 
-**Placement is a cost ladder, not a permission list.** Derive it per stage from cost per slot against value at that slot. A rationing rule expires when the ration changes; the ladder does not. Choose a *posture*; rungs are cumulative.
+**Placement is a cost ladder, not a permission list.** Derive it per stage from cost per slot against value at that slot. Price the slot from the token profile, not the per-token sheet: a cache-read-dominated loop (screenshots, tool-heavy transcripts) can cost the same on either tier when the scarce tier's cache-read rate is lower, so the split buys quota, not dollars (2026-09-11). A rationing rule expires when the ration changes; the ladder does not. Choose a *posture*; rungs are cumulative.
 
 | Posture | Adds | Buys | Cost shape |
 |---|---|---|---|
@@ -99,6 +99,7 @@ A scarce main loop given an implementation task (a correctness-bearing code or d
 - **Check `git status` after every fan-out.** Subagents on either host write scratch probes into the working tree even when told to stay clean and even when their report claims they did. Sweep before any commit, and inspect before deleting; a stray sometimes holds a real measurement.
 - **Heartbeat.** A background delegate expected to exceed ~10 minutes gets a calibrated liveness check; solo and interactive work need none. No growth and no commit earns one liveness probe (`find <scope> -mmin -12`) before you declare a hang, since a static tree is also what a gate run looks like. Verify the monitor's transcript key against one real journal line before reporting from it: a monitor grepping the wrong field reports `completed=0` forever while agents finish (Claude Code: the `verification-discipline` skill). Recipes per host: `MECHANICS.md` § Heartbeat recipes.
 - **Inject mid-run context by editing the script for a resume, and reach live agents through the artifacts they were told to read.** Point every agent at the task row rather than inlining the brief: a finding measured after dispatch reaches an in-flight agent only through a file its prompt already named. Mechanics: `MECHANICS.md` § Resume and the transcript files.
+- **When the user is present, the stage that needs them goes first; the review fan-out runs behind it.** A feel pass or a scope decision costs the user minutes; the fan-out and its fix loop cost the machine an hour or two and need nobody. Batching the human ask "once, at the end" converts the machine's hour into the user's wait (2026-09-12: two hours, said so). Absent user: the standing order, and never proceed on silence.
 
 ## Sibling files
 

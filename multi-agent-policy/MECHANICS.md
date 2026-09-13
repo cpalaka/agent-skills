@@ -175,6 +175,10 @@ and appending to a stage you will not re-run invalidates the cache for everythin
 the active task/subagent messaging surface reaches a live agent; the appendable-artifact habit is
 host-independent.
 
+A `SendMessage` to an agent that is finishing its turn is dropped: the tool reports "queued for
+delivery at its next tool round" and no round comes. Verify the addendum landed in the diff; if not,
+resend it as a resume of that agent (2026-09-12).
+
 | File | Holds | Read it for |
 |---|---|---|
 | `journal.jsonl` | each call's **return value** | drop reconciliation; diagnosing a thin result |
