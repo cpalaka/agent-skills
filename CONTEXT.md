@@ -126,7 +126,7 @@ The bundle Chunk every dev Profile imports: a single `chunks/dev-base.md` that r
 includes the seven universal base Chunks (git-sync-branch-start, git-commit-format,
 git-confirm-destructive, sandbox-auto, parallel-work, verify-gate, dev-practice). Claude Code
 expands its `@import` lines; Codex follows the bundle's explicit read directive. The git-flow fork
-and `backlog-core` are deliberately NOT in it — they vary by Profile, and `@import` cannot be
+and the tracker chunk (`backlog-core` or `tracker-github`) are deliberately NOT in it — they vary by Profile, and `@import` cannot be
 undone. `codegraph` and `code-hygiene` also stay explicit: `codegraph` self-gates on `.codegraph/`,
 and `code-hygiene` was the one member that told a model how to work rather than telling it
 something about this environment.

@@ -262,7 +262,8 @@ delivery? No → Chunk. Yes → Template.
 | `git-sync-branch-start.md` | Sync main, then branch off it, at task start. |
 | `git-flow-squash.md` / `git-flow-noff.md` | The two git-flow variants — squash is the default, `--no-ff` is opt-in ([ADR 0002](docs/adr/0002-git-flow-structural-fork.md)). |
 | `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
-| `backlog-core.md` | Task tracking with backlog.md. |
+| `backlog-core.md` | Task tracking with backlog.md (the Backlog-CLI alternative to `tracker-github.md`). |
+| `tracker-github.md` | Task tracking with GitHub Issues and a private Project (the alternative to `backlog-core.md`). |
 | `parallel-work.md` | Parallel work — waves and solo worktrees. |
 | `sandbox-auto.md` | Sandbox session-init baseline (see the `sandbox-and-permissions` Skill for denials). |
 | `codegraph.md` | Code intelligence — opt-in and self-gating on `.codegraph/`. |
