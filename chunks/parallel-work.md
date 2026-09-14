@@ -64,9 +64,11 @@ with no shared state and no ordering between them:
   so the prompt, not the approval policy, carries the gates (`git-confirm-destructive`).
 - Steer a drifting subagent with a message rather than respawning it (a respawn loses its
   context).
-- **The orchestrator re-verifies every handoff itself.** On each subagent handoff, the main
-  session independently re-runs the verify gate in that worktree before relaying anything to
-  the user — never pass on a subagent's claims unverified. Writer/subagent agents
+- **The orchestrator owns re-verification of every handoff.** On each subagent handoff, the verify gate is
+  re-run independently in that worktree before anything is relayed to the user — by the main
+  session, or by a gate-runner delegate that did not write the diff (`multi-agent-policy`
+  § Orchestrator-delegate procedure); the independence that matters is that the seat re-running
+  the gate never wrote the diff. Never pass on a subagent's claims unverified. Writer/subagent agents
   systematically **over-report their own output**; treat any self-reported metric (lines
   changed, "26% smaller", "tests pass") as a claim, not a measurement, and diff the real
   output against source yourself before believing it.
