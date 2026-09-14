@@ -125,7 +125,7 @@ someone measured that it stops a claim. Write the intent into the criterion text
 **Parallel work: the coordinator alone writes the tracker.** `parallel-work` defers its
 board-ownership clause here. In a wave, only the main session writes issue or Project fields; a
 child gets the issue URL and the explicit source documents in its prompt and writes nothing back.
-Its report is a candidate for the coordinator to verify, never a status change. In solo worktrees
+Its report is a candidate for the coordinator to verify, never a status change. In attended worktrees
 each interactive session is the main session for its own issue, so that issue's routine updates are
 fine; creating or decomposing issues stays behind the human gate above. The tracker keeps no files
 in the tree, so there are no tracker rows to stage and no local id collision to avoid. That retires

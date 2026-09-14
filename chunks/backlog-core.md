@@ -29,7 +29,7 @@ one file fine to hand-edit; `backlog config set` does not expose `definition_of_
 **`task create` is main-session-only, and seeding needs an explicit go.**
 
 - Only the **main session** creates or edits tasks — never parallel subagents or workflow
-  agents. ID generation is a max+1 scan, so concurrent creation collides. (A solo
+  agents. ID generation is a max+1 scan, so concurrent creation collides. (An attended
   interactive worktree session is the main session *for its own task*, so its `task edit`
   writes are fine; only `task create` stays main-repo-only — see `parallel-work`.)
 - **Create from a fresh board view — a feature branch is a stale board.** `backlog draft create`

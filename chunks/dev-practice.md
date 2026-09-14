@@ -31,7 +31,7 @@ Done-gate, in `backlog-core` for board-driven projects or the project's own inli
 calling a visual or interactive slice done, do the check yourself — don't punt "eyeball
 this" to the user — and run it in the **main session, never a subagent**: a subagent's
 screenshot is never returned to the orchestrator, so a visually-AC'd task would pass
-unverified. This is why visual/feel tasks run solo, not in waves (see `parallel-work`).
+unverified. This is why visual/feel tasks run attended, not in waves (see `parallel-work`).
 The `errors` buffer is cumulative and `--clear` is a no-op — `close --all` before each
 `open` for per-page attribution; some framework errors (SSR/hydration) surface on
 `errors`, not `console`. Unit tests and DOM-class checks miss real render bugs.

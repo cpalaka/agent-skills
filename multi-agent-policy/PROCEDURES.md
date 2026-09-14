@@ -33,7 +33,7 @@ merges, pushes, cleanup and Done included, convert the ticket's gates rather tha
 - **Demote look-checks to non-gating committed artifacts** (screenshots plus paths appended to the
   task's notes) for async review. This is legitimate only when an upstream approved
   design-reference task carries the frozen feel verdict. It narrows the standing rule that
-  visual/feel work runs solo and never as a background wave, without displacing it: the feel
+  visual/feel work runs attended and never as a background wave, without displacing it: the feel
   verdict moves upstream, and only the implementation tickets become wave-able.
 - **Make the close-out an explicit AC** (gate green, merge, push, cleanup, Done) so the autonomous
   finish is checkable rather than improvised.

@@ -2,12 +2,15 @@
 <!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
      Edit here only — no per-project copies, no parity. -->
 
-## Parallel work — waves & solo worktrees
+## Parallel work — waves & attended worktrees
 
 Two modes of doing more than one task at once, both taken only on an explicit parallel-work
 signal — a busy checkout is not one. Pick by the decision rule: **one task → the standing
-single-task process; you driving 2+ tasks hands-on → solo worktrees; dependency-free fan-out
-you are NOT hand-driving → background waves.**
+single-task process; you driving 2+ tasks hands-on → attended worktrees; dependency-free fan-out
+you are NOT hand-driving → background waves.** *Attended* here means a human is driving or
+watching the session; it says nothing about who writes the diff. The `multi-agent-policy`
+skill's `solo` toggle is a different word for a different thing (the orchestrator implements
+instead of delegating), and the two were measured colliding in a project note (2026-09-14).
 
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
@@ -68,7 +71,7 @@ with no shared state and no ordering between them:
   changed, "26% smaller", "tests pass") as a claim, not a measurement, and diff the real
   output against source yourself before believing it.
 
-**Mode B — Solo worktrees (you hands-on, 2+ tasks concurrently).** Each interactive worktree
+**Mode B — Attended worktrees (you hands-on, 2+ tasks concurrently).** Each interactive worktree
 session is the **main session for its own task** — so per-session status edits are fine;
 only `task create` stays main-repo-only (the max+1 ID scan collides under concurrency, see
 `backlog-core`).
@@ -94,9 +97,10 @@ before trusting a worktree to isolate a run, ask what each tool in it actually k
 rather than assume; `backlog`'s max+1 ID scan (see `backlog-core`) is one instance of a general
 class, not a one-off quirk.
 
-**Visual / feel-AC work runs solo, never as a background wave.** Any task whose acceptance
+**Visual / feel-AC work runs attended, never as a background wave.** Any task whose acceptance
 criteria are visual or "feels right" (screenshots, motion, layout judgment) needs a human
-watching mid-flight — run it solo in-session, not as a background subagent.
+watching mid-flight — run it attended, in-session, not as a background subagent. The diff may
+still be delegated; what must stay in the attended session is the acceptance.
 
 **Authoring a ticket for hands-off execution is a different job from running one** — converting
 its gates rather than skipping them, and batching what a machine cannot self-certify into one
@@ -104,7 +108,7 @@ deliberately human ticket. That procedure lives in the `multi-agent-policy` skil
 § "Hands-off ticket design"; read it before granting an orchestrator an unattended slice.
 
 **Delegate the merge and Done step to the git-flow fork — never inline it here.** However a
-branch was produced (wave or solo), how it lands — merge style, branch naming, and whether a
+branch was produced (wave or attended), how it lands — merge style, branch naming, and whether a
 commit SHA goes in the backlog notes — is owned entirely by this project's git-flow fork
 (`git-flow-squash` by default, or `git-flow-noff`). Do not restate squash-vs-no-ff or
 notes-SHA policy in this chunk; follow whichever fork the project imports.
