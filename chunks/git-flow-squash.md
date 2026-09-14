@@ -22,6 +22,16 @@ approval — apply unchanged. The rest of this chunk assumes a board.
 After the diff is approved (see below), mark the task Done **on the branch** and commit
 that there, then squash-merge so the code change and the Done-stamp become a single commit:
 
+- **The squash carries the branch's FINAL TREE and nothing else — so a file added and then
+  deleted on the branch never enters `main`'s history at all.** Prune heavy or throwaway
+  artifacts (screenshots, capture sets, fixtures, generated output) **before** the merge, on
+  the branch, as an ordinary commit: the intermediate blobs die with the branch when it is
+  deleted. The same deletion **after** the merge is cosmetic — it tidies the working tree
+  while the bytes stay in `main`'s history, recoverable only by a rewrite. The window is open
+  exactly once and git reports nothing either way, so neither the cheap moment nor the missed
+  one announces itself. Corollary for judging a cleanup: "it is already committed, so deleting
+  it saves nothing" is true of the branch and **false of `main`** until the merge runs.
+
 - `git checkout main && git merge --squash <branch>` → **review the staged changes** →
   `git commit` (write the message per `git-commit-format`), or `git reset --merge` to abort.
   If another session shares this checkout, do not switch to `main` at all (`parallel-work` §

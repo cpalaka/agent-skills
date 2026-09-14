@@ -55,4 +55,17 @@ comparison has something stable to compare.
 language or load-bearing decision the change introduces. Synced docs are part of the
 gate, not a follow-up.
 
+**Evidence kept is evidence something still READS.** Where a criterion is proven by a
+committed artifact — a screenshot pair, a capture set, a probe's output — the artifact
+earns its place in the repo only while something **other than its own closed task**
+points at it: an open task, an ADR, a standing doc, a sibling row that cites it by
+name. What survives only as proof of a check whose *result* is already written down in
+prose has done its job and goes; the prose is the durable record, and a full-resolution
+capture of a surface still under change is a baseline nothing will ever diff against.
+Apply it when the artifact is created (name in the notes what will later justify
+keeping it) and again when its task closes — otherwise a wave that commits evidence per
+ticket accumulates it forever, because each file is cited by exactly one task and that
+task is always Done. Prune **before** the branch merges where the integration model
+makes that free (`git-flow-squash` (a)).
+
 Only after the full gate is clean do you commit (per `git-commit-format`) or hand off.
