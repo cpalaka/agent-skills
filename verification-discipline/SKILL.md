@@ -25,11 +25,15 @@ One question sits under every rule here: **could more than one true state of the
 
 **A null reading is evidence only once the subject is inside the measurement window.** Calibrating on one subject does not validate the instrument for another. Before believing "no effect", show that the thing the change moves is observable at all. Then exclude the rival causes. The *form* of the failure discriminates, not the fact of it: "port unreachable" comes identically from a firewall DROP and from nothing listening, and only timeout-vs-RST separates them.
 
+**A probe answers only the question it exercised.** A green precondition (the adapter is present) says nothing about the capability the claim needs (the device survives rendering). Probe the operation the claim is about, over the duration the claim covers: an exposure probe that only requested adapters read green while a render probe found the device dying 270 ms after init (2026-09-12).
+
 **A reading from inside the trust boundary cannot establish a property of that boundary.** Public-ness, reachability and permission are properties of the *least*-privileged caller. `gh repo view --json visibility`, or a `curl` carrying your session, answers a different question and answers it green. Re-run unauthenticated or as the least-privileged principal, and assert the complement: the thing that must stay closed fails the same probe.
 
 **When a spec names the metric, also measure what the metric cannot see.** `scrollWidth === clientWidth` counts start-side padding only.
 
 **A saved review or eval harness rots with no error signal.** Its pinned positions and golden answers describe files it does not own. Once those files are corrected it flags the fix as a regression and runs clean. Re-read its embedded context against the target before every re-run.
+
+**A gate command loaded into context is a copy, and the file it came from moves.** After any mid-session pull or checkout, re-read each verify-gate knob line from disk before running it; a stale pattern reports a plausible count with no error (measured 2026-09-14: four secret-scan matches from a day-old pattern, zero from the current one).
 
 **The installed artifact and the repo file are two files. Diff them by digest, and check *which way* they differ.** A symlinked store inverts the usual drift: the checkout *is* the install, so a `git checkout` to test a branch silently downgrades every other skill. Test by extraction (`git archive <ref> <dir> | tar -x -C <scratch>`) and digest-match against the branch blob.
 
