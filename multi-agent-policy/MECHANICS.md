@@ -190,9 +190,12 @@ resend it as a resume of that agent (2026-09-12).
   resolution can serve a session-start-cached copy, and the run "succeeds" under the wrong config.
   Verify a run's configuration by grepping its `agent-*.jsonl` transcripts for `"model"`; per-agent
   spawn evidence beats a canary line the script prints.
-- **Edited `.claude/agents/*.md` definitions are NOT hot-loaded.** The registry caches at session
-  start. Validate a def changed this session by executing its procedure directly; defer literal
-  dispatch to a fresh session.
+- **A NEW `.claude/agents/*.md` definition registers mid-session; an EDITED one is not known to
+  reload.** Three new definitions (user- and project-scope) appeared as dispatchable agent types in
+  the session that wrote them, the harness announcing each (2026-09-14). Whether a dispatch reads an
+  edited body fresh is unmeasured, so for an edit made this session validate the def by executing
+  its procedure directly, or defer literal dispatch to a fresh session. Narrows the 2026-07-02
+  reading that nothing hot-loads.
 - **Codex agent definitions and installed skill metadata are session inputs.** After changing
   `~/.codex/agents/*.toml`, `~/.agents/skills/`, or a skill's `agents/openai.yaml`, validate
   discovery in a newly started Codex task.
