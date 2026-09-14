@@ -154,6 +154,16 @@ The sandbox or harness causes each of these, but none prints a denial.
 
 - **Here-strings (`<<<`) and heredocs need a `/tmp` temp file the sandbox denies**, so a loop
   fed by one runs ZERO times with no loop-level error. Use `< <(printf '%s\n' "$VAR")`.
+  **The denial is conditioned on the WORKING DIRECTORY, and that makes it worse, not better.**
+  The same sandboxed script executed **27 of 28** checks from the session's own repo root
+  (stderr empty) and **1 of 28** from a sibling worktree, where bash printed `cannot create
+  temp file for here document: Operation not permitted` 26 times **on stderr** while the script
+  exited 0 and printed a clean verdict on stdout. So heredocs appearing to work in the main
+  checkout is NOT evidence the rule is stale — it is the same rule, measured on the wrong side
+  of the boundary. Run anything heredoc-backed from a worktree with the sandbox OFF, and when a
+  scan or gate reads clean from a worktree, check its executed-check count before believing it.
+  Mechanism unproven: cwd inside vs outside the writable root is the measured discriminator,
+  not the established cause. (measured 2026-09-14)
 - **A heredoc inside `$(...)` dies when the command is `&&`-chained** — the harness's `eval`
   wrapper can't parse it and the error is a useless "unexpected EOF". Write the body to
   `$TMPDIR/f.txt` in its own call, then `-F`/`$(cat …)` in the next — subject to the
