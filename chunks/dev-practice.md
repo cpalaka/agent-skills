@@ -36,6 +36,20 @@ The `errors` buffer is cumulative and `--clear` is a no-op — `close --all` bef
 `open` for per-page attribution; some framework errors (SSR/hydration) surface on
 `errors`, not `console`. Unit tests and DOM-class checks miss real render bugs.
 
+**When work does pass to the user mid-slice, restate the invariants it depends on, not
+just the next step.** `parallel-work` already requires a subagent's prompt to carry its
+hard limits verbatim rather than trusting the host; instructions written for the *user*
+need the same discipline and are quieter when they fail, because they did follow what
+you wrote. Before sending one, name what must still be true when it comes back — the
+state that must not move, the step that must precede a save, how many things may be in
+flight at once — and say it even where a prior round already covered it, since the
+handoff is read on its own. Two omissions in one authoring slice each destroyed
+hand-authored work with no error: a "save with X active" instruction that dropped the
+preceding round's reselect-before-saving step, and a split that never said only one
+unkeyed unit survives per hand-off cycle (2026-09-14). Verify the returned state against
+those invariants rather than the user's report of it; they are reporting the instruction,
+not the invariant.
+
 **Grill against the docs when they exist.** When the project carries a `CONTEXT.md` or a
 `docs/adr/` directory, pair `grilling` with `domain-modeling` (the `grill-with-docs`
 pairing) rather than grilling as generic Q&A — use it when a slice introduces new domain

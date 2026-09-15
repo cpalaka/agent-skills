@@ -379,3 +379,19 @@ read; this is the coordination layer above it.
   `Window.mode` change does not (2026-09-14). Where a finding turns on runtime ordering and the
   orchestrator is the only seat that can execute, spend the run before the adjudication round,
   and read converging read-only seats as one lens, not two.
+- **Seats also converge on a shared UNDOCUMENTED CONVENTION, and that agreement is not
+  corroboration either — the durable fix is the artifact, not the refutation.** The bullet above
+  scopes convergence-blindness to seats that cannot execute the system; this is the same false
+  confirmation with a different cause, and it survives giving every seat full read access, because
+  what is missing is not a run but a stated convention. Two pinned review seats independently filed
+  the same finding — that a widget's `L`/`R` labels contradicted the landmark data — because the
+  repo nowhere said that a `DEF_*.L` bone sits on the figure's RIGHT, an artefact of the
+  Blender-to-Godot axis conversion. Both were reasoning correctly from the identifiers; the
+  identifiers were the trap. Their agreement read as a confirmed defect, and the cheap move was to
+  "fix" labels that were already right. What settled it was an independent re-derivation from the
+  source data, not a third opinion (2026-09-14, 3d-anim-lab #20). So: when two seats agree, ask
+  what single artifact they both read before counting them as two sources, and when the answer is
+  an unstated convention, spend the fix on documenting it where both seats look — one glossary
+  entry closed this one — rather than adjudicating the same finding again next slice. Sign, unit
+  and handedness conventions are the recurring shape; `godot-personal-preferences` #7 is the
+  single-seat version of the same hazard.
