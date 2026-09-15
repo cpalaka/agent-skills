@@ -133,6 +133,19 @@ message>'`. It failed loudly only because a commit message cannot parse as a ref
 holding a plausible SHA would have pushed the wrong tree under a sign-off that never covered it
 (measured 2026-08-02).
 
+**That parenthetical is no longer hypothetical.** Measured 2026-09-15, 3d-anim-lab: a gate-runner
+ran the gotcha scan unsandboxed (writing to `/var/folders/…/T/`) and read its output back
+*sandboxed* (reading `/tmp/claude-501`). What came back was a leftover from **a different
+checkout** — `project=…/3d-anim-lab-task-020-gait-blend`, `1 of 28 checks executed`,
+`VERDICT: CLEAN`. That is a well-formed verdict line, and it is specifically the **fail-open
+shape** this project's contract warns about, so every plausibility check an agent would run on it
+passes: right format, right vocabulary, clean result. Nothing errored. The only tell was the
+project path printed inside the file, and only because the scan happens to print one. Read that
+as the general case: the stale content you get back is not noise, it is a *well-formed answer to
+the question you asked, about something else*. Prefer an absolute path under the repo over
+`$TMPDIR` for anything a verdict rests on, and when a tool prints its own subject (a project path,
+a commit, a run id), check it against the one you meant.
+
 This directly qualifies the general "write the commit body to `$TMPDIR/f.txt` in its own call and
 `-F` it in the next" rule: correct for the heredoc problem it solves, unsafe the moment the two
 calls straddle a sandbox boundary. **Keep write → use → verify in calls of the same sandbox mode**,
