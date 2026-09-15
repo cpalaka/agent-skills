@@ -10,7 +10,7 @@ single-task process; you driving 2+ tasks hands-on → attended worktrees; depen
 you are NOT hand-driving → background waves.** *Attended* here means a human is driving or
 watching the session; it says nothing about who writes the diff. The `multi-agent-policy`
 skill's `solo` toggle is a different word for a different thing (the orchestrator implements
-instead of delegating), and the two were measured colliding in a project note (2026-09-14).
+instead of delegating), and the two were measured colliding on a project (2026-09-14).
 
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
