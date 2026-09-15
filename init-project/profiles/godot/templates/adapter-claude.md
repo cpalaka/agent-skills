@@ -1,8 +1,13 @@
 ## Godot toolchain on this host
 
 <!-- requires: tests/run_tests.sh states: captures are written under $TMPDIR when it is set -->
-- **Run `tests/run_tests.sh` inside the sandbox** — it needs no bypass; its captures go under
-  `$TMPDIR`, which the sandbox permits.
+- **`tests/run_tests.sh` runs inside the sandbox only while it stays as scaffolded.** Its captures
+  go under `$TMPDIR`, which the sandbox permits, and its fatal grep is `^SCRIPT ERROR` alone. Two
+  things end that: a tree with a `.blend` (Blender crashes at GPU detection inside the sandbox,
+  godot-gotchas #47), or tightening the grep to `^ERROR:` — sandboxed, Godot is denied `user://logs`
+  and the CA store and prints `ERROR:` for each, so a green suite reads as red (#88). Past either
+  point, escalate **per command** with the Bash tool's sandbox-off option, never by changing the
+  session's permission profile.
 <!-- requires: .mcp.json states: the servers are godot-mcp and godot (minimal-godot) and there is no godot-ai entry; contract § godot-ai addon; contract states: the dock registers godot-ai at user scope; contract states: a port fix is applied to every host's user-scope config -->
 - **`.mcp.json` lists godot-mcp and minimal-godot only.** The godot-ai stdio entry lives at USER
   scope in `~/.claude.json`, with its ports hardcoded there — if the dock walks to another port,

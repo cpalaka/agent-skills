@@ -38,8 +38,9 @@
 - **Invoke by name, always explicitly:** `godot-architecture-review` for architecture/refactor work
   (leaves `CONTEXT.md`, `docs/adr/`, `docs/architecture/system-map.md`); `audit-godot-parity` for
   periodic project↔skill parity audits.
-- Edits to scenes (`.tscn`) and resources (`.tres`) should normally go through the Godot editor;
-  hand-editing is possible but easy to corrupt. Typed arrays serialize as `Array[X]([...])`.
+- Hand-edit atomic scene (`.tscn`) / resource (`.tres`) changes with a read-back; use the editor for
+  structural changes and `Transform3D` bases, per `godot-personal-preferences`. Typed arrays
+  serialize as `Array[X]([...])`.
 - `.godot/` is the editor's generated cache and is gitignored — never edit it directly; regenerate by
   opening the project in the editor.
 
