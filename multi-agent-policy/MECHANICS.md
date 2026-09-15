@@ -368,3 +368,14 @@ read; this is the coordination layer above it.
   copy carries a second name. **Relaying is asserting:** before handing a status claim back to the
   seat that authored it, verify it against the artifact, not the handoff. An "owed / not done /
   missing" claim is an absence claim: grep the artifact and name the scope (2026-08-29).
+- **Seats that cannot execute the system converge on the same confident inference about runtime
+  behaviour, and their agreement is not corroboration either.** Shared blindness is
+  indistinguishable from independent confirmation: the second seat is not a second source when
+  both are reasoning from the same unexecutable artifact. Two pinned review seats independently
+  refuted a dating claim from the same two files, in the same direction, each saying it could not
+  run the engine; their convergence read as confirmation and the orchestrator rewrote the claim
+  their way. One throwaway worktree at the old commit and one run then contradicted both
+  reviewers and the orchestrator — a `Window.size` write applies immediately where the later
+  `Window.mode` change does not (2026-09-14). Where a finding turns on runtime ordering and the
+  orchestrator is the only seat that can execute, spend the run before the adjudication round,
+  and read converging read-only seats as one lens, not two.
