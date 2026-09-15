@@ -50,6 +50,8 @@ A reviewer's finding is itself an unverified upstream fact. Disposition every fi
 
 **Settle, don't defer.** A premise the spec itself flags as unverified is SETTLED NOW with a throwaway probe — never written into a ticket as an assumption. An assumption inside a ticket is a premise nobody re-checks; the ticket reads as decided. A probe up front costs less than a slice built on a false premise and discovered mid-implementation.
 
+**Execute every acceptance criterion; reading one tells you nothing.** A criterion that names a literal output string, a command's result, or a state the artifact must reach is a prediction about a system that exists right now — so run it and read what comes back. Reviewing it only confirms it is plausible, and plausible is what a defective criterion looks like. Measured 2026-09-14: five of one ticket's eleven criteria were defective; execution caught all five and four review seats reading them caught none. Two were unsatisfiable by construction (the artifact had to name a value that does not exist until after it is written — a commit cannot contain its own SHA), one quoted a string the tool does not emit, one said "the lowest open ticket" and returned a spec parent against the live tracker, and one asserted an absence through an instrument blind to the shape it was asserting about. The most expensive of those to discover late cost four fix rounds; the cheapest to have caught early cost one command.
+
 **Done when:** every finding across all three reports carries a disposition, and no unverified premise survives into the revised spec.
 
 ## 4. Revise and gate
