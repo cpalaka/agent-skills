@@ -162,8 +162,15 @@ The sandbox or harness causes each of these, but none prints a denial.
   checkout is NOT evidence the rule is stale — it is the same rule, measured on the wrong side
   of the boundary. Run anything heredoc-backed from a worktree with the sandbox OFF, and when a
   scan or gate reads clean from a worktree, check its executed-check count before believing it.
-  Mechanism unproven: cwd inside vs outside the writable root is the measured discriminator,
-  not the established cause. (measured 2026-09-14)
+  Mechanism, established 2026-09-14 by elimination: bash 3.2 does **not** put heredoc temp
+  files in `$TMPDIR`. `$TMPDIR` measured writable from both the repo root and the worktree, so
+  it cannot be what separates them; `/tmp` and `/var/tmp` measured denied from both; and with
+  `TMPDIR` pointed at a nonexistent path the heredoc still succeeded from the repo root. The
+  only writable location left in bash's fallback chain, and the only thing that differs between
+  the two cells, is the **working directory** — which the sandbox grants for the session's own
+  checkout and not for a sibling worktree. So the discriminator is the cause, and exporting
+  `TMPDIR` does not rescue a heredoc: only the sandbox off, or the session's own checkout, does.
+  (measured 2026-09-14, re-measured with the four-cell matrix 2026-09-14)
 - **A heredoc inside `$(...)` dies when the command is `&&`-chained** — the harness's `eval`
   wrapper can't parse it and the error is a useless "unexpected EOF". Write the body to
   `$TMPDIR/f.txt` in its own call, then `-F`/`$(cat …)` in the next — subject to the
