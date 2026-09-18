@@ -191,7 +191,7 @@ async function runFilter(body, fx) {
   // NOTE: SCREEN_SCALE and SCORES_SCHEMA are NOT parameters — the assembled body declares both.
   const fn = new AsyncFunction(
     'candidates', 'seedIndices', 'briefs', 'renderIndexed',
-    'agent', 'parallel', 'log', 'WORKHORSE', 'KEEP_SCHEMA', body + TAIL_FILTER)
+    'agent', 'parallel', 'log', 'BUILDER_MODEL', 'KEEP_SCHEMA', body + TAIL_FILTER)
   const out = await fn(fx.candidates, fx.seedIndices || [], {}, renderIndexed,
     agent, fakeParallel, log, 'claude-opus-5', KEEP_SCHEMA)
   return { ...out, logs }
@@ -205,7 +205,7 @@ async function runTourney(body, fx) {
   const MATCH_SCHEMA = { type: 'object', properties: { winner: { type: 'string', enum: ['A', 'B'] }, reason: { type: 'string' } }, required: ['winner', 'reason'] }
   const fn = new AsyncFunction(
     'candidates', 'bracket', 'briefs', 'renderConcept', 'MATCH_SCHEMA',
-    'agent', 'parallel', 'log', 'WORKHORSE', body + TAIL_TOURNEY)
+    'agent', 'parallel', 'log', 'BUILDER_MODEL', body + TAIL_TOURNEY)
   const out = await fn(fx.candidates, fx.bracket, {}, renderConcept, MATCH_SCHEMA,
     agent, fakeParallel, log, 'claude-opus-5')
   return { ...out, logs }

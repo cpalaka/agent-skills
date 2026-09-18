@@ -8,9 +8,10 @@ Two modes of doing more than one task at once, both taken only on an explicit pa
 signal — a busy checkout is not one. Pick by the decision rule: **one task → the standing
 single-task process; you driving 2+ tasks hands-on → attended worktrees; dependency-free fan-out
 you are NOT hand-driving → background waves.** *Attended* here means a human is driving or
-watching the session; it says nothing about who writes the diff. The `multi-agent-policy`
-skill's `solo` toggle is a different word for a different thing (the orchestrator implements
-instead of delegating), and the two were measured colliding on a project (2026-09-14).
+watching the session; it says nothing about who writes the diff. The `implement-run` chunk's
+`solo` toggle is a different word for a different thing — it turns delegation off, so the
+coordinator writes the diff instead of dispatching an implementer — and the two were measured
+colliding on a project (2026-09-14).
 
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
@@ -64,9 +65,9 @@ with no shared state and no ordering between them:
   so the prompt, not the approval policy, carries the gates (`git-confirm-destructive`).
 - Steer a drifting subagent with a message rather than respawning it (a respawn loses its
   context).
-- **The orchestrator owns re-verification of every handoff.** On each subagent handoff, the verify gate is
-  re-run independently in that worktree before anything is relayed to the user — by the main
-  session, or by a gate-runner seat that did not write the diff; the independence that matters is
+- **The coordinator owns re-verification of every handoff.** On each subagent handoff, the verify gate is
+  re-run independently in that worktree before anything is relayed to the user — by the coordinator
+  itself, or by a gate-runner seat that did not write the diff; the independence that matters is
   that the seat re-running the gate never wrote the diff. Never pass on a subagent's claims unverified. Writer/subagent agents
   systematically **over-report their own output**; treat any self-reported metric (lines
   changed, "26% smaller", "tests pass") as a claim, not a measurement, and diff the real

@@ -21,7 +21,8 @@ reconcile SENT vs RETURNED — here it is the instrument below), item 9 (skeptic
 measures quote fidelity, not claim support; funders and 0-cost options get their own class), and
 §1's bracket-or-scoreboard choice (this adapter's `board` is the scoreboard variant; a bracket run
 reconciles each match's votes the same way per file, but no bracket runner ships here yet). Load
-`$multi-agent-policy` before the first spawn; its pins and its fan-out → verify discipline govern.
+`$multi-agent-policy` before the first spawn; its pins govern, and so does the fan-out → verify
+discipline in its `WORKFLOWS.md` § Fan-out → verify discipline.
 
 ## Substitutions
 
@@ -105,10 +106,10 @@ reconciles each match's votes the same way per file, but no bracket runner ships
    records each stage's pin **as dispatched and as observed**; a child whose own-turn effort or
    model differs from `plan.json`, or reads `?`, makes the run not green — say which children and
    why. The model id is read from `~/.codex/config.toml` (`model =`) at authoring time and
-   written into `plan.json`, never into this file. **Tier is unmapped on Codex:**
-   `multi-agent-policy`'s workhorse/scarce vocabulary is decided by rate-limit membership, which
-   nothing here measures; every stage of a Codex run is on the one configured model, and whether
-   that is the workhorse or the scarce tier is not decided by this adapter. The result file and
+   written into `plan.json`, never into this file. **Role is unmapped on Codex:**
+   `multi-agent-policy`'s Planner and Builder are a capability assignment made per seat, which
+   nothing here measures; every stage of a Codex run is on the one configured model, and which of
+   the two roles that model is serving is not decided by this adapter. The result file and
    the `rollouts` output hold session ids and local paths — keep the archive out of public
    repositories.
 
@@ -125,18 +126,30 @@ reconciles each match's votes the same way per file, but no bracket runner ships
    one per vote = judges × candidates); verify = number of skeptics; synthesize = 1; plus the
    recovery allowance = one child per fan-out stage (one recovery wave re-dispatching that
    stage's dropped/errored ids to one child each counts per id — state which). Run 1: 3 + 3 + 2 +
-   1 = 9 base, +4 allowance = 13 projected, 10 spawned. Two ceilings, and the smaller binds:
-   `multi-agent-policy`'s 20-child announce ceiling (Claude Code's dynamic workflow-size setting
-   does not govern a Codex run), and Codex's own concurrency ceiling — config keys
-   `agents.max_concurrent_threads_per_session` / `features.multi_agent_v2.max_concurrent_threads_per_session`,
-   thread status `agent_limit_reached`. No CLI command prints the effective default, but the
-   binary's own hint — "Consider setting `features.multi_agent_v2.max_concurrent_threads_per_session`
-   below 8" — is printable evidence it is ≥ 8 (`~/.codex/config.toml` sets neither key). A stage
-   that hits `agent_limit_reached` waves: wait for a running child, then dispatch the next, and
-   reconcile at the end as §4 says.
-   Under non-interactive `codex exec` there is nobody to announce to: a projection over the
-   announce ceiling stops **report-only** (write `plan.json` and the projection to the reply,
-   dispatch nothing). Spawns dispatch a few seconds apart and run concurrently.
+   1 = 9 base, +4 allowance = 13 projected, 10 spawned. **Two limits apply, and they are different
+   kinds of thing — one is a threshold on the run's total, the other a cap on how many run at once.
+   Never compare them.**
+
+   The first is an **announce threshold on the projected total**, owned by this adapter: a
+   projection over **20 children** gets announced before dispatch. That number is owned here rather
+   than inherited — `multi-agent-policy` no longer sets an agent-count ceiling, and Claude Code's
+   dynamic workflow-size setting does not govern a Codex run either. Interactively, crossing it
+   means announce-then-dispatch. Under non-interactive `codex exec` there is nobody to announce to,
+   so a projection over **20** stops **report-only** instead (write `plan.json` and the projection
+   to the reply, dispatch nothing). Run 1's 13 is under the threshold, so it neither announces nor
+   stops.
+
+   The second is Codex's own **concurrency limit**, which **serializes the run rather than gating
+   it**: it caps how many children run at once, never how many a run may spawn in total. Config
+   keys `agents.max_concurrent_threads_per_session` /
+   `features.multi_agent_v2.max_concurrent_threads_per_session`, thread status
+   `agent_limit_reached`. Its effective value is **not obtainable** — no CLI command prints the
+   default; the binary's own hint ("Consider setting
+   `features.multi_agent_v2.max_concurrent_threads_per_session` below 8") is printable evidence
+   only that it is ≥ 8 (`~/.codex/config.toml` sets neither key). A stage that hits
+   `agent_limit_reached` **waves**: wait for a running child, then dispatch the next, and reconcile
+   at the end as §4 says. The run still spawns every projected child; it just takes longer. Spawns
+   dispatch a few seconds apart and run concurrently.
 
 8. **Smoke run and elicitation.** Canonical §6's smoke run, at the parameters it names, still
    gates a new or edited spec. Canonical §3's interview is the same, but a

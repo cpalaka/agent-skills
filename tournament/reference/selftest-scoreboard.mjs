@@ -141,7 +141,7 @@ async function runStage(body, fx) {
   // NOTE: JUDGE_SCHEMA and SCORE_SCALE are NOT parameters — the assembled body declares both (see extractStage).
   const fn = new AsyncFunction(
     'candidates', 'shortlist', 'renderConcept',
-    'agent', 'parallel', 'pipeline', 'log', 'WORKHORSE', body + TAIL)
+    'agent', 'parallel', 'pipeline', 'log', 'BUILDER_MODEL', body + TAIL)
   const out = await fn(fx.candidates, fx.shortlist, renderConcept,
     agent, parallel, pipeline, log, 'claude-opus-5')
   return { ...out, logs }

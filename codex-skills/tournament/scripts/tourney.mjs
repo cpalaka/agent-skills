@@ -14,7 +14,8 @@
 //       unassigned  a <stage-dir>/*.json nobody asked for — listed, never counted; `board`
 //                 treats any as needsAdjudication until the parent dispositions it
 //       --expect  the pre-derived input count; a mismatch is RED (an input-starved run
-//                 completes "successfully" otherwise — multi-agent-policy § Fan-out → verify)
+//                 completes "successfully" otherwise — multi-agent-policy/WORKFLOWS.md
+//                 § Fan-out → verify discipline)
 //       The buckets are disjoint and sum to sent. Exit 0 GREEN, 1 RED, 2 usage.
 //
 //   board <judge-dir> --sent <ids-file> --candidates <ids-file> [--scale MIN..MAX] [--integer]

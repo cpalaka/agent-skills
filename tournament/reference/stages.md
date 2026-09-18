@@ -57,13 +57,14 @@ export const meta = {
   ],
 }
 
-// MODEL TIER PINS — every stage below references one of these consts, never a bare alias.
+// MODEL PINS, ONE PER CAPABILITY ROLE — every stage below references one of these consts, never
+// a bare alias.
 // Resolve each ID by PROBE at assembly time, not from memory: a CLI short alias (`opus`, `fable`)
 // can lag a release and keep serving the prior generation while every rule still reads correct
 // (measured 2026-07-24). Probe with `claude -p --output-format json` and read `canonicalModel`.
 // `lint.mjs` ERRORs on a bare alias anywhere in the emitted script.
-const WORKHORSE = 'claude-opus-5' // FILL: re-probe at assembly time
-const SCARCE = 'claude-fable-5'   // FILL: re-probe; used only by SYNTH_MODEL, see Synthesize Stage
+const BUILDER_MODEL = 'claude-opus-5' // FILL: re-probe at assembly time
+const PLANNER_MODEL = 'claude-fable-5'   // FILL: re-probe; used only by SYNTH_MODEL, see Synthesize Stage
 ```
 
 ---
@@ -337,8 +338,8 @@ const DOMAIN = 'your domain here' // FILL: one-phrase description of what is bei
 const ROOT = '/path/to/research' // FILL: absolute path to the research corpus root
 
 const briefResults = await parallel([
-  () => agent(`Read ${ROOT}/research/topic-a.md. Extract everything relevant to ${DOMAIN}. ${briefSpec}`, { model: WORKHORSE, label: 'brief:topic-a', phase: 'Context' }), // FILL: replace file path, topic, and extraction goal
-  () => agent(`Read ${ROOT}/research/topic-b.md. Extract everything relevant to ${DOMAIN}. ${briefSpec}`, { model: WORKHORSE, label: 'brief:topic-b', phase: 'Context' }), // FILL: replace file path, topic, and extraction goal
+  () => agent(`Read ${ROOT}/research/topic-a.md. Extract everything relevant to ${DOMAIN}. ${briefSpec}`, { model: BUILDER_MODEL, label: 'brief:topic-a', phase: 'Context' }), // FILL: replace file path, topic, and extraction goal
+  () => agent(`Read ${ROOT}/research/topic-b.md. Extract everything relevant to ${DOMAIN}. ${briefSpec}`, { model: BUILDER_MODEL, label: 'brief:topic-b', phase: 'Context' }), // FILL: replace file path, topic, and extraction goal
 ])
 
 const briefs = { // FILL: key names must match what downstream generate/filter stages reference
@@ -362,7 +363,7 @@ const researchBriefs = [
 ]
 
 const researchResults = (await parallel(researchBriefs.map(b => () =>
-  agent(b.prompt, { model: WORKHORSE, label: `research:${b.key}`, phase: 'Context', effort: 'high' })
+  agent(b.prompt, { model: BUILDER_MODEL, label: `research:${b.key}`, phase: 'Context', effort: 'high' })
 ))).filter(Boolean)
 
 const briefs = Object.fromEntries( // FILL: key names must match what downstream stages reference
@@ -406,7 +407,7 @@ const verified = (await parallel(claims.map(c => () =>
   parallel(VERIFY_LENSES.map((lens, li) => () =>
     agent(
       `A research agent (working on: ${DOMAIN}) asserted this claim:\n"${c.claim}"\nWhy it was flagged as dubious: ${c.whyDubious}\n\nVERIFY IT THROUGH THIS LENS: ${lens}. Use WebSearch/WebFetch (load via ToolSearch "select:WebSearch,WebFetch") to ground your check in real sources where you can. Be ADVERSARIAL — actively try to refute the claim or surface the nuance that makes it misleading. If evidence is thin, default to skepticism. Then give your verdict (confirmed / refuted / partly / unknown), a corrected precise statement of what is actually true, and your single strongest piece of evidence.`,
-      { model: WORKHORSE, label: `verify:${c.id}:${li}`, phase: 'Verify', schema: VERDICT_SCHEMA, effort: 'medium' }
+      { model: BUILDER_MODEL, label: `verify:${c.id}:${li}`, phase: 'Verify', schema: VERDICT_SCHEMA, effort: 'medium' }
     )
   )).then(vs => {
     const v = vs.filter(Boolean)
@@ -450,7 +451,7 @@ const LENSES = [ // FILL: replace lens keys and prompts for your domain
 const genResults = await parallel(LENSES.map(l => () =>
   agent(
     `You are an expert generating candidates for a tournament deciding: ${DOMAIN}. ${l.prompt}\n\n${genContext}\n\nGenerate exactly 4 DISTINCT candidates through your lens. Each must satisfy all hard constraints and have one undeniably strong differentiator.`, // FILL: adjust count and constraint framing
-    { model: WORKHORSE, label: `gen:${l.key}`, phase: 'Generate', schema: CANDIDATE_SCHEMA }
+    { model: BUILDER_MODEL, label: `gen:${l.key}`, phase: 'Generate', schema: CANDIDATE_SCHEMA }
   )
 ))
 
@@ -459,7 +460,7 @@ const seedPrompts = [
   `You are an expert. Develop this user-supplied seed idea into its STRONGEST single tournament-ready candidate for: ${DOMAIN}.\n\nSEED: [describe the seed idea here]\n\n${genContext}\n\nReturn exactly 1 candidate.`, // FILL: replace seed description
 ]
 const seedDevs = await parallel(seedPrompts.map((prompt, si) => () =>
-  agent(prompt, { model: WORKHORSE, label: `gen:seed-${si}`, phase: 'Generate', schema: CANDIDATE_SCHEMA })
+  agent(prompt, { model: BUILDER_MODEL, label: `gen:seed-${si}`, phase: 'Generate', schema: CANDIDATE_SCHEMA })
 ))
 
 const candidates = []
@@ -504,7 +505,7 @@ const HARD = `HARD CONSTRAINTS for ${DOMAIN}: [list must-satisfy constraints her
 const allIdx = candidates.map((_, i) => i)
 const dedup = await agent(
   `You are the gatekeeper for a tournament deciding: ${DOMAIN}. Below are ${candidates.length} candidates, each with an index.\n\n${HARD}\n\nTASKS:\n1. KILL any candidate that violates a hard constraint.\n2. MERGE near-duplicates: when two candidates share the same core idea, keep only the better-articulated one.\n3. Indices ${JSON.stringify(seedIndices)} are the user's own seed ideas — they MUST be kept regardless (flag concerns in notes instead of killing).\n\nReturn the indices to keep.\n\n${renderIndexed(allIdx)}`,
-  { model: WORKHORSE, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
+  { model: BUILDER_MODEL, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
 )
 
 // VALIDATE THE KEPT SET ITSELF, not just the entries scored against it. `kept` is INDICES, and every
@@ -529,7 +530,7 @@ const AXES = [ // FILL: replace axes for your domain; each axis has key, brief (
 const screeningResults = await parallel(AXES.map(a => () =>
   agent(
     `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below ${SCREEN_SCALE.min}-${SCREEN_SCALE.max} on your axis ONLY${SCREEN_SCALE.integer ? ', as a whole number' : ''}. Use the full range — be a harsh discriminator, no clustering in the middle. Score every index EXACTLY ONCE and score no index you were not given. One sentence of reasoning each.\n\n${renderIndexed(kept)}`, // FILL: adjust the wording; the scale text is derived from SCREEN_SCALE, leave it
-    { model: WORKHORSE, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
+    { model: BUILDER_MODEL, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
   )
 ))
 
@@ -688,7 +689,7 @@ const HARD_SB = `HARD CONSTRAINTS for ${DOMAIN}: [list must-satisfy constraints 
 const allIdxSB = candidates.map((_, i) => i)
 const dedupSB = await agent(
   `You are the gatekeeper for a tournament deciding: ${DOMAIN}. Below are ${candidates.length} candidates, each with an index.\n\n${HARD_SB}\n\nTASKS:\n1. KILL any candidate that violates a hard constraint.\n2. MERGE near-duplicates: keep only the better-articulated one.\n3. Indices ${JSON.stringify(seedIndices)} are user seeds — keep regardless.\n\nReturn the indices to keep.\n\n${renderIndexed(allIdxSB)}`,
-  { model: WORKHORSE, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
+  { model: BUILDER_MODEL, label: 'filter:dedup', phase: 'Filter', schema: KEEP_SCHEMA }
 )
 
 // Validate the kept set ITSELF and the seed list, on the same argument as bracket mode: `kept` is indices
@@ -712,7 +713,7 @@ const AXES_SB = [ // FILL: replace axes for your domain
 const screeningResultsSB = await parallel(AXES_SB.map(a => () =>
   agent(
     `You are a tournament screener scoring candidates on ONE axis: ${a.instr}\n\nCONTEXT: ${DOMAIN}\n\nREFERENCE BRIEF:\n${a.brief}\n\nScore EVERY candidate below ${SCREEN_SCALE.min}-${SCREEN_SCALE.max} on your axis ONLY${SCREEN_SCALE.integer ? ', as a whole number' : ''}. Use the full range — no clustering in the middle. Score every index EXACTLY ONCE and score no index you were not given. One sentence of reasoning each.\n\n${renderIndexed(keptSB)}`, // FILL: adjust the wording; the scale text is derived from SCREEN_SCALE, leave it
-    { model: WORKHORSE, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
+    { model: BUILDER_MODEL, label: `screen:${a.key}`, phase: 'Filter', schema: SCORES_SCHEMA }
   )
 ))
 
@@ -839,7 +840,7 @@ const runMatch = async (ai, bi, round) => {
   const votes = await parallel(JUDGE_LENSES.map(j => () =>
     agent(
       `You are one of three judges in a single-elimination tournament deciding: ${DOMAIN}.\n\n${HARD}\n\n${j.instr} The other must-haves are hard pass/fail criteria — a candidate that fails one loses regardless of your lens.\n\nREFERENCE BRIEF:\n${j.brief()}\n\nCANDIDATE A:\n${renderConcept(a)}\n\nCANDIDATE B:\n${renderConcept(b)}\n\nBe adversarial: hunt for the fatal flaw in each before weighing strengths. Pick the better CHOICE, not the more impressive idea on paper.`,
-      { model: WORKHORSE, label: `judge:${round}:${j.key}`, phase: 'Tournament', schema: MATCH_SCHEMA }
+      { model: BUILDER_MODEL, label: `judge:${round}:${j.key}`, phase: 'Tournament', schema: MATCH_SCHEMA }
     )
   ))
   // Count only the CLOSED FIELD the schema declares. `valid.length - aVotes` treated every non-'A'
@@ -957,7 +958,7 @@ const rawJudged = await pipeline(
     const c = candidates[idx]
     return agent(
       `${SHARED_SB}\n\nYou are developing ONE tournament candidate.\nCANDIDATE: ${c.name}\n\nProduce a complete, detailed output for this candidate. Put full content in the appropriate schema fields.`, // FILL: tailor prompt for your domain
-      { model: WORKHORSE, label: `gen:${c.name}`, phase: 'Tournament', schema: { type: 'object', properties: { candidates: { type: 'array', items: { type: 'object' } } }, required: ['candidates'] }, effort: 'high' } // FILL: replace inline schema with your domain's generation schema (e.g. CANDIDATE_SCHEMA)
+      { model: BUILDER_MODEL, label: `gen:${c.name}`, phase: 'Tournament', schema: { type: 'object', properties: { candidates: { type: 'array', items: { type: 'object' } } }, required: ['candidates'] }, effort: 'high' } // FILL: replace inline schema with your domain's generation schema (e.g. CANDIDATE_SCHEMA)
     )
   },
   (generated, idx) => {
@@ -971,7 +972,7 @@ const rawJudged = await pipeline(
     return parallel(JUDGES.map(j => () =>
       agent(
         `${SHARED_SB}\n\nYou are judging a tournament candidate. YOUR ROLE: ${j.persona}.\n${j.rubric}\n\nCANDIDATE NAME: ${c.name}\nCANDIDATE OUTPUT:\n${renderConcept(generated)}\n\nScore it ${SCORE_SCALE.min}-${SCORE_SCALE.max} through YOUR lens only${SCORE_SCALE.integer ? ', as a whole number' : ''}. Be tough, specific, and do NOT inflate. Give a breakdown, a sharp critique, the single most important fix (mustFix), and whether YOU personally would choose it. Echo YOUR ROLE verbatim in \`persona\` and the CANDIDATE NAME verbatim in \`candidate\` — a mismatch voids your vote.`, // FILL: adjust the rubric wording; the scale text is derived from SCORE_SCALE, leave it
-        { model: WORKHORSE, label: `judge:${c.name}:${j.key}`, phase: 'Tournament', schema: JUDGE_SCHEMA, effort: 'high' }
+        { model: BUILDER_MODEL, label: `judge:${c.name}:${j.key}`, phase: 'Tournament', schema: JUDGE_SCHEMA, effort: 'high' }
       )
     )).then(js => {
       // parallel() resolves POSITIONALLY: js[k] is JUDGES[k]'s ballot, or null if that judge errored.
@@ -1058,7 +1059,7 @@ if (noChampion) log('⚠ verify-champion: no champion to refute (empty/unresolve
 const skepticResults = noChampion ? [] : await parallel(SKEPTIC_LENSES.map(s => () =>
   agent(
     `You are a professional skeptic. Your job is to REFUTE this champion before committing to it. Default to refuted=true only for genuinely FATAL flaws; use severity for the rest. Always propose concrete fixes where they exist.\n\n${HARD}\n\n${s.instr}\n\nREFERENCE BRIEF:\n${s.brief()}\n\nTHE CHAMPION:\n${renderConcept(candidates[champion])}`,
-    { model: WORKHORSE, label: `skeptic:${s.key}`, phase: 'Verify', schema: SKEPTIC_SCHEMA }
+    { model: BUILDER_MODEL, label: `skeptic:${s.key}`, phase: 'Verify', schema: SKEPTIC_SCHEMA }
   )
 ))
 const skeptics = SKEPTIC_LENSES.map((s, k) => ({ lens: s.key, result: skepticResults[k] })).filter(x => x.result)
@@ -1106,7 +1107,7 @@ const HARD = `HARD CONSTRAINTS for ${DOMAIN}: [list must-satisfy constraints her
 const briefs = {} // STANDALONE PARSE ONLY — DELETE at assembly
 
 log('Writing final recommendation...')
-const SYNTH_MODEL = WORKHORSE // OPT-IN: set to SCARCE for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing scarce here and nowhere else in a tournament (multi-agent-policy posture ladder, `full` rung); every other stage stays WORKHORSE.
+const SYNTH_MODEL = BUILDER_MODEL // OPT-IN: set to PLANNER_MODEL for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing the Planner role here and nowhere else in a tournament (multi-agent-policy/WORKFLOWS.md § Planner placement in a saved workflow); every other stage stays BUILDER_MODEL.
 // Bracket mode has no single upstream `needsAdjudication` binding, so compose one from the two producers
 // that do carry flags: the FILTER that seeded this bracket, and the matches themselves. Without this the
 // report crowns a champion off a half-screened seeding, in a document a human reads instead of the JSON.
@@ -1154,7 +1155,7 @@ const DOMAIN_SYNTH = 'your domain here' // FILL: one-phrase description (already
 const SHARED_SYNTH = `[shared background context for ${DOMAIN_SYNTH}]` // FILL: compose from briefs/verifiedDigest at assembly
 
 log('Producing final synthesized output...')
-const SYNTH_MODEL = WORKHORSE // OPT-IN: set to SCARCE for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing scarce here and nowhere else in a tournament (multi-agent-policy posture ladder, `full` rung); every other stage stays WORKHORSE.
+const SYNTH_MODEL = BUILDER_MODEL // OPT-IN: set to PLANNER_MODEL for max-insight final synthesis. This is the one stage whose agent count is fixed at exactly 1 regardless of bracket size, which is the cost argument for placing the Planner role here and nowhere else in a tournament (multi-agent-policy/WORKFLOWS.md § Planner placement in a saved workflow); every other stage stays BUILDER_MODEL.
 const fmtScore = (s) => (s === null || s === undefined ? '(unscored)' : s.toFixed(1)) // an unscored candidate has no mean to print — never render it as 0.0
 // winner is `null` on an empty board (stages.md contract) — never index candidates[winner] unguarded.
 const leader = winner === null || winner === undefined ? null : candidates[winner]
@@ -1207,12 +1208,12 @@ const CONSTRAINTS_QA = `[hard constraints for ${DOMAIN_QA}]` // FILL: replace wi
 log('QA red-team + patch...')
 const qa = await agent(
   `Red-team this final output BEFORE it ships. Be ruthless.\n\nCONSTRAINTS:\n${CONSTRAINTS_QA}\n\nFINAL OUTPUT:\n${synth.summaryMarkdown}\n\nPARAMETERS:\n${synth.parametersMarkdown || '(none)'}\n\nCheck HARD for: (1) domain-specific hard gates (${DOMAIN_QA}); (2) internal contradictions, missing quantities, or ambiguous steps; (3) does it overshoot the constraint budget?; (4) any claims that contradict verified findings; (5) is every judge mustFix actually resolved? List every issue with a concrete fix.`, // FILL: replace checklist items with your domain's QA gates
-  { model: WORKHORSE, label: 'qa-redteam', phase: 'QA', schema: QA_SCHEMA, effort: 'high' }
+  { model: BUILDER_MODEL, label: 'qa-redteam', phase: 'QA', schema: QA_SCHEMA, effort: 'high' }
 )
 
 const patched = await agent(
   `Apply these QA fixes to the output, changing as LITTLE as possible and preserving its structure, formatting, and voice. Return ONLY the corrected full output markdown (no preamble).\n\nQA VERDICT: ${qa.verdict}\nQA ISSUES:\n${JSON.stringify(qa.issues, null, 2)}\n\nCURRENT FINAL OUTPUT:\n${synth.summaryMarkdown}`, // FILL: replace synth.summaryMarkdown with the correct field for your synth output (e.g. report for text-mode)
-  { model: WORKHORSE, label: 'qa-patch', phase: 'QA', effort: 'medium' }
+  { model: BUILDER_MODEL, label: 'qa-patch', phase: 'QA', effort: 'medium' }
 )
 ```
 
