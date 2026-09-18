@@ -24,7 +24,7 @@ The same review fits any artifact about to be mechanically fanned out — a spec
 
 ## 2. Dispatch the reviewers
 
-Invoke `multi-agent-policy` first — this is a fan-out, and the model/effort pins come from there.
+Dispatch each of the three as the `code-reviewer` seat — never as a bare spawn, which would inherit this session's model. A spec review is scoped diligence, so the seat is Builder even when this session is running on Planner.
 
 Launch three subagents in parallel. Each receives the fence and only the inputs its charter names; pass nothing else from this thread.
 

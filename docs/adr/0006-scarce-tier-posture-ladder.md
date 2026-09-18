@@ -1,7 +1,7 @@
 # 6. Scarce-tier placement is a cost-ordered posture ladder, not a permission list
 
 ## Status
-Accepted — 2026-08-08.
+Superseded by [ADR 0011](0011-roles-not-cost-tiers.md) — 2026-09-17. Accepted 2026-08-08.
 
 ## Context
 `multi-agent-policy` said "spend the scarce tier mainly on the completeness critic," and the

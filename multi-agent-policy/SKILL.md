@@ -1,124 +1,68 @@
 ---
 name: multi-agent-policy
-description: Model/effort tiers and orchestration procedure for multi-agent work. Use before spawning any agent (a subagent, workflow, fan-out, adversarial review, tournament, or orchestrator-delegate handoff); when reconciling a fan-out's results; when a peer session shares the live system; and before dispatching an external vendor lens.
+description: Which capability role fills which seat in a multi-agent run. Use before a delegated implementation, a review with sub-agents, or any fan-out from a planning session. Not for a single read-only sub-agent.
 ---
 
 # Multi-agent policy
 
-**Hard pins**, mirrored in the host's global instructions so they hold unloaded: workhorse tier for all agent work; the budget tier only for work that bears no correctness; scarce tier opt-in per launch; a scarce main loop orchestrates implementation by default.
+Two roles, each defined by a property, not a model name — a rule naming a model goes stale silently
+([ADR 0011](../docs/adr/0011-roles-not-cost-tiers.md)).
 
-**Two agent-count ceilings, and the smaller binds.** This skill's ceiling: a projection over 20 agents gets announced. Claude Code's dynamic workflow size (`/config`, default *medium*, under 15): a design over it, such as a full adversarial review or any tournament, needs the setting raised before launch, and announcing the count does not substitute. Project from the current args; a count recorded at authoring time is stale by definition.
+- **Planner** — the role that draws on its own weekly meter. Judgment over an ambiguous subject.
+- **Builder** — the strongest role with no meter of its own. Every seat that is not the advisor,
+  including one whose subject is still being specified.
 
-Rules here are host-independent. A recipe written for one host says nothing about whether the other host exposes the same tool.
+No third role exists, and nothing cheaper. The meter, not the work's difficulty, is what you
+ration — which is why Builder is the default and Planner the exception.
 
-## Before the first spawn
+## Which role a session runs on
 
-1. **Pin model and effort per stage** (§ Model & effort pins). Done when every stage names both.
-2. **A delegated implementation run: ask which orchestration shape, and record the answer** (§ Orchestrator-delegate procedure); on an `/implement` run, also spawn the scarce advisor and send it the drafted execution spec before the first implementer dispatch (trigger 1 there).
-3. **Project the agent count and the scarce posture, and confirm scarce headroom on both usage windows** (§ Scarce tier).
-4. **Announce** each ceiling crossing by name, the scarce projection with a recommendation, and any budget-tier composition with its de-risk.
-5. **Persist the approved spec** to the artifact the run reads.
-6. **Give every smoke run a pre-derived expected input count** (§ Fan-out → verify discipline).
+**Planner sessions:** wayfinder, grill and grill-with-docs, to-spec, spec-review, to-tickets.
 
-## Tier roles
+**The moment to switch is before `/implement`.** A model switch keeps the context window, so the
+grill → spec → tickets chain stays unbroken. The **advisor** — the seat holding unscoped judgment
+for a coordinator — is the only Planner seat inside an implementation run.
 
-This skill names tiers, never models:
+## Spawning
 
-- **workhorse**: the strongest model with no weekly cap. Default for all agent work.
-- **budget**: cheaper, faster models. Non-correctness-bearing sweeps only, under § Budget-tier exception.
-- **scarce**: the weekly-limited premium tier. The rate limit decides membership, not the vendor's "generally available" label, and it may be the session default. Opt-in per launch.
+- **No seat is ever a bare spawn.** A seat is a named position; fill it from a pinned definition
+  wherever one exists. A
+  bare spawn inherits the parent's model, and the host says so only if you look: review seats were
+  measured leaking onto a Planner parent in three of four sessions (2026-09-14). Definitions live
+  in `agents/`; confirm they resolve (`ls -l ~/.claude/agents`) first.
+- **Check the meter before spawning the advisor or fanning out from a Planner session** — both the
+  weekly window and the session one. A wide fan-out drains the parent's own window — every dispatch
+  and every returned report spends its turns. The failure is clean, so relaunch after the reset.
+- **A sub-agent spawned from a Planner session pins Builder — one of them or a fan-out of them —
+  and states the pin before dispatching.** The exception is a judgment-shaped question, whose
+  subject is ambiguous rather than merely unwritten; pin Planner there and say so. Research is
+  judgment-shaped only when its question is, not because it is called research. Where no seat
+  definition fits, pin the role on the dispatch itself.
+- **Effort is `high` on every seat.** There is no higher path.
 
-No durable role-to-model mapping exists anywhere, because a stale one misroutes silently. A run's script still names a concrete model ID, resolved by probe at authoring time. Memory and aliases both fail this: an alias lagged a release and kept serving the prior generation (2026-07-24). The `fable` arg is a script parameter, not a tier claim.
+## Model names: rules never, run artifacts always
 
-## Model & effort pins
+No durable rule — this Skill, a Chunk, a project contract, an ADR, either host's global file —
+names a model. A **run artifact** does: a seat definition and a workflow script each carry one
+concrete model ID, probe-resolved at authoring time, never an alias, which lagged a release and
+kept serving the prior generation (2026-07-24).
 
-- **Set model and effort explicitly on every stage.** Inheritance is silent. Before launching a saved workflow you did not author, grep it for per-stage `model:` pins.
-- **Claude Code's Agent tool pins only `model`.** It cannot pin effort and cannot override a definition's pin. Pin effort through the Workflow tool, `agent(prompt, {model, effort})`, or through a definition whose frontmatter carries both, such as `~/.claude/agents/implementer.md`. Codex: subagents or definition-backed agents from `~/.codex/agents/*.toml`, with `reasoning_effort` pinned on the dispatch where the surface permits.
-- **Implementation stages run the delegate at `high`; `xhigh` is the user's call.** Ask (AskUserQuestion: high vs xhigh, one line on why this phase might warrant it) and dispatch the answer. On Claude Code `xhigh` means the Workflow tool: `agent(spec, {agentType: 'implementer', effort: 'xhigh'})`.
-- **Verification effort follows the review mode:** modest = `high`, full = `xhigh`.
+**Re-audit trigger.** On a model-family change, `context-hygiene`'s reverse pass walks the seat
+definitions' model fields beside the global-file rules it covers. A stale pin kept a retired seat
+dispatchable for weeks (2026-08-25); nothing else reads those fields.
 
-## Scarce tier
+## The run itself
 
-**Confirm headroom on both usage windows**, the weekly one and the five-hour session window, before committing the tier to a stage. A fan-out of N xhigh scarce agents can drain the session window in minutes. The failure is clean (journal rows read `failed`), so relaunch fresh after the reset rather than resuming (2026-09-01). When a window is about to expire with budget unspent, the guard inverts: spend it.
-
-**Placement is a cost ladder, not a permission list.** Derive it per stage from cost per slot against value at that slot. Price the slot from the token profile, not the per-token sheet: a cache-read-dominated loop (screenshots, tool-heavy transcripts) can cost the same on either tier when the scarce tier's cache-read rate is lower, so the split buys quota, not dollars (2026-09-11). A rationing rule expires when the ration changes; the ladder does not. Choose a *posture*; rungs are cumulative.
-
-| Posture | Adds | Buys | Cost shape |
-|---|---|---|---|
-| `none` | nothing | nothing | 0 agents. The default. |
-| `critic` | completeness critic + counter-critic | the absence and method-error slots, where insight beats diligence most sharply | 1–2 agents, **fixed** regardless of diff size. **Recommend here.** |
-| `insight` | finders | **no gain (2026-08-08)** | scales with lens count (8–12), the first rung whose cost is not fixed |
-| `full` | synthesis | cross-finding narrative | +1 agent |
-
-**`insight` is measured and unsupported. Stop at `critic` unless this run differs in a way you can name.** Scarce finders found fewer findings and no HIGH. A shader- or spec-heavy subject may invert that, and vendor lenses buy the same diversity more cheaply. Method, limits and the kind-split: ADR 0006 (`docs/adr/0006-scarce-tier-posture-ladder.md` in the repo this skill ships from).
-
-**On an `/implement` run the advisor seat is this rung's analogue, and the coordinator is not.** The coordinator holds the workhorse tier; the scarce tier is one persistent advisor on named triggers — fixed cost regardless of diff size (three consults per ticket at most, each one message to a seat already carrying it), spent on the insight slot: unscoped judgment where the coordinator would otherwise guess or ask the user. Never a finder, never a gate. Measured 2026-09-14 on 3d-anim-lab issue #18 in effective units (cache reads 0.1×, writes 2×, output 5×): the one advisor consult was about 2 % of the run, the coordinator slice it kept off the scarce tier about 30 % and cache-read dominated (so moving it buys quota), the three review seats about 12 %. Triggers, cap and exclusions: § Orchestrator-delegate procedure.
-
-**Verify stays workhorse at every rung.** Verification is scoped diligence against named files, and the scarce tier's edge is unscoped judgment. It is also the only stage whose count is unbounded at launch, so a scarce pin there cannot be projected. An override may still force it; the script must then warn that the projection excludes it.
-
-**Announce the projected scarce-agent count with a pre-selected recommendation.** "Recommend `critic`, 2 scarce agents" can be disagreed with. "fable or not?" makes the user do the arithmetic. Log by name anything the projection excludes. Arg surface (`scarce`, `fable`, `stages`): `MECHANICS.md`.
-
-## Budget-tier exception
-
-When the user flags low usage or asks to conserve, a non-correctness-bearing fan-out (cataloging, extraction, a doc-reading sweep) may run on the budget tier with a small agent count (the `budget` global, `MECHANICS.md`). De-risk it by reading the dense sources yourself and validating the cheap output. Correctness-bearing work (code review, load-bearing verification) stays on the workhorse tier, always. Announce the composition and the de-risk, and offer the trade-off before spending workhorse capacity on a big fan-out.
-
-## Verification structure
-
-- **Scope each verifier prompt** to the named files, lines and spec refs it must check. An unscoped xhigh verifier roams the repo and misjudges.
-- **Hand a review agent the measured record its spec summarises, not just the spec.** A reviewer given only the ticket compares against the ticket's looser paraphrase, so an implementation that matches the underlying measurement reads to it as drift. Name where the record lives in the prompt and say that a claim matching it is correct even where the spec is looser; otherwise you spend the adjudication round refuting your own reviewer (2026-09-03: five of one Spec axis's findings were this, all five refuted against the record).
-- **A deliverable that is prose for an agent to follow is verified by a fresh agent following it, never by reviewing its diff.** Skills, engine documents, runbooks, contracts. Two review agents passed a document whose knob-block shape was specified nowhere, whose key set contradicted itself across three files, and whose idempotence claim contradicted its own refusal step — every one of which surfaced within minutes of an agent with no context trying to execute the prose. Budget one playthrough per instruction artifact against a throwaway target, and make its report "where did you guess, where did the text contradict itself, what did it name that does not exist" rather than an opinion on the design (2026-09-04). The host's global instruction file is a confound on every arm: a control that stops for the right reason from the wrong text reads green. Run Codex arms under a scratch `CODEX_HOME` carrying `config.toml` and `auth.json` but no `AGENTS.md` (delete the auth copy after); where the Claude host cannot shed `~/.claude/CLAUDE.md`, name the confound and make file attribution the discriminator (2026-09-05).
-- **Severity-tier the verification.** 3-vote panels for HIGH only; MEDIUM gets one verifier that escalates on uncertainty; LOW is main-loop judgment. Panels on vague findings amplify noise.
-- **Always run a dedicated completeness critic** in a diff review ("what did the finders miss"), a slot distinct from the finders, at the premium effort: scarce at xhigh when opted in with headroom, otherwise workhorse at xhigh. On an `/implement` run this critic and the counter-critic below are the advisor seat's fifth trigger (§ Orchestrator-delegate procedure) — one consult covering both, not two extra agents, at that seat's pinned `high`, since part of what xhigh buys a fresh agent is the ticket context this seat already holds; the xhigh above applies when the slot runs as its own agent, outside an `/implement` run.
-- **Pair it with a counter-critic aimed at the review, not the subject**, at the same effort, hunting method error: category errors, speculative-generality remedies, stage-inappropriate standards, absence claims whose refuting evidence sat outside the finders' scope. A scoped verifier is the wrong tool for this slot: scoping is right for checking a fact and blind to a scope error (2026-07-25). Task it explicitly with:
-  - **auditing the refuters**: a bad kill costs what a bad finding costs;
-  - **hunting duplicate clusters** (§ Fan-out → verify discipline);
-  - **hunting asymmetry**: "check every survivor against the other arm; if the other arm has the same property and was not charged, say so".
-- **Expect the counter-critic to correct you.** Its kills of the orchestrator's own measurements were premise errors: right numbers, wrong reading. Budget one on any review where you also wrote the spec; it is the only slot pointed at you. Its kills are still claims to verify, since one was its own error.
-- **Nobody in the fan-out can see asymmetry in the harness you built**, such as a battery run on one arm and not the other; each agent sees only what it was pointed at. Before synthesising, re-read your own fan-out design for coverage given to one subject and not the other, and close the gap yourself.
-- **Adjudicate each finding in the main loop, per finding, never once per session.** Before accepting a finding as novel or as an absence: `git show main:<file>` (pre-existing?) and grep the sibling tasks' notes and AC (already owned?). Reading the board at session start does not count. Every miss came from adjudicating against code while skipping the intent layer.
-- **A criterion that predicts behaviour is checked against the measurement, never against the fact that a measurement was recorded.** When the record refutes the prediction, supersede the criterion in place with what was proven and carry the refutation into the parent's criteria; a sibling "recorded in the notes" criterion is not evidence for the behavioural one (2026-09-03: a "stops at the git gate" AC stayed checked across two tickets after the pilot record said the child pushed; only the counter-critic caught it).
-- **Run external vendor lenses on any reasonably-sized diff.** After the internal pass, run Grok and Codex reviews framed for refutation; vendor diversity catches what same-family redundancy cannot (2026-07-17). Adjudicate every finding against source before acting, and hold fix commits until every lens returns. The implementing delegate reviewing its own diff is a conflict of interest; the other vendor is the independent lens. Dispatch through the direct CLIs, since the plugin bridges return placeholders; invocations and silent failures: `MECHANICS.md` § Vendor lenses.
-
-## Fan-out → verify discipline
-
-- **Assert the input layer arrived before trusting any stage output.** Agents reverse-engineer missing context from the repo, so an input-starved run completes "successfully": a brief that arrived as `"undefined"` produced an on-theme run that only pool-size arithmetic caught (2026-07-30). Parse `args` defensively (`typeof args === 'string' ? JSON.parse(args) : args`), hard-throw on a missing required field, and give every smoke run a pre-derived expected input count so a missing layer reads as a number mismatch.
-- **Reconcile items sent against verdicts returned, not `survived` against `refuted`.** A `.catch(()=>null)` or `.filter(Boolean)` drops an item while survived+refuted still reconcile. Emit a `dropped`/`errored` bucket; when sent ≠ verdicts, recover each drop from `journal.jsonl` and verify it in the main loop. Treat a cached or replayed result as empty until you have read it.
-- **Reconciliation recurses to the vote level.** With N-skeptic panels, reconcile `votesReturned` against `votesSent` per finding: one dropped vote flips a refute-majority into a tie that "survives". Adjudicate any survivor that passed on a tie or a missing vote.
-- **Reconcile output artifacts against assignments by name, not count.** Duplicate agent instances can run outside a workflow's accounting and write extra files under self-chosen names (2026-08-27). After any file-writing fan-out, list the target dir and match each file to its assignment. Keep unmatched files until adjudicated, since duplicate pairs disagree on real figures.
-- **Merge semantically between find and verify, and adjudicate defect by defect.** Sent-vs-returned is blind to duplicates; a structural key (`route + target + claim-prefix`) merges nothing across lanes; and a refuter kill binds only the copy it ran against, so the twin survives at HIGH and carries a false correction into a durable artifact (2026-07-30). Cluster by title+claim similarity with the threshold tuned against the real corpus rather than chosen by eye, because over-merging destroys distinct spec claims. Give each defect one severity and one route owner before verification. Where a merge stage is impractical, the counter-critic hunts clusters.
-- **A refuted finding about a protected invariant gets a second look** (a11y, reduced-motion, security, data loss, irreversibility). A refutation resting on one narrow premise can hold for the scenario raised and fail for one not raised; re-check it against other layouts, routes, settings and inputs. A kill that feels authoritative is exactly when a wrong one ships.
-- **A confirmed finding proves the defect, not the remedy.** Finder fix-hints are drive-by hypotheses; re-derive any fix against the real system model before pinning it.
-
-## Orchestrator-delegate procedure
-
-An `/implement` run — a correctness-bearing code or data diff — is coordinated by the main loop on the **workhorse** tier: it writes the per-phase execution spec, delegates the diff, adjudicates every finding and merges, writing no implementation diff and, where the project defines a gate-runner, running no gate itself. The seats, with their definitions: implementer (`~/.claude/agents/implementer.md`; Codex `~/.codex/agents/implementer.toml`), scarce advisor (`~/.claude/agents/advisor.md`), two review seats (`~/.claude/agents/code-reviewer.md`, one Standards and one Spec) and the project contract's gate-runner, if any. These are files the host loads from `~/.claude/agents/` (Codex `~/.codex/agents/`): a name the host cannot resolve dispatches unpinned, and the Agent tool reports that only if you look, so check they resolve (`ls -l ~/.claude/agents`) before the first spawn. They are versioned in this repo's `agents/` and installed as symlinks; `agents/README.md` carries the install. Exceptions (trivial edits, visual/feel work, editor-MCP writes) are judged on a ticket's total implementation surface, not edit by edit. Toggles: `"solo"` disables delegation, `"orchestrate"` re-enables it. The delegate executes the `/tdd` red-green slices from the ticket spec; the closing `/code-review` is the coordinator's to dispatch, as the two pinned seats, and adjudicate. A scarce main loop given an implementation task still orchestrates by default — it delegates the diff and runs the advisor's judgment itself — but that is the shape for a session that already is scarce, not the way to start one: an `/implement` session starts on the workhorse tier.
-
-- **Ask which orchestration shape the run takes before the first spawn, on every delegated run in every project.** Three shapes: Agent-tool subagents, a coordinator pane driving interactive child sessions, a saved workflow. Pre-select from `MECHANICS.md` § Choosing the orchestration shape, state the deciding question in one line, and put it to the user (AskUserQuestion) with the recommendation first. Record the answer in the artifact the run reads (the parent ticket's notes) so a resumed session inherits it (2026-09-02).
-- **Offer parallel worktree delegates first when the slices' write sets are disjoint, serial delegates on one checkout when they overlap, and record the user's pick in the same artifact as the shape answer above.** This is the delegate *layout*, not the shape: the bullet above picks the mechanism, this one picks how many delegates write at once. Where a project documents its own default layout, follow that. Supersedes: the procedure's silence on the layout between delegates, which let three delegates run serially on one checkout for 104 minutes with the orchestrator idle between them, measured on a project (2026-09-12).
-- **The scarce advisor is one persistent seat per ticket, not a spawn per question.** Spawn it with the ticket, the spec and the first question — never the transcript — and continue it with `SendMessage` so its context persists; one question in a ticket is cheaper as a fresh delegate, and persistence pays from the second. Consult it when: (1) before the first implementer dispatch, one pass over the drafted execution spec for false or unverified premises, a missing hard limit, an observable that cannot go red; (2) you would otherwise stop and ask the user, or pick silently between two readings of the spec or source (a reuse premise that reads false, two sources that disagree); (3) you want to reject a review finding, or a finding would change an acceptance criterion or the spec; (4) a gate stays red after one `diagnosing-bugs` loop; (5) the pre-merge completeness critic and counter-critic on risky changes, same seat. Three consults per ticket, each announced; the cap counts consults, not triggers, so a trigger that never fires costs nothing. After three, ask the user. Never the advisor: running gates, reading a diff for conformance, prose records, git mechanics, anything scoped to named files (2026-09-14).
-- **Where a project has asked for per-ticket delegate control, ask which delegate writes the diffs** at each implementation ticket's start (after plan approval, before any spawn), via AskUserQuestion over the available lenses. External-CLI writers get the same handoff re-verification as Claude subagents (2026-07-17).
-- **The coordinator writes the per-phase execution spec; the delegate writes the diffs at its pinned `high`** (§ Model & effort pins for `xhigh`). The coordinator re-verifies every handoff against source. The gates (tests, typecheck, smoke, scans) run in the project's **gate-runner** where its contract defines one: a workhorse seat that did not write the diff, dispatched after every handoff and every fix round, reporting each gate's verdict line and its retained log or artifact directory. Read the verdict lines from those directories, not from the report's prose; a gate you did not see run in the current round is unverified. Where no gate-runner is defined, the coordinator runs the gates itself and says so. This file names the role only — the commands live in the project contract's knob block, since a command written here would carry unverified premises, the failure the next bullet describes.
-- **A command written into a delegate spec carries your unverified premises, and the delegate cannot audit one the spec presents as settled.** Name the goal and let the delegate establish the command, or verify it yourself first. A help, dry-run or status flag is inert by convention, not by guarantee: read the CLI's source before invoking its binary to learn it (an `npx` tool is already unpacked in `~/.npm/_npx`). `npx impeccable skills update --help` performed a real update, honouring `--help` only as `argv[0]` and treating EOF at the confirm prompt as yes (2026-08-29).
-- **On every feature branch, delegated or solo, after the gates and before the user handoff, run the two-axis code-review** (Standards + Spec sub-agents in parallel) against the merge-base, each seat dispatched as the pinned `code-reviewer` definition named above, never as an unpinned spawn: an unpinned `Agent` spawn inherits the parent's model, and under a scarce parent the review seats were measured leaking onto it in three of four sessions (2026-09-14). Adjudicate every finding against source in the main loop, route confirmed ones back to the original implementer, re-run the gate on the fix, and include the outcome in the handoff. `"solo"` turns off delegation and leaves this review on: the orchestrator reviewing its own delegation or diff is a conflict of interest, and this is the independent lens when no vendor pass runs (2026-08-24).
-- **Check `git status` after every fan-out.** Subagents on either host write scratch probes into the working tree even when told to stay clean and even when their report claims they did. Sweep before any commit, and inspect before deleting; a stray sometimes holds a real measurement.
-- **Heartbeat.** A background delegate expected to exceed ~10 minutes gets a calibrated liveness check; solo and interactive work need none. No growth and no commit earns one liveness probe (`find <scope> -mmin -12`) before you declare a hang, since a static tree is also what a gate run looks like. Verify the monitor's transcript key against one real journal line before reporting from it: a monitor grepping the wrong field reports `completed=0` forever while agents finish (Claude Code: the `verification-discipline` skill). Recipes per host: `MECHANICS.md` § Heartbeat recipes.
-- **Inject mid-run context by editing the script for a resume, and reach live agents through the artifacts they were told to read.** Point every agent at the task row rather than inlining the brief: a finding measured after dispatch reaches an in-flight agent only through a file its prompt already named. Mechanics: `MECHANICS.md` § Resume and the transcript files.
-- **When the user is present, the stage that needs them goes first; the review fan-out runs behind it.** A feel pass or a scope decision costs the user minutes; the fan-out and its fix loop cost the machine an hour or two and need nobody. Batching the human ask "once, at the end" converts the machine's hour into the user's wait (2026-09-12: two hours, said so). Absent user: the standing order, and never proceed on silence.
+The `implement-run` Chunk carries the procedure — seat roster, the advisor's three slots, the
+fallback when a seat does not resolve, the run record. Every dev project loads it; this Skill does
+not restate it.
 
 ## Sibling files
 
-**`PROCEDURES.md`**, read when you are:
+Nothing loads these by default.
 
-- granting an orchestrator hands-off execution of a ticket (convert the gates rather than skipping them);
-- starting a planning session over a multi-session doc corpus (sweep it for rot first).
-
-**`MECHANICS.md`**, read when you are:
-
-- writing or editing a workflow script (`scarce`/`stages` args, `budget`, spawn knobs, the `args` channel, resume and transcript files, ultracode);
-- dispatching a vendor lens (§ Vendor lenses);
-- about to make the first spawn of a delegated run (§ Choosing the orchestration shape);
-- driving tickets through interactive child sessions in a terminal multiplexer (§ Coordinating interactive child sessions);
-- arming a heartbeat on a long delegate (§ Heartbeat recipes);
-- launching a research fan-out (§ WebSearch pool);
-- re-launching after a mid-session edit to a workflow script, agent definition or Codex skill metadata (§ Stale-registry and cache gotchas);
-- sharing the live system you mutate or observe with a peer session (§ Cross-session coordination).
+- **[`WORKFLOWS.md`](WORKFLOWS.md)** — only when the seats are a saved Workflow-tool script or an
+  external vendor lens, never for a plain sub-agent fan-out.
+- **[`COORDINATOR-PANE.md`](COORDINATOR-PANE.md)** — a run's shape; interactive child sessions in a
+  multiplexer; heartbeats; sharing a live system with a peer.
+- **[`GRANTS.md`](GRANTS.md)** — hands-off execution of a ticket.

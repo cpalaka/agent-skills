@@ -128,14 +128,20 @@ adding a new project type.
 
 ### multi-agent-policy
 
-Model/effort tiers and orchestration procedure for multi-agent work — per-stage pins,
-severity-tiered verification, fan-out → verify discipline, the orchestrator-delegate procedure,
-peer-session coordination, and the stale-cache gotchas. Names capability *tiers* (`workhorse` /
-`budget` / `scarce`) rather than model names, so it survives model churn.
+Which capability role fills which seat in a multi-agent run. Two roles — **Planner** and
+**Builder** — each defined by a property (does it draw on its own weekly meter?) rather than a
+model name, so a model release does not silently invalidate the routing. Carries the pin rule
+(every seat is a definition; a bare spawn inherits the parent), the meter check, effort pinned
+`high`, and the rule that model IDs live in run artifacts and never in durable prose
+([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). The procedure an implementation run follows
+is not here — it is the `implement-run` Chunk, which every dev project loads.
 
-**When to use:** before any subagent spawn, workflow, fan-out, adversarial review, tournament, or
-orchestrator-delegate handoff; when reconciling a fan-out's results; when sharing a live system
-with a peer session; and before dispatching an external vendor lens.
+**When to use:** before a delegated implementation, a review with sub-agents, or any fan-out from
+a planning session. Not for a single read-only sub-agent.
+
+Three sibling files nothing loads by default: `WORKFLOWS.md` (Workflow-tool scripts, vendor
+lenses, fan-out → verify discipline), `COORDINATOR-PANE.md` (run shapes, interactive child
+sessions, heartbeats, peer coordination) and `GRANTS.md` (hands-off execution grants).
 
 [`SKILL.md`](multi-agent-policy/SKILL.md)
 

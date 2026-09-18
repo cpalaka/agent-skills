@@ -1,18 +1,9 @@
-# Multi-agent policy: situational procedures
+# Hands-off execution grants
 
-Two procedures that fire only when a specific kind of multi-agent session is being set up, kept
-out of `SKILL.md` so a normal fan-out does not pay for them. Everything in `SKILL.md` still applies;
-these narrow it and override nothing. Read this when you are:
-
-- **granting an orchestrator hands-off execution of a ticket**: *Hands-off ticket design*
-- **about to run a planning or decision session over a multi-session doc corpus**: *Doc-corpus
-  consistency sweep*
-
-## Hands-off ticket design (autonomous execution grants)
-
-When the user wants a ticket, or a chain of them, executed by an orchestrator with zero involvement,
-merges, pushes, cleanup and Done included, convert the ticket's gates rather than skipping them
-(established 2026-08-03):
+Read this when the owner wants a ticket, or a chain of them, executed with zero involvement —
+merges, pushes, cleanup and Done included. Nothing loads it by default, and it narrows the
+`implement-run` Chunk rather than overriding it: a grant converts a ticket's gates, it never
+skips them (established 2026-08-03).
 
 - **Record the grant in the artifact the executing session will read**, the task's own notes, and
   not only chat. State what is waived (sign-off and review DoD items; merge, push and
@@ -37,11 +28,3 @@ merges, pushes, cleanup and Done included, convert the ticket's gates rather tha
   verdict moves upstream, and only the implementation tickets become wave-able.
 - **Make the close-out an explicit AC** (gate green, merge, push, cleanup, Done) so the autonomous
   finish is checkable rather than improvised.
-
-## Doc-corpus consistency sweep
-
-Before a planning or decision session that consumes a multi-session doc corpus, run a cheap
-workhorse-tier consistency sweep first: per-doc auditors, a cross-doc reconciler, and a
-surviving-open-inventory agent. Verify, then apply only provenance-derivable fixes; an `[open]`
-stays open. The planning session should never be the thing that discovers doc rot, and the
-inventory doubles as the wall of items it must not silently resolve.

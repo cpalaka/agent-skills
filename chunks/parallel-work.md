@@ -106,8 +106,8 @@ still be delegated; what must stay in the attended session is the acceptance.
 
 **Authoring a ticket for hands-off execution is a different job from running one** — converting
 its gates rather than skipping them, and batching what a machine cannot self-certify into one
-deliberately human ticket. That procedure lives in the `multi-agent-policy` skill, `PROCEDURES.md`
-§ "Hands-off ticket design"; read it before granting an orchestrator an unattended slice.
+deliberately human ticket. That procedure lives in the `multi-agent-policy` skill,
+`GRANTS.md`; read it before granting a coordinator an unattended slice.
 
 **Delegate the merge and Done step to the git-flow fork — never inline it here.** However a
 branch was produced (wave or attended), how it lands — merge style, branch naming, and whether a
