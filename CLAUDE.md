@@ -48,6 +48,11 @@ that is local config, not tracked — a fresh clone has neither until someone se
   of its parts, so the list is known live before a clean result is believed. A `grep -f` over that
   file can apply none of its patterns and prints exactly what a clean body prints
   (`verification-discipline` § Prove the needle first; measured again 2026-09-18).
+  **A calibration that plants a pattern's own text certifies nothing.** The identity entries
+  reach `grep -E` as regexes and 43 of the 48 do not match their own text, so planting one raw
+  read `scan clean` over the tree holding it (measured 2026-09-17 gating issue #4). A known-bad
+  that fires has to be a string the regex *matches*: strip `\b`, take an alternation's first
+  branch, and confirm the candidate with `grep -iqE -e <pattern>` before planting it.
 - **the backstop** (`post-checkout`, `post-merge`) warns when a checkout or merge leaves the tree
   behind `main`, for the checkout-is-the-install reason above. Neither hook can fail a checkout or
   a merge, and neither catches a lost uncommitted edit — they diff after the fact.
