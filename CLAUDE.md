@@ -43,6 +43,11 @@ that is local config, not tracked — a fresh clone has neither until someone se
   guard sees only the git object store.** An issue body or comment written with `gh` on this
   public repository is never scanned, so grep the body file against both pattern lists before
   any `gh` write (39 identity hits landed in three public issues on 2026-09-17 that way).
+  **Screen it through the guard rather than a hand-rolled grep** — copy the body into the tree,
+  `scan`, delete — and plant the configured git author name first, which the guard blocks by each
+  of its parts, so the list is known live before a clean result is believed. A `grep -f` over that
+  file can apply none of its patterns and prints exactly what a clean body prints
+  (`verification-discipline` § Prove the needle first; measured again 2026-09-18).
 - **the backstop** (`post-checkout`, `post-merge`) warns when a checkout or merge leaves the tree
   behind `main`, for the checkout-is-the-install reason above. Neither hook can fail a checkout or
   a merge, and neither catches a lost uncommitted edit — they diff after the fact.
