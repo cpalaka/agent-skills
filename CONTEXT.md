@@ -159,6 +159,49 @@ anything project-specific has to live.
 _Avoid_: leaf (fine as shorthand), custom; Zone 3 (the retired name from when a project's rules
 lived in `CLAUDE.md` beside its imports).
 
+### Multi-agent runs
+
+The `multi-agent-policy` Skill and the implementation Chunk share these terms. A run is any
+session that dispatches more than itself: a delegated implementation ticket, a review with
+sub-agents, a fan-out from a planning session.
+
+**Planner**:
+The capability role for judgment over an ambiguous subject — the main-loop model for wayfinder,
+grill, spec, spec-review and to-tickets sessions, and the model behind the **advisor** seat inside
+an implementation run. Defined by a property, never a model name: the role that draws on its own
+weekly meter.
+_Avoid_: scarce / scarce tier (the retired cost-rationing name), Fable (a model name; the role
+outlives the model), thinking model.
+
+**Builder**:
+The capability role for correctness-bearing, fully specified work — the **coordinator** of an
+implementation run and every seat it dispatches except the advisor: implementer, reviewers,
+gate-runner. Defined by property: the strongest role with no meter of its own.
+_Avoid_: workhorse / workhorse tier (the retired name), budget tier (retired; no cheaper third
+role exists), Opus (a model name), executor.
+
+**Seat**:
+A named position in a run filled by one pinned agent definition — implementer, advisor,
+reviewer (Standards or Spec), gate-runner. The definition carries the model and effort; the seat
+name says what the position does. A seat is never a bare spawn, because a bare spawn inherits the
+parent's model.
+_Avoid_: delegate (acceptable shorthand for the implementer seat only), subagent (the host
+mechanism that fills a seat, not the seat), agent type (the host's field name).
+
+**Coordinator**:
+The main-loop session running an implementation ticket: it writes the per-phase execution spec,
+dispatches the seats, adjudicates every finding against source, and merges. It writes no
+implementation diff and, where a gate-runner seat exists, runs no gate itself.
+_Avoid_: orchestrator (the older name; "orchestrate" survives only as the toggle word paired
+with "solo"), main session (true but says nothing about the role), driver.
+
+**Slot**:
+One budgeted consult of the advisor seat within a ticket. Two are fixed — the pre-dispatch pass
+over the execution spec, and the pre-merge critic — and one floats for whatever the coordinator
+would otherwise ask the user or decide silently. A fourth need goes to the user.
+_Avoid_: trigger (the condition that may spend a slot, not the slot), consult (the act of
+spending one), call.
+
 ### MCP tooling
 
 The `godot` Profile's Templates encode a division of labour between the Godot editor MCP servers,
