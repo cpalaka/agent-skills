@@ -395,3 +395,22 @@ read; this is the coordination layer above it.
   entry closed this one — rather than adjudicating the same finding again next slice. Sign, unit
   and handedness conventions are the recurring shape; `godot-personal-preferences` #7 is the
   single-seat version of the same hazard.
+- **Every seat asked to VERIFY A CLAIM checks it inside the scope the claim states; the scope
+  itself is what goes unchecked. Vary the question, not the seat.** The two bullets above locate
+  the shared blind spot in something the seats *read* — a system they cannot run, a convention
+  nobody wrote down. This one locates it in the **question you asked them**, which is worse,
+  because you authored it and it looks like the one thing under your control. A modifier's comment
+  justified its axis conversion with "a rotation leaves its own axis invariant, so the head reads
+  the same converted axis whatever the torso holds". The scarce advisor derived that independently
+  when consulted, the orchestrator had derived it before dispatching, and the Standards seat then
+  endorsed it with correct algebra (`B·R(a,θ)·B⁻¹ = R(Ba,θ)`). Three derivations, every one valid
+  **for the two offsets the claim mentions**, and all three blind to the same omission: a *different*
+  modifier ran earlier in the same pass and rotated about a horizontal axis, so the invariance did
+  not hold and the stated reason was false. Nothing behavioural was wrong — the code recomputed
+  per call — but the false rationale was load-bearing, because it licensed exactly the caching that
+  would have broken it (2026-09-14, 3d-anim-lab #21). What caught it was a seat given a different
+  brief: "trace each consumed value back to its producer and check the convention at each hop",
+  which forced the rest of the pass into scope precisely because it never mentioned the claim. So:
+  when a claim matters, do not buy a third opinion on it. Buy one seat whose question is about the
+  system the claim lives in, and let it arrive at the claim from outside. A seat asked "is this
+  right?" audits your sentence; a seat asked "trace this" audits your world.
