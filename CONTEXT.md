@@ -76,7 +76,8 @@ edge case is expected; a gotcha is surprising); mirroring a universal catalog in
 **Parity**:
 The alignment between a project's docs and the source Skill that seeded them. A *parity check* is
 the audit; a *parity table* is its output, presented for approval before any write. Applies to
-**Templates** only — a **Chunk** has no parity lifecycle, which is why every Chunk header says so.
+**Templates** only — a **Chunk** has no parity lifecycle, which is why every Chunk header says so —
+and of those, only a Profile's own assets have a check that exists (see **Template**).
 _Avoid_: equivalence, feature-parity.
 
 **Drift**:
@@ -91,13 +92,17 @@ Only *generalizable* knowledge propagates; project-specific decisions stay in th
 _Avoid_: sync (implies bidirectional — it is not), merge, backport.
 
 **Template**:
-A Skill-owned file **copied** into a *new* project at init time, thereafter kept aligned with the
-Skill by a parity check — the *copied-and-customized* delivery mechanism, contrast **Chunk**
-(referenced, single-source). Reserved for artifacts a project genuinely edits after the copy. Two
-owners: `init-project/templates/` holds the four **engine-owned** ones every Profile emits
-(`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md`, `.claude/agents/gate-runner.md`), and
+A Skill-owned file **copied** into a *new* project at init time — the *copied-and-customized*
+delivery mechanism, contrast **Chunk** (referenced, single-source). Reserved for artifacts a
+project genuinely edits after the copy. Two owners: `init-project/templates/` holds the four
+**engine-owned** ones every Profile emits (`CLAUDE.md`, `AGENTS.md`,
+`docs/agents/project-workflow.md`, `.claude/agents/gate-runner.md`), and
 `init-project/profiles/<type>/templates/` holds a Profile's own assets — its `docs/` files plus the
-four `adapters:` fragments the engine inserts into those four at their markers.
+four `adapters:` fragments the engine inserts into those four at their markers. Realignment after
+the copy is partial and Profile-side only: godot's parity check diffs some of its `docs/` assets
+and the `claude` and `codex` fragments, while the `contract` and `gate_runner` fragments and all
+four engine-owned Templates are checked by nothing and drift unwatched in every stamped project
+([issue #17](https://github.com/cpalaka/agent-skills/issues/17)).
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
 **Fragment target check**:
@@ -117,8 +122,8 @@ symlink (reference, not copy). Because exactly one copy exists, a Chunk has **no
 lifecycle** — editing it updates every consumer at next launch. Holds invariant content only;
 per-project variation is handled by knobs, fork selection, or an inline-leaf, never by editing the
 Chunk. Discriminator vs **Template**: does the project edit the bytes after delivery? No → Chunk
-(referenced); yes → Template (copied + parity).
-_Avoid_: Template (the copied, parity-aligned mechanism — they coexist), snippet, include,
+(referenced); yes → Template (copied).
+_Avoid_: Template (the copied mechanism — they coexist), snippet, include,
 partial, fragment.
 
 **dev-base**:

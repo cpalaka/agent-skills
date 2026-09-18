@@ -28,7 +28,7 @@ imports:            # chunk ids to @import BEYOND dev-base (dev-base is always i
 fork: git-flow-squash      # exactly one git-flow variant. squash is the DEFAULT (ADR-0002);
                            # git-flow-noff is the opt-in. The fork is imported explicitly,
                            # never via dev-base (@import cannot be undone).
-templates: []              # parity-tracked Template assets to stamp: [{src, dest, refresh?}]
+templates: []              # Template assets to stamp: [{src, dest, refresh?}]
 adapters:                  # optional: this type's fragments for the four engine Templates.
   claude: adapter-claude.md   #   inserted at <!-- profile:claude-mechanics --> in CLAUDE.md
   codex:  adapter-codex.md    #   inserted at <!-- profile:codex-mechanics --> in AGENTS.md
@@ -247,8 +247,8 @@ writes `~/.codex/config.toml`. Both go in the handoff (step 8); the engine does 
 exists** unless `refresh: true`. After copying, replace every `{{NAME}}` token with the value
 the user supplies for NAME; ask once per distinct token. Two tokens are **derived, never asked**:
 `{{PROJECT_ROOT}}` is `pwd` at the repo root at stamp time, and `{{PROJECT_NAME}}` is the answer
-step 1 already has. Templates are *copied + parity-tracked* (unlike chunks); their source of truth
-is the Profile asset, kept aligned by a parity check, never hand-merged. **Leave behind any
+step 1 already has. Templates are *copied*, not referenced (unlike chunks); their source of truth
+is the Profile asset, realigned by a parity check where the Profile has one, never hand-merged. **Leave behind any
 `templates` entry whose comment says it waits for the lockfile-freeze** — the recipe stamps those
 itself, after the freeze, because they point into a tree that does not exist yet at this step.
 

@@ -75,9 +75,10 @@ local edits that a manual upstream sync must re-apply. Today that is `unslop/` a
 
 **Chunk vs Template.** A **Chunk** (`chunks/`) is single-source and referenced — editing it
 updates every consuming project at next launch. A **Template** is *copied* into a project at init
-and thereafter kept aligned by a parity check: `init-project/templates/` holds the four files
-every Profile emits, `init-project/profiles/<type>/templates/` a Profile's own assets. Know which
-you are editing; `CONTEXT.md` has the discriminator.
+and thereafter drifts: `init-project/templates/` holds the four files every Profile emits, which
+no parity check reads at all, and `init-project/profiles/<type>/templates/` a Profile's own
+assets, only some of which one does. Know which you are editing; `CONTEXT.md` has the
+discriminator and the coverage.
 
 **The `init-project` engine is generic.** Adding a project type means adding a
 `profiles/<type>.md` Profile — plus, where the type has host specifics, its four `adapters:`
