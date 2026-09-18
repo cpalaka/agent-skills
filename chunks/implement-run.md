@@ -17,9 +17,19 @@ are in `multi-agent-policy`'s `COORDINATOR-PANE.md` and `WORKFLOWS.md`.
 
 - **Coordinator** — the main loop: drafts the per-phase execution spec, dispatches the other
   seats, adjudicates every finding against source, merges on the project's `git-flow-*` chunk's terms; it
-  writes no implementation diff, and runs no gate where a runner resolves.
-- **Implementer** — one fully specified phase, returning a handoff report; under `layout`, the
-  `parallel-work` chunk's decision rule says whether it takes a worktree.
+  writes no implementation diff, and runs no gate where a runner resolves. **The execution spec is
+  prose in the dispatch prompt, not a file** — it is written into each seat's prompt and quoted in
+  the run record, and nothing commits it; a ticket that wants a durable spec says so and names
+  where it goes.
+- **Implementer** — one fully specified phase, returning a handoff report. `layout` says only
+  whether two phases may be in flight at once: `parallel-when-disjoint` allows it where the phases
+  touch disjoint files, `serial` never does. **Neither value is a worktree decision** — that is
+  `parallel-work`'s decision rule, whose cases are one task, attended worktrees and background
+  waves, and which takes a worktree only on an explicit parallel-work signal. Both cases resolve
+  there: `parallel-when-disjoint` with **one** phase in flight is that chunk's single-task process
+  and takes no worktree, and putting a **second** phase in flight is itself the parallel-work
+  signal, so the two go to its attended-worktrees or background-waves case and each implementer is
+  confined to its own tree.
 - **Advisor** — one spawn per ticket (the ticket, the spec, the first question), continued by
   message.
 - **Reviewer** — the `code-reviewer` seat dispatched twice, its axis (Standards or Spec) named in
@@ -35,7 +45,11 @@ for the slot-2 marker.
 **Three slots**, each announced.
 
 1. **Pre-dispatch**, always: one pass over the drafted spec, whose premises you checked against
-   the source first.
+   the source first — looking for a false or unverified premise, **a missing hard limit, and an
+   observable that cannot go red**. Check the spec's prescribed *mechanisms* against its own stated
+   *intent*, not only its premises against the source: a spec can prescribe an algorithm that
+   contradicts the user story it exists to serve, and neither a conformance review nor a gate
+   written from that spec can catch it, because the code matches.
 2. **Pre-merge**: completeness critic and counter-critic in one consult — on unless the ticket
    body carries `Advisor: pre-dispatch only` anywhere in it (a local-file ticket carries
    it in the file).
@@ -53,7 +67,11 @@ spent, knob `none` — hold the judgment yourself, ask the owner at the same tri
 Gate-runner unavailable: run the gates yourself and say so.
 
 **Review.** Hand the reviewers the measurements a spec summarises, not just the spec; re-check a
-refuted finding about safety or data loss; a finding proves the defect, not the remedy.
+refuted finding about safety or data loss; a finding proves the defect, not the remedy. After
+fixes, re-run the affected checks and take a targeted review; reopen the full review only where the
+scope or the assumptions changed. A third-party review — a vendor tool rather than a seat — is
+optional and answers a specific remaining question; absent external tooling never blocks the
+native pair.
 
 **Toggles.** `solo` turns delegation off, review stays on; `orchestrate` back on.
 
@@ -61,7 +79,17 @@ refuted finding about safety or data loss; a finding proves the defect, not the 
 long-running child needs a heartbeat; recipes in `COORDINATOR-PANE.md`.
 
 **The run record.** One closing comment on the ticket — in it, where the ticket is a file — under
-four headings: `Slots`, `Gates`, `Review`, `Deviations`. Post it at handoff; close in the same
-approval as the push, unless acceptance needs the owner's attended run, which keeps it open.
-**Leave the acceptance-criteria checkboxes unticked**; `gh issue edit --body`
-replaces a body wholesale.
+four headings: `Slots`, `Gates`, `Review`, `Deviations`.
+
+**Posting it, the merge and the close are one approval, not three.** Where the host gates a tracker
+write on a human — most do — asking separately to post the record, then to push, then to close buys
+two more round trips and gates nothing the first approval did not already cover. So offer the diff,
+the record and the close in one message, saying which acceptance reading you took and why, and act
+on the single yes. A ticket whose acceptance needs the owner's attended run stays open: the push is
+not the acceptance.
+
+**Never rewrite the ticket's body — append a comment.** `gh issue edit --body` and its equivalents
+replace a body wholesale, and the body is the spec, so an edit to tick one acceptance checkbox can
+silently take the spec with it. That is a rule about the *write*, not about the checkboxes: leave
+them for the owner, and put every observation, verdict and piece of evidence in an append-only
+comment where nothing can be lost.

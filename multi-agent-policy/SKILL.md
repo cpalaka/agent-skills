@@ -17,6 +17,13 @@ ration — which is why Builder is the default and Planner the exception.
 
 ## Which role a session runs on
 
+**Read it off the meter, not off the model name.** The roles are defined by meter ownership, and no
+durable rule here may name a model, so the model you are running under maps to no role by anything
+written down — the usage tool is the only instrument that answers it. A per-model weekly line in
+the host's usage read names the Planner model; a session on that model is on Planner, and any other
+is on Builder. Where the host gives a sub-agent no usage read, it cannot observe its own role and
+says so rather than guessing; the dispatching coordinator states the pin instead.
+
 **Planner sessions:** wayfinder, grill and grill-with-docs, to-spec, spec-review, to-tickets.
 
 **The moment to switch is before `/implement`.** A model switch keeps the context window, so the
