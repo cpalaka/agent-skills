@@ -9,9 +9,11 @@ ONE engine, many **Profiles**. The engine is a uniform apply-algorithm; a Profil
 (`profiles/<type>.md`) is the *data* for one project type. Adding a project type = adding
 a Profile. The engine and `dev-base` bundle are stable; only Profiles grow. (ADR-0003.)
 
-Every Profile emits the same three agent-facing files: one shared **contract** and two thin **host
-adapters** over it (ADR-0009). Knob blocks live in the contract, host mechanics live in the
-adapters, and neither adapter carries a project rule.
+Every Profile emits the same four agent-facing files: one shared **contract**, two thin **host
+adapters** over it (ADR-0009), and the project's **gate-runner seat**, stamped to
+`.claude/agents/gate-runner.md` — the seat that re-runs the verify gate for a coordinator that did
+not write the diff, which is why ADR-0011 makes ADR-0009's three into four. Knob blocks live in the
+contract, host mechanics live in the adapters, and neither adapter carries a project rule.
 
 ## What a Profile is (the manifest contract)
 
@@ -27,10 +29,11 @@ fork: git-flow-squash      # exactly one git-flow variant. squash is the DEFAULT
                            # git-flow-noff is the opt-in. The fork is imported explicitly,
                            # never via dev-base (@import cannot be undone).
 templates: []              # parity-tracked Template assets to stamp: [{src, dest, refresh?}]
-adapters:                  # optional: this type's fragments for the three engine Templates.
+adapters:                  # optional: this type's fragments for the four engine Templates.
   claude: adapter-claude.md   #   inserted at <!-- profile:claude-mechanics --> in CLAUDE.md
   codex:  adapter-codex.md    #   inserted at <!-- profile:codex-mechanics --> in AGENTS.md
   contract: contract.md       #   inserted at <!-- profile:contract-sections --> in the contract
+  gate_runner: adapter-gate-runner.md   # inserted at <!-- profile:gate-runner-mechanics --> in the gate-runner starter
 settings:                  # optional: this type's settings.local.json delta, merged in step 4
   allow: []                #   extra permissions.allow globs (unioned by exact-string dedup)
   enabled_mcp_servers: []  #   added to enabledMcpjsonServers
@@ -63,7 +66,7 @@ Profile — five for the chunk's invariant sequence, three (`dir`, `build_check`
 reads alongside them — so a Profile varies the commands, never the key set; a step a project
 genuinely has no command for says so in its value rather than going missing.
 
-`adapters:` names three files under the Profile's own `templates/`. An absent field, or an absent
+`adapters:` names four files under the Profile's own `templates/`. An absent field, or an absent
 key inside it, inserts nothing — the engine deletes that marker line and moves on.
 
 **A fragment is a section, not loose bullets.** It carries its own `##` headings, because it lands
@@ -77,11 +80,16 @@ happens to sit above the marker. Two placements:
 Either way a fragment *adds*: it sharpens the engine's generic bullets with this project type's
 specifics rather than restating them.
 
+**The gate-runner starter has no stub heading.** A `gate_runner` fragment always appends its
+section at the marker. `## Project gates` is the project's to fill, never a stub a fragment may
+replace — and because the replace rule is a prefix match, a fragment heading that prefix-matches a
+starter heading is a Profile bug: it swallows the starter's own section.
+
 **A bullet may declare what it presupposes.** One HTML comment on the line above it,
 `<!-- requires: <target>[; <target>…] -->`, names what must already exist in the project for the
 bullet to be true. It may sit above a fragment bullet or above one of the engine Templates' own
-bullets (`templates/CLAUDE.md`, `templates/AGENTS.md`); the check treats both alike. Four target
-families, and no others:
+bullets — `templates/AGENTS.md` carries the only one of those today; the check treats both alike.
+Four target families, and no others:
 
 - `<path>` — the file or directory exists. `tests/run_tests.sh`, `.claude/agents`
 - `<path> § <Heading text>` — a `##`/`###` heading in that file whose text **begins with** the given
@@ -107,7 +115,7 @@ check that reads the comments is Migrate mode's **fragment target check** (its s
 
 ## The engine-owned Templates
 
-`templates/` beside this file holds the three Templates every Profile emits. They are engine-owned:
+`templates/` beside this file holds the four Templates every Profile emits. They are engine-owned:
 a Profile customises them through `adapters:` fragments and knob values, never by shipping its own
 copy.
 
@@ -116,18 +124,20 @@ copy.
 | `templates/project-workflow.md` | `docs/agents/project-workflow.md` | `{{PROJECT_NAME}}`, `{{KNOB_BLOCKS}}` |
 | `templates/CLAUDE.md` | `CLAUDE.md` | `{{PROJECT_NAME}}`, `{{IMPORT_LINES}}` |
 | `templates/AGENTS.md` | `AGENTS.md` | `{{PROJECT_NAME}}`, `{{CHUNK_READ_LIST}}` |
+| `templates/gate-runner.md` | `.claude/agents/gate-runner.md` | `{{PROJECT_NAME}}` |
 
-- **`{{PROJECT_NAME}}`** — the project's own name. Asked **once**, reused in all three.
+- **`{{PROJECT_NAME}}`** — the project's own name. Asked **once**, reused in all four.
 - **`{{KNOB_BLOCKS}}`** — the tagged knob blocks, in `knobs` order (step 1).
 - **`{{IMPORT_LINES}}`** — the `@` import block, in the order step 1 fixes.
 - **`{{CHUNK_READ_LIST}}`** — the sentence naming the chunk files Codex must read, derived in step 1.
 - **`<!-- profile:claude-mechanics -->`, `<!-- profile:codex-mechanics -->`,
-  `<!-- profile:contract-sections -->`** — insertion markers for the `adapters:` fragments. Every
-  marker is consumed: it is replaced by its fragment, or deleted.
+  `<!-- profile:contract-sections -->`, `<!-- profile:gate-runner-mechanics -->`** — insertion
+  markers for the `adapters:` fragments. Every marker is consumed: it is replaced by its fragment,
+  or deleted.
 
-The three Templates also carry `*<Fill at init: …>*` prompts where a value cannot be derived (the
-Project blurb, the project's own rules, how to run it). Ask for those and write the answers in;
-step 7 fails on any that survive.
+The contract and the two adapters also carry `*<Fill at init: …>*` prompts where a value cannot be
+derived (the Project blurb, the project's own rules, how to run it). Ask for those and write the
+answers in; step 7 fails on any that survive.
 
 ## The apply algorithm (uniform — this is `init-scaffold-core`)
 
@@ -140,13 +150,14 @@ missing, run `bootstrap.sh` / `bootstrap.ps1`, which creates the pair. **Both, o
 stamp emits `CLAUDE.md` naming `~/.claude/chunks/…` and `AGENTS.md` naming `~/.codex/chunks/…`
 whichever host you are running on, so checking only the one your own host reads leaves the other
 adapter pointing at nothing, with no error at stamp time and none at the other host's next launch. Inventory the target: `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md
-.claude/settings.local.json` + any paths the Profile's `templates`/recipe touch. For each thing that
+.claude/agents/gate-runner.md .claude/settings.local.json` + any paths the Profile's
+`templates`/recipe touch. For each thing that
 exists, plan to merge/skip — not overwrite. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
 
-**1. Write the contract and the two adapters.** Fragments go in whole — init writes the targets a
-`<!-- requires: -->` comment names (the `requires:` paragraph in § What a Profile is), so the fragment
-target check (Migrate step 6) does not run here.
+**1. Write the contract, the two adapters and the gate seat.** Fragments go in whole — init writes
+the targets a `<!-- requires: -->` comment names (the `requires:` paragraph in § What a Profile is),
+so the fragment target check (Migrate step 6) does not run here.
 
 - **`docs/agents/project-workflow.md` — the shared project contract.** In this order: the engine's
   header (it states that this is the one contract both adapters read and that host mechanics live in
@@ -163,6 +174,10 @@ target check (Migrate step 6) does not run here.
   actually imported** (it rides dev-base, it's the chosen `fork`, or it's in `imports`), write a
   tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` carrying that chunk's values. On
   re-run, replace *only* the content between the tags (idempotent); insert the block if absent.
+  **The values inside an existing block are this project's own answers, not the manifest's:** a
+  re-run keeps them as they stand, and fills from the manifest only a block that is absent. What it
+  does change between existing tags is the key set — a key the Profile has added or renamed since
+  the last stamp is added or renamed in place, its value answered from the project as at apply time.
   Never write knob values into a chunk file — they live here, and the chunks read them out of this
   file by marker. **A chunk listed in `knobs` but NOT imported** — a CONDITIONAL import, e.g. the
   godot profile's `backlog-core` (imported only for board-driven projects) — gets its knob block
@@ -189,8 +204,8 @@ target check (Migrate step 6) does not run here.
   block with **exact-line dedup**; never duplicate or reorder hand-placed imports. Below it, one
   section — `## Claude Code mechanics (this host only)` — carrying host mechanics only: the
   `.claude/settings.local.json` baseline pointer, `.mcp.json` as the project-scope MCP file,
-  `.claude/agents/` for project-local subagents **where the Profile stamps any** (drop that bullet
-  where it stamps none), that skills fire from context on this host, and the `/name` spelling. **No
+  `.claude/agents/` for project-local subagents (unconditional — every Profile stamps the gate seat
+  there), that skills fire from context on this host, and the `/name` spelling. **No
   knob block and no project rule may remain in this file.**
 - **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: dev-base's eight bundled
   chunks (`git-sync-branch-start`, `git-commit-format`, `git-confirm-destructive`, `sandbox-auto`,
@@ -210,6 +225,12 @@ target check (Migrate step 6) does not run here.
   not receive the whole file — the auto-loaded pair is over the cap, or the file never loaded at all
   — so it is the one check that distinguishes "read and ignored" from "never arrived". The `v1` in
   it names the adapter Template's *shape*; bump it only when that shape changes, never per project.
+- **`.claude/agents/gate-runner.md` — the project's gate seat.** Stamped whole from
+  `templates/gate-runner.md`, **skip if it exists**: a project that has customised its starter keeps
+  its own, and the merge/skip invariant this algorithm opens with forbids overwriting free prose it
+  cannot merge. The `gate_runner` fragment replaces the marker; where the Profile declares none, the
+  marker is deleted. **What skip-if-exists costs:** a later improvement to the starter never reaches
+  an already-stamped project by re-running init — someone carries it across by hand.
 
 **2. Enable external @imports (load-bearing — see ADR-0001), and trust the repo on Codex.**
 External `@~/.claude/chunks/…` imports require a **one-time, per-project interactive approval**
@@ -252,7 +273,7 @@ in the sequence:** it runs where the recipe puts it — the godot recipe calls i
 before the two MCP adapter files that launch out of the frozen tree — so read the recipe for the
 order and this step for what the freeze does.
 
-**7. Verify-after-write.** Re-inventory the expected outputs; confirm the three emitted files exist;
+**7. Verify-after-write.** Re-inventory the expected outputs; confirm the four emitted files exist;
 confirm each `@import` path resolves through the symlink; confirm no stamped file still carries a
 `{{` token, an unconsumed `<!-- profile:… -->` marker, a `<!-- requires:` comment, or a surviving
 `*<Fill at init:` prompt; confirm no `##` heading in an emitted adapter has nothing under it; if the
@@ -327,7 +348,10 @@ this is not a chunk-library project: say so and stop — the right tool is init,
 `verify-gate`, `dev-practice` and `parallel-work` (they ride dev-base), plus `backlog-core` where it
 is imported — its `<!-- knobs:<id> -->` block must be present. If one is missing, **refuse and name
 it**. Never synthesise a knob value: the values are measured facts about that project, and a guessed
-gate command is worse than no migration.
+gate command is worse than no migration. **`implement-run` is the exemption.** It rides dev-base
+too, but the Chunk states that its defaults apply where the block is absent, so a project stamped
+before it existed has none: that is a fact about when the project was stamped, not a gap the user
+must fill. Migrate it without one and say so.
 
 **3. Move the knob blocks verbatim** into the new `docs/agents/project-workflow.md`, under the
 engine's header, in the order they appeared.
@@ -347,9 +371,10 @@ same prose.
 - **Whole bullets that are only host mechanics move to the adapter instead**: the
   `.claude/settings.local.json` baseline, `.mcp.json`, `.claude/agents/`, the `/name` spelling, and
   any "skills auto-load here" claim. They belong in `## Claude Code mechanics (this host only)`, not
-  in a shared contract. The Template's generic `.claude/agents/` bullet stands where `.claude/agents`
-  exists — that is its `<!-- requires: -->` target, step 6's check — and a moved bullet naming a
-  subagent the project actually has always wins over it.
+  in a shared contract. The Template's generic `.claude/agents/` bullet is unconditional and always
+  stands — migrate stamps nothing, so in a migrated project the directory and the gate seat both
+  arrive with the init run this mode's closing paragraph tells the user to make — and a moved bullet
+  naming a subagent the project actually has always wins over it.
 
 **Flag, never rewrite.** Four classes, each reported in step 8's ledger with its file and its
 line, and left exactly as it was. **They apply to moved prose only** — the engine's own header and
@@ -453,8 +478,11 @@ launch on the second host, so none of those has been answered yet.
 **Then tell them to run init once.** Migrate stamps no Templates, so whichever of the files the
 emitted contract and adapters now point at — a gotcha-scan wrapper, a reference guide, a domain
 pointer, a test harness, the Codex MCP config — the project lacks is still absent, and until init
-runs the contract names files that are not there. Init is idempotent and skip-if-exists: over a
-migrated project it stamps exactly the missing ones and touches nothing this mode wrote. Two things
+runs the contract names files that are not there. **The gate seat is absent for the same reason,
+and nothing points at it**: `.claude/agents/gate-runner.md` is an engine Template too, so a migrated
+project has no gate runner until init stamps one — the adapter's `.claude/agents/` bullet names the
+directory, never the seat. Init is idempotent and skip-if-exists: over a migrated project it stamps
+exactly the missing ones and touches nothing this mode wrote. Two things
 that run does not do, and the handoff says both. The stamps it lands are named only by contract
 sections this mode offered and did not insert — no migrated contract carries the
 `<!-- profile:contract-sections -->` marker, so no recipe step can insert a section into it, and every

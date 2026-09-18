@@ -55,6 +55,15 @@ knobs:
                                                         # and the branch convention stay in step. Match the
                                                         # project's own convention here, not this shape.
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
+  implement-run:
+    # implement-run rides dev-base too. These four are the chunk's OWN defaults — the values that
+    # apply wherever the block is absent, so a project stamped before this entry existed runs on
+    # exactly them. Written out here because they are then the project's saved pick: the coordinator
+    # states them at the start of a run and asks only where a ticket cannot fit them.
+    shape: "subagents"
+    layout: "parallel-when-disjoint"
+    gate_runner: "gate-runner"
+    advisor: "advisor"
 ---
 
 ## Bespoke setup
@@ -111,9 +120,9 @@ the repo root.)
      free-form (`-l a,b`) and emerge organically. After seeding, retire the old queue
      homes (point roadmap docs/memories at the board; never maintain two queues).
 
-5. **Adoption commit.** Commit the `backlog/` files by explicit path + the three emitted files
-   (`CLAUDE.md`, `AGENTS.md` and `docs/agents/project-workflow.md`) plus the two stamped
-   `docs/agents/` pointers as one adoption commit. `auto_commit: false` means task-file changes
+5. **Adoption commit.** Commit the `backlog/` files by explicit path + the four emitted files
+   (`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md` and `.claude/agents/gate-runner.md`)
+   plus the two stamped `docs/agents/` pointers as one adoption commit. `auto_commit: false` means task-file changes
    always ride along with code commits thereafter (one task-file change per code commit).
 
 **Then resume the engine's verify-after-write + handoff** (the imports resolve, the knob

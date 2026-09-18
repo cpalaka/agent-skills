@@ -10,8 +10,8 @@ fork: git-flow-squash      # the default (ADR-0002); git-flow-noff is the opt-in
 templates: []              # none — backlog's claude-section.md is promoted into the
                            # backlog-core chunk, so no profile stamps it; web carries no Template assets.
 knobs:
-  # backlog-core is an explicit import; verify-gate + dev-practice ride
-  # dev-base. All three are value-variant, so the engine still writes a knob
+  # backlog-core is an explicit import; verify-gate, dev-practice, parallel-work
+  # and implement-run ride dev-base. Every one is value-variant, so the engine still writes a knob
   # block for each, into the project's shared contract (docs/agents/project-workflow.md) —
   # never into an adapter, and never into a chunk.
   #
@@ -53,12 +53,22 @@ knobs:
                                                         # and the branch convention stay in step. Match the
                                                         # project's own convention here, not this shape.
     install: "<the fresh-worktree install command, e.g. `npm install` in the app directory>"
+  implement-run:
+    # implement-run rides dev-base too, and unlike the values above none of these is a `<…>` shape
+    # to answer: they are the chunk's OWN defaults, which apply wherever the block is absent, so a
+    # project stamped before this entry existed runs on exactly them. They become that project's
+    # saved pick — the coordinator states them at the start of a run and asks only where a ticket
+    # cannot fit them.
+    shape: "subagents"
+    layout: "parallel-when-disjoint"
+    gate_runner: "gate-runner"
+    advisor: "advisor"
 ---
 ## Bespoke setup
 
 None beyond the engine's uniform steps. The engine's apply algorithm
-(the contract and the two adapters, the settings.local.json merge, verify-after-write,
-handoff) fully covers a web project; there are no installs, no `init` CLI, no
+(the contract, the two adapters and the gate seat, the settings.local.json merge,
+verify-after-write, handoff) fully covers a web project; there are no installs, no `init` CLI, no
 `project.godot`-style edits, no Templates to stamp, and no host specifics beyond the
 generic ones, so this Profile declares no `adapters:` fragments either.
 

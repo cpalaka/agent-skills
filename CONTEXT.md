@@ -51,8 +51,8 @@ not copy the canonical procedure. Two instances of the same idea:
 
 - **For a Skill**, a directory that reads the canonical `SKILL.md`. They live in `codex-skills/`.
 - **For a project**, the `CLAUDE.md` and `AGENTS.md` that `init-project` emits over the **project
-  contract**, `docs/agents/project-workflow.md` — the third emitted file, which holds every project
-  rule and every knob block, once, for both hosts ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)).
+  contract**, `docs/agents/project-workflow.md` — the canonical body both adapters read, which holds
+  every project rule and every knob block, once, for both hosts ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)).
 
 _Avoid_: fork, port, duplicate skill, compatibility copy; project contract (the canonical body an
 adapter reads, not an adapter).
@@ -94,10 +94,10 @@ _Avoid_: sync (implies bidirectional — it is not), merge, backport.
 A Skill-owned file **copied** into a *new* project at init time, thereafter kept aligned with the
 Skill by a parity check — the *copied-and-customized* delivery mechanism, contrast **Chunk**
 (referenced, single-source). Reserved for artifacts a project genuinely edits after the copy. Two
-owners: `init-project/templates/` holds the three **engine-owned** ones every Profile emits
-(`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md`), and
+owners: `init-project/templates/` holds the four **engine-owned** ones every Profile emits
+(`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md`, `.claude/agents/gate-runner.md`), and
 `init-project/profiles/<type>/templates/` holds a Profile's own assets — its `docs/` files plus the
-three `adapters:` fragments the engine inserts into those three at their markers.
+four `adapters:` fragments the engine inserts into those four at their markers.
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
 **Fragment target check**:

@@ -19,7 +19,7 @@ fork: git-flow-squash       # The default (ADR-0002). git-flow-noff is the opt-i
 # merged into .claude/settings.local.json by the engine (step 4). blender-mcp-guide.md and
 # asset-pipeline.md are stamped CONDITIONALLY, together (only for Blender-pipeline projects) — see
 # the recipe, not this list.
-# The three contract/adapter fragments are NOT stamped from here either: they are the `adapters:`
+# The four `adapters:` fragments are NOT stamped from here either: they are the `adapters:`
 # field below, inserted into the engine's own Templates at their markers (engine step 1).
 # Three stamps have a recipe ORDERING dependency: mcp.json, codex/config.toml and mcp/package.json
 # all point into tools/mcp/, so the recipe's lockfile-freeze runs before any of those trees is used.
@@ -52,13 +52,14 @@ templates:
   # lockfile-freeze seed (engine step 6 mechanic, payload below)
   - { src: mcp/package.json,      dest: tools/mcp/package.json }   # pins both servers exactly; recipe runs the freeze
 
-# The three fragments the engine inserts into ITS Templates (engine step 1). The Godot project
+# The four fragments the engine inserts into ITS Templates (engine step 1). The Godot project
 # rules are contract content — host-neutral, "your host adapter says how" — and each adapter
 # fragment carries only what is true of that host alone.
 adapters:
   contract: contract.md          # → <!-- profile:contract-sections --> in docs/agents/project-workflow.md
   claude:   adapter-claude.md    # → <!-- profile:claude-mechanics --> in CLAUDE.md
   codex:    adapter-codex.md     # → <!-- profile:codex-mechanics --> in AGENTS.md
+  gate_runner: adapter-gate-runner.md   # → <!-- profile:gate-runner-mechanics --> in .claude/agents/gate-runner.md
 
 settings:                 # merged into .claude/settings.local.json by the engine (step 4)
   allow:
@@ -135,12 +136,22 @@ knobs:
     # imported via dev-base, so it needs values, not an empty block.
     worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree
     install: "npm ci --prefix tools/mcp (rehydrate the frozen MCP launcher tree), then import once (open the editor or `godot --headless --path . --import`) so the global class cache exists — else tests/run_tests.sh false-FAILs fixture_pass.gd"
+  implement-run:
+    # implement-run rides dev-base (value-variant) as well. These four are the chunk's OWN defaults
+    # — the values in force wherever the block is absent, so a Godot project stamped before this
+    # entry existed already runs on exactly them. Stamping them makes them that project's saved
+    # pick: the coordinator states them at the start of a run and asks only where a ticket cannot
+    # fit them.
+    shape: "subagents"
+    layout: "parallel-when-disjoint"
+    gate_runner: "gate-runner"
+    advisor: "advisor"
 ---
 
 ## Bespoke setup
 
-The heavy Godot recipe. The engine already owns the uniform steps — the contract and the two
-adapters (the @imports, the tagged knob blocks above, and the three `adapters:` fragments), the
+The heavy Godot recipe. The engine already owns the uniform steps — the contract, the two adapters
+and the gate seat (the @imports, the tagged knob blocks above, and the four `adapters:` fragments), the
 `.claude/settings.local.json` merge (the godot allow-delta, union by exact-string dedup), plain
 Template stamping, the lockfile-freeze MECHANIC, verify-after-write including the byte gate, and the
 handoff. Do **not** re-run those here.
