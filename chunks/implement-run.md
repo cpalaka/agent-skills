@@ -64,6 +64,10 @@ usage tool); the owner decides a tight one.
 
 **Fallback.** Advisor unavailable — no definition this host can dispatch, meter
 spent, knob `none` — hold the judgment yourself, ask the owner at the same triggers, say so.
+Holding it yourself is not self-review: a spec's author is the last reader who can see that an
+observable does not mean what they intended, so hand slot 1's **observable that cannot go red**
+to the implementer as a question its dispatch prompt asks before it writes code — the one seat
+that has to read the spec adversarially regardless.
 Gate-runner unavailable: run the gates yourself and say so.
 
 **Review.** Hand the reviewers the measurements a spec summarises, not just the spec; re-check a
