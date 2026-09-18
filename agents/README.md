@@ -18,7 +18,7 @@ silently.
 | Implementer | `claude/implementer.md` | `codex/implementer.toml` |
 | Advisor (Planner role, one spawn per ticket, continued by `SendMessage`) | `claude/advisor.md` | — none, by design |
 | Reviewer, dispatched twice — one Standards axis, one Spec axis | `claude/code-reviewer.md` | `codex/code-reviewer.toml` |
-| Gate-runner | the project's own `.claude/agents/gate-runner.md` | — none |
+| Gate-runner | the project's own `.claude/agents/gate-runner.md`, once a project stamps one | — none |
 
 The gate-runner stays in its project: it carries that project's gate commands, so a shared copy
 would drift from the gate the coordinator would otherwise have run. Where a host cannot resolve
@@ -32,6 +32,8 @@ assuming one, because nothing in this repository may assume where the clone live
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
+# Stand in the wrong clone and the loop would link five names at nothing, silently.
+[ -f "$REPO/agents/claude/implementer.md" ] || { echo "not the agent-skills clone: $REPO" >&2; exit 1; }
 mkdir -p "$HOME/.claude/agents" "$HOME/.codex/agents"
 for n in implementer advisor code-reviewer; do
   ln -sfn "$REPO/agents/claude/$n.md" "$HOME/.claude/agents/$n.md"
@@ -44,6 +46,13 @@ done
 Check: `ls -l ~/.claude/agents ~/.codex/agents` — every entry should be a symlink into this
 clone, and no entry should name a seat that no longer exists.
 
+## When these model IDs were last true
+
+`claude-opus-5`, `claude-fable-5-1` and `gpt-6-astra` were each resolved by probe on 2026-09-17 —
+the Claude two from the host's own model list, `gpt-6-astra` from `codex doctor`'s resolved model
+and the CLI's built-in catalog. A model-family change expires all three at once; re-probe them
+together rather than one at a time, and update this date with them.
+
 ## Editing here is live
 
 Same rule as the Skills (`CLAUDE.md` § Load-bearing facts): the installed definition *is* this
@@ -51,9 +60,13 @@ file, so an edit lands immediately, and a checkout onto a ref without this direc
 every seat with no error. A **new** `.claude/agents/*.md` registers mid-session; whether a
 dispatch re-reads an **edited** body in the session that edited it is unmeasured — validate an
 edit in a fresh session, not the one that made it. The Codex side is a session input: after
-touching a `.toml`, check discovery in a newly started task. Codex rejects an unknown key in a
-role file with a startup warning rather than a failed dispatch, so a typo there is quiet unless
-you look for it.
+touching a `.toml`, check discovery in a newly started task.
+
+Codex validates the role file's *shape* but not its *values*, measured on 0.153.3 by planting each
+in turn and counting `codex doctor`'s startup warnings: an unknown key raises one warning, and a
+`model` set to a name no model has raises none. So a misspelled key is merely quiet, but a
+misspelled model ID is completely silent — the field that decides which model fills the seat is
+the one nothing checks. Change it by copying a slug, never by typing one.
 
 ## Why there is no Codex advisor
 
@@ -62,8 +75,8 @@ unscoped judgment. The Codex account has one role, so a twin there would be a se
 opinion wearing a name that claims otherwise. A Codex coordinator takes the fallback instead.
 
 `codex/code-reviewer.toml` also carries no equivalent of the `.md`'s `tools:` restriction; the
-role file has no key for one, and an unknown key is rejected. Read-only on Codex is enforced by
-the dispatch's sandbox, not by the role file.
+role file has no key for one, and inventing one only earns the startup warning above. Read-only
+on Codex is enforced by the dispatch's sandbox, not by the role file.
 
 ## Not covered by the install-surface verifier
 

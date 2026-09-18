@@ -59,6 +59,16 @@ clone may live anywhere — the script takes the location from its own path. Cla
 Chunk imports are *external includes*: Claude Code asks for approval once per consuming project
 on first launch, and the session must be restarted before they load.
 
+### The seat definitions
+
+A third install surface, and the only one the verifier never sees. `agents/` holds one pinned
+agent definition per seat per host — `implementer`, `advisor` and `code-reviewer` for Claude Code,
+`implementer` and `code-reviewer` for Codex. They install as one symlink each, exactly like a
+Skill; [`agents/README.md`](agents/README.md) carries the seat table and the loop.
+
+They matter more than their size suggests: a seat whose definition the host cannot resolve does
+not fail, it dispatches on whoever spawned it. Check with `ls -l ~/.claude/agents ~/.codex/agents`.
+
 ### Setting up a clone
 
 Git hooks are opt-in per clone, so run this once after cloning:
@@ -292,6 +302,8 @@ reference is existence-gated and the step skips.
   inline-leaf, …). Read it before renaming anything.
 - [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — operating notes for working *in* this
   repo.
+- [`agents/README.md`](agents/README.md) — the seat definitions: which seat each file
+  fills, how they install, and why editing one is live.
 - [`docs/adr/`](docs/adr/) — the architecture decisions behind the above.
 
 ## License
