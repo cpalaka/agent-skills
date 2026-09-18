@@ -17,6 +17,18 @@ footer that links commit ↔ task).
 out notable deviations from the plan/spec (and the reason) so a reviewer is not
 surprised. Footers carry traceability links.
 
+**Pass a body with backticks through `-F <file>`, never `-m "…"`.** Inside double
+quotes the shell command-substitutes every backtick span and puts the *empty*
+result in its place, so a body naming code (`result.foo = foo`, a flag, a path)
+commits with those spans **deleted**. Bash prints `command not found` to stderr
+and `git commit` still exits 0, so the only evidence is stderr noise beside a
+green commit — and a commit message is an artifact nothing re-reads, so the loss
+surfaces, if ever, when someone goes looking for the reasoning it was supposed to
+carry. Write the body to a file **inside the repo** and pass `-F` (the same
+remedy `gh` needs via `--body-file`, for a different mechanism: a sandboxed and an
+unsandboxed shell resolve different `$TMPDIR`, so a file written by one is empty
+to the other). Caught while unpushed, `git commit --amend -F <file>` is the fix.
+
 **One logical change per commit.** Each commit should be a single coherent unit
 of work whenever possible. Multiple commits on a branch are fine — how a branch
 is integrated (squash vs. merge commit) is the git-flow fork's concern, not this
