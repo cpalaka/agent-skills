@@ -8,9 +8,11 @@ phase('A')
 // besides), which is the regression it exists to catch. The specific name is not the point — any
 // suffix-less screaming-case binding exercises the same path. `bad-model-alias.js` is the other
 // arm's control, a quoted alias at a key site.
-// Keep this comment free of a literal call and of that key's name: both appear in the explicit-pin
-// heuristic's span scan, which runs over the raw source, and either one reds this fixture for a
-// second, unrelated reason (measured while writing it).
+// This comment carries neither a literal call nor that key's name because the explicit-pin heuristic's
+// span scan once ran over the RAW source, where either one red this fixture for a second, unrelated
+// reason (measured while writing it). That scan reads CODE ONLY since 2026-09-18 and
+// `good-pin-scan-skips-comments.js` is its control, so the avoidance no longer carries the
+// single-reason property — the fixture's own contents below do, and they are what must not change.
 const SCREENER = 'opus'
 const r = (await parallel([() => agent('hi', { model: SCREENER })])).filter(Boolean)
 return r

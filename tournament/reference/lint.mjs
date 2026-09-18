@@ -26,6 +26,19 @@ if (!file) { console.error('usage: lint.mjs <script.js> | lint.mjs --selftest');
 // this they had no runner and drifted unnoticed. stderr is captured on BOTH paths: `WARN:` goes to
 // stderr, so reading only stdout on a passing fixture made a WARN on a `good-`/`gap-` script invisible
 // and the "no WARN" half of their contract unenforceable.
+//
+// OPTIONAL PER-FIXTURE LINE ASSERTION. All four classes assert an EXIT CODE and a WARN presence and
+// nothing about message CONTENT, so a fixture reporting the WRONG LINE NUMBER passes exactly like one
+// reporting the right one. That is not hypothetical: codeOnly() dropped the newlines inside a
+// multi-line `/* … */`, so the one rule that counts its reported line in the STRIPPED source — the
+// explicit-pin rule — named a line that many lines low, and the fixture that would have caught it
+// exits 1 before the fix and after it (measured 2026-09-18). A
+// fixture may therefore pin the numbers by carrying one line of its own —
+//     // selftest: error-lines 11
+// — a comma-separated list of the line numbers the `ERROR:` messages must name, all of them and no
+// others. ONLY a fixture that declares it is checked, so the four class contracts are untouched and a
+// fixture that declares nothing is asserted exactly as much as it was before.
+const ERROR_LINES_DECL = /^[ \t]*\/\/ selftest: error-lines[ \t]+([\d ,]+?)[ \t]*$/m
 if (file === '--selftest') {
   const dir = join(HERE, 'fixtures')
   let names
@@ -45,13 +58,22 @@ if (file === '--selftest') {
     const out = (r.stdout || '') + (r.stderr || '')
     const code = r.status ?? 1
     const warned = /^WARN: /m.test(out)
-    const ok = expectBad ? code === 1 : expectWarn ? code === 0 && warned : code === 0 && !warned
+    let ok = expectBad ? code === 1 : expectWarn ? code === 0 && warned : code === 0 && !warned
+    let lineNote = ''
+    const decl = readFileSync(join(dir, n), 'utf8').match(ERROR_LINES_DECL)
+    if (decl) {
+      const want = decl[1].split(',').map(t => t.trim()).filter(Boolean).map(Number).sort((a, b) => a - b)
+      const got = out.split('\n').filter(l => l.startsWith('ERROR: '))
+        .map(l => (l.match(/\bline (\d+)\b/) || [])[1]).filter(Boolean).map(Number).sort((a, b) => a - b)
+      if (!(want.length === got.length && want.every((v, k) => v === got[k]))) ok = false
+      lineNote = `, ERROR line(s) ${got.join(',') || 'none'} (expected ${want.join(',')})`
+    }
     if (!ok) fails++
     const contract = expectBad ? 'exit 1'
       : expectWarn ? 'exit 0, WARN present'
         : isGap ? 'exit 0, no WARN — a recorded blind spot, NOT a good script'
           : 'exit 0, no WARN'
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${n} — exit ${code}${warned ? ', WARN present' : ', no WARN'} (expected ${contract})`)
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${n} — exit ${code}${warned ? ', WARN present' : ', no WARN'}${lineNote} (expected ${contract})`)
   }
   console.log(fails ? `VERDICT: RED — ${fails} of ${names.length} lint fixture(s) off contract`
     : `VERDICT: GREEN (lint --selftest) — ${names.length} fixtures (${bads} bad, ${goods} good, ${warnFixtures} warn, ${gaps} known gaps)`)
@@ -136,11 +158,29 @@ for (const name of new Set([...parallelCode.matchAll(PARALLEL_BIND)].map(m => m[
 
 // Every agent() call must pin an explicit model: — no silent session-model inheritance (measured 2026-07-01).
 // Heuristic: scan each agent() call's span (up to the next agent() call) for a model: key.
-const agentStarts = [...src.matchAll(/\bagent\(/g)].map(m => m.index)
+// CODE ONLY, unlike the alias rule below. A span runs from one `agent(` to the NEXT one, so a comment
+// merely NAMING the call opened a span that closed at the real call and reported that call unpinned —
+// hit for real while writing `fixtures/bad-model-alias-const.js`, whose comment had to be written around
+// both spellings to stay a single-reason fixture. `fixtures/good-pin-scan-skips-comments.js` is the
+// control; `fixtures/bad-agent-no-pin.js` is the RED one, which this rule had none of until 2026-09-18 —
+// narrowing its input could have switched it off in silence and --selftest would have stayed green.
+// The line is counted in the STRIPPED source, which is sound because codeOnly adds and removes no LINE:
+// it deletes text, the only thing it adds is a space, and every branch re-emits the newlines it consumed.
+// Three branches did NOT until 2026-09-18 — a multi-line `/* … */`, a `/…` codeOnly reads as a regex while
+// the parser reads it as division, and a `\`-continued string literal — so every line reported after one
+// read that many lines low. THIS IS THE ONLY RULE THAT SHOWS IT — the
+// alias, scoreboard and filter rules all count their line in the RAW src — which is part of why it went
+// unseen; the other part is that this harness could not see it either, since the fixture reds on the exit
+// code either way. `fixtures/bad-pin-line-after-block-comment.js` said line 5 for a call on line 11, and
+// `fixtures/bad-pin-line-after-regex-and-string.js` said line 15 for a call on line 17, and --selftest
+// printed PASS for both. What MEASURES the three fixes is the optional `selftest: error-lines` assertion
+// those two fixtures declare, without which none of them is falsifiable.
+const pinCode = codeOnly(src)
+const agentStarts = [...pinCode.matchAll(/\bagent\(/g)].map(m => m.index)
 for (let i = 0; i < agentStarts.length; i++) {
-  const span = src.slice(agentStarts[i], agentStarts[i + 1] ?? src.length)
+  const span = pinCode.slice(agentStarts[i], agentStarts[i + 1] ?? pinCode.length)
   if (!/\bmodel\s*:/.test(span)) {
-    const line = src.slice(0, agentStarts[i]).split('\n').length
+    const line = pinCode.slice(0, agentStarts[i]).split('\n').length
     errors.push(`agent() call at line ${line} has no explicit model: — pin it to a concrete ID (model: BUILDER_MODEL, or SYNTH_MODEL for the single synthesis agent)`)
   }
 }
@@ -249,6 +289,18 @@ const BOARD_BIND = /(?:(?:const|let|var)\s+)?\bboard\s*=[^=]/
 // `fixtures/gap-filter-regex-after-keyword.js`, filed `gap-` so --selftest prints it as the blind spot it
 // is. The character-class gap stays comment-only: a false ERROR is loud, and a fixture pinning it would
 // pin a shape we would rather fix than keep.
+// EVERY BRANCH RE-EMITS THE NEWLINES IT CONSUMES, and must keep doing so. Four rules read this output.
+// The explicit-pin rule counts its REPORTED LINE in it, so a swallowed newline shifts that number; the
+// other three feed it to tests that are line-anchored or newline-bounded (SB_STUB_DECL's `^…$`,
+// FLAG_ASSIGN's `[^\n;]+`, the parallel guard's 15-line window), and a swallowed newline JOINS the text
+// before the construct to the text after it under all three. THREE branches swallowed them until
+// 2026-09-18 — the block comment, the regex literal (which ended its scan AT a newline and then stepped
+// past it, running its flag scan into the next line's identifier), and the quoted string (which scanned
+// to the closing quote across any number of them, as a `\`-continued literal does). Each shape is valid
+// JS the syntax gate accepts, so each is fixtured: `fixtures/bad-pin-line-after-block-comment.js` and
+// `fixtures/bad-pin-line-after-regex-and-string.js`, which can red only because they declare
+// `selftest: error-lines`. Only the pin rule's symptom is measured that way; the other three rules'
+// exposure is reasoned, not measured.
 function codeOnly(s) {
   let out = '', i = 0, prev = ''
   const stack = []
@@ -264,16 +316,27 @@ function codeOnly(s) {
     }
     const c = s[i], d = s[i + 1]
     if (c === '/' && d === '/') { while (i < s.length && s[i] !== '\n') i++; continue }
-    if (c === '/' && d === '*') { i += 2; while (i < s.length && !(s[i] === '*' && s[i + 1] === '/')) i++; i = Math.min(i + 2, s.length); continue }
+    if (c === '/' && d === '*') { i += 2; while (i < s.length && !(s[i] === '*' && s[i + 1] === '/')) { if (s[i] === '\n') out += '\n'; i++ } i = Math.min(i + 2, s.length); continue }
     if (c === '/' && /[=(,:[!&|?{;+\-*%<>~^]/.test(prev)) { // operand position → regex literal, not division
       i++
       while (i < s.length && s[i] !== '/' && s[i] !== '\n') { if (s[i] === '\\') i++; i++ }
-      i++
+      if (s[i] === '/') i++          // step past the CLOSER only — a `\n` is left for the general path
       while (i < s.length && /[a-z]/.test(s[i])) i++
       out += ' '; prev = ' '
       continue
     }
-    if (c === "'" || c === '"') { const q = c; i++; while (i < s.length && s[i] !== q) { if (s[i] === '\\') i++; i++ } i++; out += ' '; prev = ' '; continue }
+    if (c === "'" || c === '"') {
+      const q = c; i++
+      let nl = ''                   // a `\`-continued (or unterminated) literal crosses newlines; re-emit them
+      while (i < s.length && s[i] !== q) {
+        if (s[i] === '\\') { if (s[i + 1] === '\n') nl += '\n'; i++ }
+        else if (s[i] === '\n') nl += '\n'
+        i++
+      }
+      i++
+      out += ' ' + nl; prev = ' '
+      continue
+    }
     if (c === '`') { stack.push({ kind: 'tpl' }); i++; out += ' '; prev = ' '; continue }
     if (top && top.kind === 'expr') {
       if (c === '{') top.depth++
