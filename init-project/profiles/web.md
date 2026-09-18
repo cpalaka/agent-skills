@@ -39,7 +39,10 @@ knobs:
     test: "npm run test"
     build: "npm run build"
     build_check: "<the build's own artifact assertion — e.g. that the SSG/prerender step produced the static output. The build must SAY so; exit 0 alone is not the check>"
-    smoke: "npm run dev"                      # bring up, confirm the affected route renders, bring down
+    # NOT a bare server command: a dev server never exits, and step 7 classifies a gate step that
+    # hangs — no exit, banner only — as a STAMP FAILURE, so `smoke: <the dev command>` fails the
+    # verify-after-write of every project stamped from this Profile. State the procedure instead.
+    smoke: "bring the dev server up in the background (`npm run dev`, or the project's package manager and script name), request the affected route, and read the route's OWN rendered content — the server's ready banner is not the verdict, and a route that 500s or renders an error boundary still prints that banner. Then stop the server and confirm the port is free. PASS = the affected route's expected content observed AND no server process left behind; either half missing is a FAIL"
     secret_scan: "grep -rEn '<secret-leak pattern>' over the working tree from repo root — expect ZERO matches"
     env: "<where the deployed secrets live — an env file on the host, a secrets manager, the platform's own store; never in the repo and never in the client runtime>"
   dev-practice:
