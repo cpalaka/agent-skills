@@ -192,14 +192,14 @@ target check (Migrate step 6) does not run here.
   `.claude/agents/` for project-local subagents **where the Profile stamps any** (drop that bullet
   where it stamps none), that skills fire from context on this host, and the `/name` spelling. **No
   knob block and no project rule may remain in this file.**
-- **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: dev-base's seven bundled
+- **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: dev-base's eight bundled
   chunks (`git-sync-branch-start`, `git-commit-format`, `git-confirm-destructive`, `sandbox-auto`,
-  `parallel-work`, `verify-gate`, `dev-practice`) + the `fork` + each `imports` entry. It expands
+  `parallel-work`, `verify-gate`, `dev-practice`, `implement-run`) + the `fork` + each `imports` entry. It expands
   into **item 3 of the read list**, not a free-standing sentence, and it carries the count so a
   reader can tell a short read from a complete one:
   `These <count> files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
   then the file names with their `.md` suffixes. `<count>` is the length of the list you just
-  derived, spelled as a word — it is seven plus the fork plus each `imports` entry, so a board-less
+  derived, spelled as a word — it is eight plus the fork plus each `imports` entry, so a board-less
   project has one fewer than a board-driven one. The Template carries
   the rest: the read-these-completely list, the "do not read `dev-base.md` instead" warning and the
   `~/.claude/chunks` → `~/.codex/chunks` resolution rule (ADR-0005), the Skills / MCP / sandbox /

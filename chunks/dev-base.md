@@ -1,5 +1,6 @@
 <!-- chunk:dev-base | kind: bundle | single-source: agent-skills/chunks/dev-base.md -->
-<!-- The dev-process base every dev Profile imports. Recursively @imports the universal base chunks. -->
+<!-- The dev-process base every dev Profile imports. Recursively @imports the eight universal base
+     chunks, implement-run among them. -->
 <!-- Codex does not expand the @ lines below: when a Codex AGENTS.md directs you here, read every
      listed child completely and resolve ~/.claude/chunks/<name> as ~/.codex/chunks/<name>. -->
 <!-- NOT here (they vary by Profile, and @import cannot be undone): the git-flow fork (git-flow-squash / git-flow-noff), the tracker chunk (backlog-core or tracker-github), and codegraph — a Profile imports exactly one fork + exactly one tracker chunk explicitly, and codegraph only where a `.codegraph/` index actually exists. -->
@@ -21,3 +22,4 @@
 @~/.claude/chunks/parallel-work.md
 @~/.claude/chunks/verify-gate.md
 @~/.claude/chunks/dev-practice.md
+@~/.claude/chunks/implement-run.md

@@ -5,6 +5,20 @@ Operating notes for working **in this repo**. For what each Skill is and how to 
 …) read [`CONTEXT.md`](CONTEXT.md) — it is not auto-loaded. Check [`docs/adr/`](docs/adr/) when a
 decision in your area may already be settled.
 
+This repository runs its own tickets under the same procedure it ships. Two imports carry it — the
+implementation chunk, and this repository's own contract, which is hand-written rather than
+engine-stamped and says why:
+
+@~/.claude/chunks/implement-run.md
+@docs/agents/project-workflow.md
+
+The first is an external import, so it needs this project's one-time approval on a fresh session
+before it expands ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md)); until then the
+line is inert text, which looks identical to a loaded import. **A sub-agent has it worse**: this
+file reaches a dispatched seat with both import lines *deleted*, so nothing marks the gap at all
+(measured 2026-09-17 by having a seat quote back what it received). A seat that needs the
+procedure or the knob values opens those two files itself.
+
 ## Load-bearing facts
 
 **Editing a file here is live.** This clone is usually also the install: entries under

@@ -15,20 +15,21 @@ file carries only the pane mechanics that Chunk points at, and relaxes nothing t
 
 ## Choosing the orchestration shape
 
-Three shapes deliver a delegated implementation run. The `implement-run` Chunk requires asking the
-owner which one before the first dispatch, recommendation pre-selected; this table is what the
-pre-selection reads from. All three burn the same usage window.
+Three shapes deliver a delegated implementation run. The `implement-run` Chunk takes the pick from
+the project's `shape` knob and asks only where the ticket cannot fit it; this table is what that
+question reads from. All three burn the same usage window.
 
 | Shape | Fits | Costs |
 |---|---|---|
-| **Agent-tool subagents** (`implementer`, worktree isolation) | fan-out nobody needs to watch; short tickets; a parallel pair spawned in one message; inherits sandbox, permission mode and MCP config with no setup | opaque in flight: no dialog reaches the user, steering only by coordinator message; nothing survives but the report, so no session to resume; a gate needing an open editor still runs in the coordinator, but sandbox-off Bash works from a subagent (measured 2026-09-14), so a gate-runner delegate carries those gates where the project defines one |
-| **Coordinator pane + interactive child sessions** (§ below) | a mostly linear chain committing to real repositories that a human wants to watch, interrupt and resume; a child stops and asks at a grant boundary; its permission dialogs reach the user, so it can run a sandbox-off gate itself; the exact session resumes later | sequential, one writer per repository `main`; per-ticket pane, prompt-file and worktree setup with the settings file copied in; the multiplexer socket needs the sandbox bypass on every call; permission rules trip on prose until the standing clauses are in place |
-| **Saved workflow script** | a fixed fan-out → verify pipeline that will run more than once; per-stage model and effort pins; resume from a run id | script authoring and the `args` channel (`WORKFLOWS.md`); the dynamic workflow-size ceiling; least steerable in flight |
+| `subagents` — **Agent-tool subagents** (`implementer`, worktree isolation) | fan-out nobody needs to watch; short tickets; a parallel pair spawned in one message; inherits sandbox, permission mode and MCP config with no setup | opaque in flight: no dialog reaches the user, steering only by coordinator message; nothing survives but the report, so no session to resume; a gate needing an open editor still runs in the coordinator, but sandbox-off Bash works from a subagent (measured 2026-09-14), so a gate-runner delegate carries those gates where the project defines one |
+| `coordinator-pane` — **a coordinator pane + interactive child sessions** (§ below) | a mostly linear chain committing to real repositories that a human wants to watch, interrupt and resume; a child stops and asks at a grant boundary; its permission dialogs reach the user, so it can run a sandbox-off gate itself; the exact session resumes later | sequential, one writer per repository `main`; per-ticket pane, prompt-file and worktree setup with the settings file copied in; the multiplexer socket needs the sandbox bypass on every call; permission rules trip on prose until the standing clauses are in place |
+| `workflow` — **a saved workflow script** | a fixed fan-out → verify pipeline that will run more than once; per-stage model and effort pins; resume from a run id | script authoring and the `args` channel (`WORKFLOWS.md`); the dynamic workflow-size ceiling; least steerable in flight |
 
-Pre-select by three questions, in order. *Will a human watch a ticket, or need to resume its
-session?* The pane. *Does the work fan out wider than a pair and need no eyes?* Subagents, or a
-workflow if it is a pipeline you will run again. *Neither?* Subagents, the shape with no setup.
-State the pick and the question that decided it, then ask.
+Where a project has no saved `shape`, or the ticket cannot fit the one it has, pick by three
+questions, in order. *Will a human watch a ticket, or need to resume its session?* The pane. *Does
+the work fan out wider than a pair and need no eyes?* Subagents, or a workflow if it is a pipeline
+you will run again. *Neither?* Subagents, the shape with no setup. State the pick and the question
+that decided it, then ask.
 
 ## Heartbeat recipes
 

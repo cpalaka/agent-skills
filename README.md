@@ -270,7 +270,7 @@ delivery? No → Chunk. Yes → Template.
 
 | Chunk | Covers |
 |---|---|
-| `dev-base.md` | The bundle every Profile imports; recursively includes seven universal base Chunks. |
+| `dev-base.md` | The bundle every Profile imports; recursively includes eight universal base Chunks. |
 | `dev-practice.md` | Dev practice defaults — planning, diagnosis, TDD, browser QA. |
 | `code-hygiene.md` | What's off-limits in code, and when to ask. |
 | `verify-gate.md` | The gate to run before any commit or handoff. |
@@ -281,6 +281,7 @@ delivery? No → Chunk. Yes → Template.
 | `backlog-core.md` | Task tracking with backlog.md (the Backlog-CLI alternative to `tracker-github.md`). |
 | `tracker-github.md` | Task tracking with GitHub Issues and a private Project (the alternative to `backlog-core.md`). |
 | `parallel-work.md` | Parallel work — waves and solo worktrees. |
+| `implement-run.md` | How one ticket is run under `/implement` — the seats, the advisor's slots, the run record. |
 | `sandbox-auto.md` | Sandbox session-init baseline (see the `sandbox-and-permissions` Skill for denials). |
 | `codegraph.md` | Code intelligence — opt-in and self-gating on `.codegraph/`. |
 

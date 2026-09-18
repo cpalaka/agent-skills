@@ -6,6 +6,11 @@ carries the load-bearing facts in full — the checkout-is-the-install rule, the
 the leak-guard's identity file, the no-attribution commit policy, and the existence gate on
 private Skills. This file is the Codex entry point, not a duplicate of it.
 
+**Read two more files before running a ticket here**, since Codex expands no import directives:
+`docs/agents/project-workflow.md` (this repository's contract — the `implement-run` knob values and
+the issue-tracker convention) and `~/.codex/chunks/implement-run.md` (the procedure those knobs
+configure). `CLAUDE.md` reaches both by `@import`; on this host the read is the mechanism.
+
 This repository is the canonical source for the Skills and Chunks it contains. Claude Code
 discovers Skills through `~/.claude/skills/`; Codex discovers them through `~/.agents/skills/`.
 Preserve both hosts, and prefer symlinks back to this repository over copied Skill bodies.
