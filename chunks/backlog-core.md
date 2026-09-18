@@ -26,12 +26,12 @@ Always pass `--plain` when listing/viewing. Never hand-edit files
 under `backlog/` — the CLI owns IDs, naming, and frontmatter. (`backlog/config.yml` is the
 one file fine to hand-edit; `backlog config set` does not expose `definition_of_done`.)
 
-**`task create` is main-session-only, and seeding needs an explicit go.**
+**`task create` is main-repo-only, and seeding needs an explicit go.**
 
-- Only the **main session** creates or edits tasks — never parallel subagents or workflow
-  agents. ID generation is a max+1 scan, so concurrent creation collides. (An attended
-  interactive worktree session is the main session *for its own task*, so its `task edit`
-  writes are fine; only `task create` stays main-repo-only — see `parallel-work`.)
+- Only the **coordinator** creates or edits tasks — never parallel subagents or workflow
+  agents. ID generation is a max+1 scan, so concurrent creation collides. (One exception: an
+  attended interactive worktree session writes board fields *for the task it owns*, so its
+  `task edit` writes are fine; only `task create` stays main-repo-only — see `parallel-work`.)
 - **Create from a fresh board view — a feature branch is a stale board.** `backlog draft create`
   and `task create` assign IDs by a max+1 scan of the **current branch's** `backlog/`, so creating
   on a branch is blind to items added on `main` (or a sibling branch) since it diverged → a

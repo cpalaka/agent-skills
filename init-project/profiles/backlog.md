@@ -102,7 +102,7 @@ the repo root.)
    `backlog config get definitionOfDone` — the CLI takes the camelCase spelling for the same key
    (verified 2026-09-03 on 1.45.2).
 
-4. **Seed the board** — MAIN session only, sequential. `task create`'s ID generation is a
+4. **Seed the board** — coordinator only, sequential. `task create`'s ID generation is a
    max+1 scan, so concurrent creation from subagents/workflow agents collides (upstream
    #632). Per `backlog-core`, populating the board needs an explicit go-ahead in chat
    first — propose the list (titles + one-liners), wait for a yes.

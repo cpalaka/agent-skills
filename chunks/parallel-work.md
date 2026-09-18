@@ -43,7 +43,7 @@ refuses or would carry the changes along (`git-sync-branch-start`). When you see
 **Mode A — Waves (dependency-free fan-out via background subagents).** For multiple tasks
 with no shared state and no ordering between them:
 
-- **Main session only** syncs `main` and marks each task In Progress before fanning out —
+- **The coordinator alone** syncs `main` and marks each task In Progress before fanning out —
   board writes never happen inside a subagent (ID generation collides under concurrency).
 - Per task, from the repo root, create the worktree under the **worktree path prefix** knob
   (`git worktree add <prefix>-<slug> -b <branch> main`) and run the **install command** in
@@ -74,7 +74,7 @@ with no shared state and no ordering between them:
   output against source yourself before believing it.
 
 **Mode B — Attended worktrees (you hands-on, 2+ tasks concurrently).** Each interactive worktree
-session is the **main session for its own task** — so per-session status edits are fine;
+session **writes board fields for the task it owns** — so per-session status edits are fine;
 only `task create` stays main-repo-only (the max+1 ID scan collides under concurrency, see
 `backlog-core`).
 

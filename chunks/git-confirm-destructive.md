@@ -5,7 +5,7 @@
 
 These operations are hard to undo or are visible outside the local repo. Each one must
 **surface for explicit human approval before it runs** — never autonomously. No loop, wave,
-background subagent, or orchestrator may execute any of them on its own; they pause and ask.
+background subagent, or coordinator may execute any of them on its own; they pause and ask.
 
 **Force-push — always confirm.**
 

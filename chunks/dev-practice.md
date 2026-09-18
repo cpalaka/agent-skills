@@ -27,10 +27,10 @@ feel/look doubt → build minimal + an `agent-browser` screenshot loop; codebase
 clear-what/unclear-how → plan mode. (Verify step = `verify-gate`; sign-off = the human
 Done-gate, in `backlog-core` for board-driven projects or the project's own inline rule.)
 
-**Drive `agent-browser` yourself, in the main session.** For the real-browser pass before
+**Drive `agent-browser` yourself, in the parent session.** For the real-browser pass before
 calling a visual or interactive slice done, do the check yourself — don't punt "eyeball
-this" to the user — and run it in the **main session, never a subagent**: a subagent's
-screenshot is never returned to the orchestrator, so a visually-AC'd task would pass
+this" to the user — and run it in the **parent session, never a subagent**: a subagent's
+screenshot is never returned to the parent, so a visually-AC'd task would pass
 unverified. This is why visual/feel tasks run attended, not in waves (see `parallel-work`).
 The `errors` buffer is cumulative and `--clear` is a no-op — `close --all` before each
 `open` for per-page attribution; some framework errors (SSR/hydration) surface on
