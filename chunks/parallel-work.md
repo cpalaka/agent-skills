@@ -66,9 +66,8 @@ with no shared state and no ordering between them:
   context).
 - **The orchestrator owns re-verification of every handoff.** On each subagent handoff, the verify gate is
   re-run independently in that worktree before anything is relayed to the user — by the main
-  session, or by a gate-runner delegate that did not write the diff (`multi-agent-policy`
-  § Orchestrator-delegate procedure); the independence that matters is that the seat re-running
-  the gate never wrote the diff. Never pass on a subagent's claims unverified. Writer/subagent agents
+  session, or by a gate-runner seat that did not write the diff; the independence that matters is
+  that the seat re-running the gate never wrote the diff. Never pass on a subagent's claims unverified. Writer/subagent agents
   systematically **over-report their own output**; treat any self-reported metric (lines
   changed, "26% smaller", "tests pass") as a claim, not a measurement, and diff the real
   output against source yourself before believing it.

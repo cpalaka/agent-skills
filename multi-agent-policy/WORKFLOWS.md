@@ -53,6 +53,21 @@ The measurement behind the placement rule is ADR 0006 (see `docs/adr/README.md`)
 
 - **Severity-tier the verification.** 3-vote panels for HIGH only; MEDIUM gets one verifier that
   escalates on uncertainty; LOW is main-loop judgment. Panels on vague findings amplify noise.
+- **Always run a dedicated completeness critic** in a diff review ("what did the finders miss"), a
+  slot distinct from the finders. Inside an implementation run this is not an extra agent: it is the
+  advisor's second slot, one consult covering this critic and the counter-critic below, because part
+  of what a fresh agent would need buying is the ticket context that seat already holds.
+- **Pair it with a counter-critic aimed at the review, not the subject**, hunting method error:
+  category errors, speculative-generality remedies, stage-inappropriate standards, absence claims
+  whose refuting evidence sat outside the finders' scope. A scoped verifier is the wrong tool here —
+  scoping is right for checking a fact and blind to a scope error (2026-07-25). Task it explicitly
+  with **auditing the refuters** (a bad kill costs what a bad finding costs), **hunting duplicate
+  clusters**, and **hunting asymmetry**: "check every survivor against the other arm; if the other
+  arm has the same property and was not charged, say so".
+- **Expect the counter-critic to correct you.** Its kills of the coordinator's own measurements were
+  premise errors: right numbers, wrong reading. Budget one on any review where you also wrote the
+  spec; it is the only slot pointed at you. Its kills are still claims to verify, since one was its
+  own error.
 - **Assert the input layer arrived before trusting any stage output.** Agents reverse-engineer missing context from the repo, so an input-starved run completes "successfully": a brief that arrived as `"undefined"` produced an on-theme run that only pool-size arithmetic caught (2026-07-30). Parse `args` defensively (`typeof args === 'string' ? JSON.parse(args) : args`), hard-throw on a missing required field, and give every smoke run a pre-derived expected input count so a missing layer reads as a number mismatch.
 - **Reconcile items sent against verdicts returned, not `survived` against `refuted`.** A `.catch(()=>null)` or `.filter(Boolean)` drops an item while survived+refuted still reconcile. Emit a `dropped`/`errored` bucket; when sent ≠ verdicts, recover each drop from `journal.jsonl` and verify it in the main loop. Treat a cached or replayed result as empty until you have read it.
 - **Reconciliation recurses to the vote level.** With N-skeptic panels, reconcile `votesReturned` against `votesSent` per finding: one dropped vote flips a refute-majority into a tie that "survives". Adjudicate any survivor that passed on a tie or a missing vote.
