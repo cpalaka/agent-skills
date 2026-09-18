@@ -25,7 +25,10 @@ that is local config, not tracked — a fresh clone has neither until someone se
   `AGENT_SKILLS_IDENTITY_FILE`, defaulting to `~/.config/agent-skills/identity-patterns`. If it is
   missing, the hook modes still run the built-in list but warn loudly, and `scan` **fails**
   outright, because an import audit on the built-in list alone certifies nothing. A contributor
-  who has no such file will see that warning; it is expected, not a misconfiguration.
+  who has no such file will see that warning; it is expected, not a misconfiguration. **The
+  guard sees only the git object store.** An issue body or comment written with `gh` on this
+  public repository is never scanned, so grep the body file against both pattern lists before
+  any `gh` write (39 identity hits landed in three public issues on 2026-09-17 that way).
 - **the backstop** (`post-checkout`, `post-merge`) warns when a checkout or merge leaves the tree
   behind `main`, for the checkout-is-the-install reason above. Neither hook can fail a checkout or
   a merge, and neither catches a lost uncommitted edit — they diff after the fact.
