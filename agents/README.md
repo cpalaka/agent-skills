@@ -57,10 +57,16 @@ together rather than one at a time, and update this date with them.
 
 Same rule as the Skills (`CLAUDE.md` § Load-bearing facts): the installed definition *is* this
 file, so an edit lands immediately, and a checkout onto a ref without this directory breaks
-every seat with no error. A **new** `.claude/agents/*.md` registers mid-session; whether a
-dispatch re-reads an **edited** body in the session that edited it is unmeasured — validate an
-edit in a fresh session, not the one that made it. The Codex side is a session input: after
-touching a `.toml`, check discovery in a newly started task.
+every seat with no error.
+
+On Claude Code 2.1.269 the registry re-reads the directory during a session, but lazily: a rename
+took several minutes and several tool calls to show up, and until it did, dispatches were still
+served the old roster — the retired name answered and the new one was reported not found, both
+wrongly. An **edited** body, once the refresh lands, is served fresh (measured 2026-09-17 by
+having the seat quote its own changed line back). So a dispatch that contradicts what is on disk
+means the refresh has not happened yet, not that the file is wrong; the cost of assuming
+otherwise is re-editing a file that was already correct. The Codex side is a session input:
+after touching a `.toml`, check discovery in a newly started task.
 
 Codex validates the role file's *shape* but not its *values*, measured on 0.153.3 by planting each
 in turn and counting `codex doctor`'s startup warnings: an unknown key raises one warning, and a
