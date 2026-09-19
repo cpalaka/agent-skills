@@ -26,6 +26,13 @@ The `implement-run` chunk carries the procedure. This block carries what varies 
 - advisor: advisor
 <!-- /knobs:implement-run -->
 
+**Wrap-commit push carve-out.** An end-of-session close-out that commits a promotion here — a
+Chunk or Skill edit written from a session rooted in another project — may push `main` without a
+separate approval, after the leak-guard scan. The checkout is the install on every machine, so an
+unpushed promotion is live on one box and absent on the other. The `reviewed` tag marks the
+frontier of the later bloat and redundancy review; a close-out commit never moves it, and the
+review moves it with `git tag -f reviewed HEAD` and pushes it with `-f`.
+
 **A prose deliverable is verified by an agent following it, never by re-reading it.** Everything
 here is prose an agent executes, so a ticket that changes a Skill, a Chunk or a Template closes on
 a playthrough against a throwaway target — "where did you guess, where did the text contradict
