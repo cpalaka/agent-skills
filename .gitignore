@@ -18,3 +18,9 @@ __pycache__/
 !.claude/settings.json
 .superpowers/
 # CLAUDE.md is intentionally TRACKED (repo operating notes) — keep it mechanics-only, no secrets/private paths.
+
+# Per-ticket working notes (rule ledgers, execution specs, run state). Untracked AND unignored,
+# these reach `leak-guard.sh scan`, and a ticket's own notes carry absolute home paths — so the
+# tree gate goes permanently red and stops carrying information (measured 2026-09-19: 22 hits from
+# three working files, against 2 from the planted canary). Durable output belongs on the ticket.
+.scratch/
