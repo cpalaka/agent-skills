@@ -1,19 +1,12 @@
 <!-- chunk:dev-base | kind: bundle | single-source: agent-skills/chunks/dev-base.md -->
-<!-- The dev-process base every dev Profile imports. Recursively @imports the eight universal base
-     chunks, implement-run among them. -->
-<!-- Codex does not expand the @ lines below: when a Codex AGENTS.md directs you here, read every
-     listed child completely and resolve ~/.claude/chunks/<name> as ~/.codex/chunks/<name>. -->
-<!-- NOT here (they vary by Profile, and @import cannot be undone): the git-flow fork (git-flow-squash / git-flow-noff), the tracker chunk (backlog-core or tracker-github), and codegraph — a Profile imports exactly one fork + exactly one tracker chunk explicitly, and codegraph only where a `.codegraph/` index actually exists. -->
-<!-- codegraph left the bundle 2026-07-25: it self-gates on `.codegraph/` and was inert in all but
-     one project, so every other session paid ~380 words to be told "ignore this
-     chunk entirely". Import it explicitly in a project once that project has an index. -->
-<!-- code-hygiene left the bundle 2026-08-08 (always-on audit). Its four rules — no hardcoded
-     secrets, no debug logging in shipped code, declare top-level deps, ask when unsure and prefer
-     reversible steps — are standard practice a current model already follows, and it was the one
-     chunk in this bundle that told the model how to work rather than telling it something about
-     THIS environment. The only enforcement that mattered (the repo-root secret scan) is a step in
-     `verify-gate` and is unaffected. The file stays for explicit import by any project that wants
-     the rules stated. -->
+<!-- The dev-process base every dev Profile imports: it recursively @imports the eight universal
+     base chunks listed below, implement-run among them, and that list is the bundle. -->
+<!-- Codex expands no @ line: when a Codex AGENTS.md sends you here, read every child listed below
+     completely, resolving ~/.claude/chunks/<name> as ~/.codex/chunks/<name>. -->
+<!-- Two chunks stay OUT of the bundle and the Profile imports them explicitly, because @import
+     cannot be undone: the git-flow fork (git-flow-squash) and the tracker chunk — backlog-core
+     or tracker-github, exactly one. The manifest selects both
+     (`init-project` § What a Profile is). -->
 
 @~/.claude/chunks/git-sync-branch-start.md
 @~/.claude/chunks/git-commit-format.md

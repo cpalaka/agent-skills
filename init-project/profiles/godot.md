@@ -4,14 +4,14 @@ imports: []                 # No UNCONDITIONAL imports beyond dev-base + the for
                             # backlog-core is CONDITIONAL (like blender-mcp-guide): the recipe's
                             # "Board (conditional)" step decides it at apply time and wires it
                             # (import line + knob block + init) — never the default knob pass.
-fork: git-flow-squash       # The default (ADR-0002). git-flow-noff is the opt-in alternative.
-                            # MIGRATION: pick the fork from the repo's REAL git history, not this
+fork: git-flow-squash       # The default (ADR-0002) and, since ADR-0013, the only variant shipped.
+                            # MIGRATION: check the fork against the repo's REAL git history, not this
                             # default. Pre-chunk Godot bootstrapping prescribed NO git-flow
                             # model at all, so a pre-chunk Godot repo has whatever its history shows:
                             # linear / squash-merged history → git-flow-squash; genuine `--no-ff`
-                            # merge commits → git-flow-noff. Never flip a project's integration model
-                            # as a scaffolding side effect. (The `--no-ff` default was the old BACKLOG
-                            # init template's model, NOT the godot one — ADR-0002.)
+                            # merge commits → FLAG IT and stop, because ADR-0013 retired the
+                            # merge-commit fork and restoring it is an owner decision. Never flip a
+                            # project's integration model as a scaffolding side effect.
 
 # Template assets under profiles/godot/templates/ are already copied in; this manifest enumerates
 # the ones to STAMP, with DEST (engine step 3: copy src→dest, skip-if-exists unless refresh:true).

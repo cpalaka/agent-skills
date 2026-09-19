@@ -2,8 +2,8 @@
 <!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
      Edit here only — no per-project copies, no parity. -->
 <!-- The tracker fork's GitHub side: a project imports this OR backlog-core, never both. It is a
-     drop-in owner for every clause git-sync-branch-start, git-commit-format, git-flow-squash /
-     git-flow-noff, parallel-work and dev-practice defer to "the tracker chunk". -->
+     drop-in owner for every clause git-sync-branch-start, git-commit-format, git-flow-squash,
+     parallel-work and dev-practice defer to "the tracker chunk". -->
 
 ## Task tracking (GitHub Issues + Project)
 
@@ -76,10 +76,9 @@ substitutes for it. Retirement is the other exit: work abandoned rather than fin
   is **not** board-less, so `git-flow-squash`'s board-less exception does not fire either. Where a
   variant says "mark it Done on the branch before the merge", **there is nothing to mark on the
   branch**: closing the issue and moving it to the done column are GitHub writes made after
-  sign-off, so the integration commit carries code only. Under `git-flow-noff`, record the merge
-  SHA the variant wants recorded as an issue comment rather than a board note; that is a routine
-  update. The rest of each variant applies unchanged, including base revalidation, the gate rerun
-  after a rebase, and per-integration push approval.
+  sign-off, so the integration commit carries code only. The rest of the variant applies
+  unchanged, including base revalidation, the gate rerun after a rebase, and per-integration
+  push approval.
 - `dev-practice`'s "human Done-gate" pointer resolves to the completion clause above.
 
 **Acceptance criteria live in the issue body as a checklist.** Phrase them as the specific checks

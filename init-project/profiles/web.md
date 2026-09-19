@@ -6,7 +6,7 @@ type: web
 # (a fork can never ride dev-base — @import cannot be undone).
 imports:
   - backlog-core
-fork: git-flow-squash      # the default (ADR-0002); git-flow-noff is the opt-in alternative.
+fork: git-flow-squash      # the default (ADR-0002) and, since ADR-0013, the only variant.
 templates: []              # none — backlog's claude-section.md is promoted into the
                            # backlog-core chunk, so no profile stamps it; web carries no Template assets.
 knobs:

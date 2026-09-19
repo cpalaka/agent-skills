@@ -18,7 +18,12 @@ The `implement-run` chunk carries the procedure. This block carries what varies 
 <!-- knobs:implement-run -->
 - shape: subagents
 - layout: serial — one checkout, prose deliverables, no fan-out to keep disjoint. A worktree here is
-  for ref surgery (`CLAUDE.md` § Load-bearing facts), not for an implementer.
+  for ref surgery (`CLAUDE.md` § Load-bearing facts), not for an implementer — **except that a
+  change editing many Chunks at once takes one, because the checkout is the install and a
+  half-rewritten library is live in every project the moment it touches disk.** It stages the edits
+  into one squash; it is not isolation. Both hosts' symlinks keep pointing at the main checkout
+  while it runs, so a resolution check against them proves nothing until after the merge. Remove it
+  once it has landed and show `git worktree list` in the closing record.
 - gate_runner: coordinator — this repository stamps no project-local agents, so no gate-runner seat
   resolves and the coordinator runs the gates and says so. The gates are the leak-guard scan
   (`.githooks/leak-guard.sh scan`), the word and count checks a ticket names, and resolution checks

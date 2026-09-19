@@ -4,9 +4,8 @@ type: backlog
 # dev-practice. Add only the explicit, un-bundleable imports here.
 imports:
   - backlog-core
-fork: git-flow-squash       # ADR-0002 default. Opt-in alternative is git-flow-noff
-                            # (plain task-NNN branch + SHA-in-notes) — swap the fork
-                            # line to migrate; never import both.
+fork: git-flow-squash       # the ADR-0002 default and, since ADR-0013, the only variant.
+                            # Exactly one fork is ever imported.
 templates:                  # board conventions arrive via the backlog-core @import (the old
                             # claude-section.md Template was promoted INTO that chunk). Two stamped
                             # assets, both host-neutral and both reached through the contract:
