@@ -207,6 +207,47 @@ would otherwise ask the user or decide silently. A fourth need goes to the user.
 _Avoid_: trigger (the condition that may spend a slot, not the slot), consult (the act of
 spending one), call.
 
+### Issue tracking
+
+The `tracker-github` Chunk and the pipeline Skills (wayfinder, to-spec, to-tickets, implement)
+share these terms. Status is never stored: it is read off an issue's open state, its gate label
+and its blocked-by edges.
+
+**gate label**:
+The one `gate:*` label on a workable issue, saying what a session may do with it — `gate:agent`
+(start and close alone), `gate:accept` (do the work; the owner accepts before it closes) or
+`gate:decide` (a decision or grill comes first; no session starts it). It also picks the commit
+footer: `Closes` under `gate:agent`, `Refs` under `gate:accept`.
+_Avoid_: status, column, stage (a board's words; there is no board), ready-for-agent (the
+upstream role name that maps onto `gate:agent`), hitl / afk.
+
+**origin label**:
+The one `origin:*` label saying why an issue exists — `origin:spec` (a child of a `Spec:`
+parent), `origin:review` (spun out of a ticket's code review), `origin:spec-review` (filed from a
+spec's review, outside its chain), `origin:found` (a defect met while doing other work) or
+`origin:chore` (maintenance and housekeeping). A wayfinder ticket carries its `wayfinder:<type>`
+label instead of an origin.
+_Avoid_: kind, type, category (bug vs feature is title prose, not a label), follow-up (a title
+prefix that origin labels retired).
+
+**parent**:
+An issue that exists to hold children — a `Spec:` issue whose sub-issues are its tickets, or a
+`Map:` issue whose sub-issues are wayfinder tickets. Never workable, so it carries no gate label
+and no origin label; its title prefix is its only marker, and it closes when its last child does.
+_Avoid_: epic, umbrella, tracking issue.
+
+**frontier**:
+The open `gate:agent` issues whose blocked-by issues are all closed and that no one has claimed.
+The next ticket is the lowest-numbered one on it. Wayfinder's word, adopted for every chain.
+_Avoid_: backlog, queue, todo column.
+
+**closing record**:
+The comment a session posts when it closes an issue: each acceptance criterion by number with its
+evidence, the reviewed tree's SHA, and, on a `gate:accept` issue, the owner's accepting reply
+quoted. It is the tick — the issue body's checkboxes are never rewritten for state.
+_Avoid_: sign-off (the owner's reply, which the record quotes), run record (the `implement-run`
+Chunk's name for the same comment on an implementation ticket — same thing, that Chunk's word).
+
 ### MCP tooling
 
 The `godot` Profile's Templates encode a division of labour between the Godot editor MCP servers,
