@@ -47,6 +47,14 @@ for a coordinator — is the only Planner seat inside an implementation run.
   definition fits, pin the role on the dispatch itself.
 - **Effort is `high` on every seat** — in the definition's frontmatter, or on the dispatch where
   none fits. The Agent tool pins only `model`. No higher path.
+- **A seat runs its definition as it stood at session start.** The snapshot survives a mid-session
+  edit, and survives that edit merging to `main`. Nothing warns, because a seat applying a stale
+  body reports nothing unusual. So a run that changes a seat definition can still validate it. Tell
+  the seat in the dispatch prompt to read the rule off disk and report whether it differed from the
+  body it started with. A gate-runner did that twice on 2026-09-18, taking the on-disk version
+  instead of a false red the same diff had already fixed. Narrows "defer the literal dispatch to a
+  fresh session", which still holds for `.claude/workflows/*.js`, where the harness runs the script
+  and nothing can choose to re-read.
 
 ## Model names: rules never, run artifacts always
 
