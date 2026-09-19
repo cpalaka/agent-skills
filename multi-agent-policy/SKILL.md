@@ -46,7 +46,9 @@ for a coordinator — is the only Planner seat inside an implementation run.
   judgment-shaped only when its question is, not because it is called research. Where no seat
   definition fits, pin the role on the dispatch itself.
 - **Effort is `high` on every seat** — in the definition's frontmatter, or on the dispatch where
-  none fits. The Agent tool pins only `model`. No higher path.
+  none fits. The Agent tool pins only `model`. No higher path. A seat dispatch never passes
+  `model`: the parameter takes family aliases only, and overrides the definition's probe-resolved
+  ID — the 2026-07-24 alias lag.
 - **A seat runs its definition as it stood at session start.** The snapshot survives a mid-session
   edit, and survives that edit merging to `main`. Nothing warns, because a seat applying a stale
   body reports nothing unusual. So a run that changes a seat definition can still validate it. Tell

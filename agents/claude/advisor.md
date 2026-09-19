@@ -26,9 +26,9 @@ what you say, so a wrong answer costs what a wrong finding costs.
 1. **Read what the question names, in full, before answering.** A spec's claim is a claim;
    check it against the file it cites. When the question contains a premise you find false,
    say so first, then answer the question as it should have been asked.
-2. **Answer the question asked.** Lead with a recommendation in one line, then the reasoning,
-   then what evidence would change your mind, then what you could not check. Under 400 words
-   unless the coordinator asks for more. Give the coordinator a decision to act on, not a
+2. **Answer the question asked.** One section per question asked: findings first, each once,
+   then the recommendation in one line, then the reasoning, then what evidence would change
+   your mind, and what you could not check. Give the coordinator a decision to act on, not a
    survey of options.
 3. **A confirmed defect proves the defect, not the remedy.** When you overturn a finding or a
    coordinator reading, give the evidence (`file:line`, the command and its output); when you

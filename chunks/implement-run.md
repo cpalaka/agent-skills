@@ -42,10 +42,15 @@ owner to switch, continuing on Planner only if they say so. Read the body for th
 **Three slots**, each announced.
 
 1. **Pre-dispatch**, always: one pass over the drafted spec, whose premises you checked against
-   the source first — looking for a false or unverified premise, **a missing hard limit, and an
-   observable that cannot go red**. Check the spec's prescribed *mechanisms* against its own stated
-   *intent*, not only its premises against the source: neither a conformance review nor a gate
-   written from that spec can catch a mechanism that contradicts it, because the code matches.
+   the source first — looking for a false or unverified premise, **a missing hard limit, an
+   observable that cannot go red, and a fourth you paste verbatim:** *what will this run raise that
+   the ticket does not list?* — it names no claim of yours, so it audits your world, not your
+   sentence. Check the spec's prescribed *mechanisms* against its own stated *intent*, not only its
+   premises against the source: neither a conformance review nor a gate written from that spec can
+   catch a mechanism that contradicts it, because the code matches. **A prose deliverable** (a
+   record, a Skill, a Chunk) loads in no gate: its observable is an independent reader given the
+   source rows, not the writer's table, calibrated by one planted absent row whose count is read,
+   beside a playthrough by a fresh agent following it.
 2. **Pre-merge**: completeness critic and counter-critic in one consult — on unless the ticket
    body carries `Advisor: pre-dispatch only` anywhere in it (a local-file ticket carries
    it in the file).
@@ -55,11 +60,12 @@ owner to switch, continuing on Planner only if they say so. Read the body for th
    fourth need goes to the owner.
 
 Never the advisor: gates, reading a diff for conformance, prose records, git mechanics,
-a task scoped to named files. Read the meter before spawning it (`/usage`, or the host's
-usage tool); the owner decides a tight one.
+a task scoped to named files. Read the meter before spawning it; the owner decides a tight one.
 
-**Fallback.** Advisor unavailable — no definition this host can dispatch, meter
-spent, knob `none` — hold the judgment yourself, ask the owner at the same triggers, say so.
+**Fallback.** **One affordable slot:** keep slot 1 and ask the advisor for its pre-merge reading —
+given before the diff exists, so the record names it the capped form, never slot 2.
+Advisor unavailable — no definition this host can dispatch, meter spent, knob `none` — hold the
+judgment yourself, ask the owner at the same triggers, say so.
 Holding it yourself **is** self-review unless slot 1's **observable that cannot go red** goes to
 the implementer as a question its dispatch prompt asks before it writes code — a spec's author is
 the last reader who can see that an observable does not mean what they intended.
@@ -79,17 +85,16 @@ remaining question; absent external tooling never blocks the native pair.
 
 **After any fan-out**, sweep `git status` in every checkout the run touched before merging. A
 long-running child needs a heartbeat; recipes are in `multi-agent-policy`'s `COORDINATOR-PANE.md`
-where it is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills`); where
-it is not, skip that read.
+under the Knobs paragraph's install gate.
 
 **The run record.** One closing comment on the ticket — in it, where the ticket is a file — under
 four headings: `Slots`, `Gates`, `Review`, `Deviations`.
 
-**Posting it, the merge and the close are one approval, not three.** Asking separately to post the
-record, then to push, then to close buys two more round trips and gates nothing the first approval
-already covered. Offer the diff, the record and the close in one message, saying which acceptance
-reading you took and why, and act on the single yes. A ticket whose acceptance needs the owner's
-attended run stays open: the push is not the acceptance.
+**Posting it, the merge and the close are one approval, not three** — separate asks buy round
+trips and gate nothing the first approval covered. Offer the diff, the record and the close
+in one message, saying which acceptance reading you took and why, and act on the single yes.
+A ticket whose acceptance needs the owner's attended run stays open: the push is not the
+acceptance.
 
 **Never rewrite the ticket's body — append a comment.** `gh issue edit --body` and its equivalents
 replace a body wholesale, and the body is the spec, so an edit to tick one acceptance checkbox can
