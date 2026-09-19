@@ -44,7 +44,10 @@ that is local config, not tracked — a fresh clone has neither until someone se
   public repository is never scanned, so grep the body file against both pattern lists before
   any `gh` write (39 identity hits landed in three public issues on 2026-09-17 that way).
   **Screen it through the guard rather than a hand-rolled grep** — copy the body into the tree,
-  `scan`, delete — and plant the configured git author name first, which the guard blocks by each
+  `scan`, delete — where **into the tree means a path the scan walks**: `scan` skips every
+  gitignored path, so a body drafted in `.scratch/` returns `scan clean` whatever it contains
+  (measured 2026-09-19, a planted known-bad there: `scan clean` over 156 files, exit 0; the same
+  file at the repo root returned 2) — and plant the configured git author name first, which the guard blocks by each
   of its parts, so the list is known live before a clean result is believed. A `grep -f` over that
   file can apply none of its patterns and prints exactly what a clean body prints
   (`verification-discipline` § Prove the needle first; measured again 2026-09-18).
