@@ -29,6 +29,18 @@ remedy `gh` needs via `--body-file`, for a different mechanism: a sandboxed and 
 unsandboxed shell resolve different `$TMPDIR`, so a file written by one is empty
 to the other). Caught while unpushed, `git commit --amend -F <file>` is the fix.
 
+**That file's FIRST LINE is the subject — write it, then a blank line, then the
+body.** `-F` takes the whole file as the message verbatim, so a file holding only
+the body silently promotes its entire opening paragraph to the subject line: a
+multi-sentence subject hundreds of characters long, blowing the ≤~72 rule and
+taking the `<type>(<scope>):` prefix with it. Nothing warns. `git commit` exits 0
+and prints the runaway subject in its own first line, which is the only tell —
+read it, the same way the branch name on that line is read. The shape that cannot
+fail is to build the file with the subject printed separately from the body
+(`{ printf '%s\n\n' "$SUBJECT"; cat body.txt; } > msg.txt`) rather than trusting a
+heredoc to have started with it. Unpushed, the fix is again
+`git commit --amend -F <file>`. Measured 2026-09-18.
+
 **One logical change per commit.** Each commit should be a single coherent unit
 of work whenever possible. Multiple commits on a branch are fine — how a branch
 is integrated (squash vs. merge commit) is the git-flow fork's concern, not this
