@@ -70,6 +70,17 @@ to the implementer as a question its dispatch prompt asks before it writes code 
 that has to read the spec adversarially regardless.
 Gate-runner unavailable: run the gates yourself and say so.
 
+**Every constrained seat gets the reasoning behind the constraint, not just the constraint.**
+The clause above is one case of it — hand the implementer the question rather than the verdict —
+and it generalises to every seat you narrow, pin or forbid something for. A constraint arrives as
+an instruction the seat follows silently; only its *why* can be refuted, and the seat is often the
+one reader positioned to refute it. So say what you concluded, say what you concluded it from, and
+invite the contradiction in as many words. Measured 2026-09-19: a coordinator narrowed a gate round
+and wrote into the dispatch that the seat should judge the reasoning rather than work to it
+silently; the gate-runner came back having refuted two of the premises against the project's own
+contract, and the round was reopened. Cheap, and the failure it prevents is silent — a seat that
+complies with a wrong constraint reports nothing unusual.
+
 **Review.** Hand the reviewers the measurements a spec summarises, not just the spec; re-check a
 refuted finding about safety or data loss; a finding proves the defect, not the remedy. After
 fixes, re-run the affected checks and take a targeted review; reopen the full review only where the

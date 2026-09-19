@@ -50,6 +50,26 @@ attributes, filters, LFS, generated assets, a byte-mirror directory), run it onc
 And exempt byte-mirror directories from normalization (`assets/** -text`) so the
 comparison has something stable to compare.
 
+**WHICH gates you run is part of the gate too, and it is derived, not assumed.** Narrowing a
+round to "the gates this change could affect" is a claim about what each gate **loads**, and a
+gate's name says what it is *for*, never what it *reads*. So before dropping any gate, grep for
+what actually references the changed path and name the gate that loads it. A gate whose knob the
+project documents as not seeing a class of defect does not cover that class however apt its name;
+a suite that loads a file's *siblings* reads like coverage and is not. Where no gate loads the
+changed file, say so, and either add the one that does or record the coverage as inspection
+rather than as a pass — and prefer running the full gate whenever the derivation would cost more
+than the round. Measured 2026-09-19: a comment-only edit was scoped to four gates on the reasoning
+that a malformed comment is a parse error the typecheck step catches; that project's own typecheck
+knob reports no script diagnostics at all, nothing under its test tree loaded the edited file, and
+the only two gates that did were the two the narrowing had excluded. This is the
+`verification-discipline` absence-claim failure wearing a scheduling costume — "this gate covers
+that file" needs the same evidence as "nothing owns X".
+
+**Tell a runner seat your narrowing reasoning, not just the resulting scope.** The scope you hand
+it is an instruction it follows silently; the *why* behind it is the only thing it can refute. The
+measurement above was caught for that reason and no other. (`implement-run` carries the general
+form, for every constrained seat.)
+
 **Docs synced.** Before the commit, confirm the project's design docs (e.g.
 `CONTEXT.md`, ADRs, any PRD/spec the project keeps) are updated for any new domain
 language or load-bearing decision the change introduces. Synced docs are part of the
