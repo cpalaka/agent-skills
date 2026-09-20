@@ -15,7 +15,7 @@ colliding 2026-09-14.
 
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract file named by your host adapter): the **worktree
 path prefix** (where `git worktree add` puts each tree) and the **install command** (what
-to run in a fresh worktree to make it buildable). This chunk names them; it never bakes a
+to run in a fresh worktree to make it buildable). This Skill names them; it never bakes a
 literal path or command.
 
 **One clone per interactive session.** Two sessions on one checkout is not a mode; it is the
@@ -117,4 +117,4 @@ is installed (its directory exists under `~/.claude/skills` or `~/.agents/skills
 before granting a coordinator an unattended slice; where it is not, skip that read.
 
 **Delegate the merge and Done step to `git-flow-squash` — never inline it here.** Merge style,
-branch naming and the notes-SHA policy are that chunk's, however the branch was produced.
+branch naming and the notes-SHA policy are that Skill's, however the branch was produced.

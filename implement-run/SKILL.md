@@ -29,7 +29,7 @@ or `coordinator`; default `gate-runner`), `advisor` (a seat name or `none`; defa
   whether two phases may be in flight at once: `parallel-when-disjoint` allows it where the phases
   touch disjoint files, `serial` never does. **Neither value is a worktree decision** — one phase
   in flight is `parallel-work`'s single-task case and takes no worktree, and putting a **second**
-  in flight is itself the explicit parallel-work signal, so both resolve on that chunk's decision
+  in flight is itself the explicit parallel-work signal, so both resolve on that Skill's decision
   rule and each implementer is confined to its own tree.
 - **Advisor** — one spawn per ticket (the ticket, the spec, the first question), continued by
   message.
