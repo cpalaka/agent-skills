@@ -73,6 +73,13 @@ A status field, health endpoint, summary line, or your own report is computed fr
 - **A criterion that predicts behaviour is checked against the measurement, never against the fact that a measurement was recorded.** When the record refutes the prediction, supersede the criterion in place with what was proven and carry the refutation into the parent's criteria; a sibling "recorded in the notes" criterion is not evidence for the behavioural one (2026-09-03: a "stops at the git gate" criterion stayed checked across two tickets after the pilot record said the child had pushed; only the counter-critic caught it).
 - **A deliverable that is prose for an agent to follow is verified by a fresh agent following it, never by reviewing its diff.** Skills, engine documents, runbooks, contracts: a review reads the text, and the text is the oracle. Two review agents passed a document whose knob-block shape was specified nowhere, whose key set contradicted itself across three files, and whose idempotence claim contradicted its own refusal step — all three surfaced within minutes of a no-context agent trying to execute the prose (2026-09-04). Budget one playthrough per instruction artifact against a throwaway target, and ask it "where did you guess, where did the text contradict itself, what did it name that does not exist" rather than for an opinion on the design. The host's global instruction file is a confound on every arm, since a control that stops for the right reason from the wrong text reads green: run under a scratch host config where the host allows it, otherwise name the confound and make file attribution the discriminator (2026-09-05).
 
+**A count from a log or transcript keyed by position is not a count of things.** File:line
+pairs drift as files change, so a standing site recurs under new numbers and reads as several.
+Before sizing an eval set, a fixture set, or a "distinct sites" claim, count in the live tree
+(`command grep -rn` over the projects, exclusions named) and treat the transcript figure as an
+upper bound. Measured 2026-09-19: 21 "distinct" `basis.z` sites in one project's transcripts
+were 4 live sites; the fleet held 12.
+
 ### Assert the complement
 
 For any "X must never happen" rule, also assert the nearby behaviour that must still work, pinned with its measured margin. A one-sided check is satisfied best of all by a deleted feature. What the complement still misses:
