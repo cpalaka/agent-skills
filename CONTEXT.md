@@ -122,23 +122,37 @@ symlink (reference, not copy). Because exactly one copy exists, a Chunk has **no
 lifecycle** — editing it updates every consumer at next launch. Holds invariant content only;
 per-project variation is handled by knobs, fork selection, or an inline-leaf, never by editing the
 Chunk. Discriminator vs **Template**: does the project edit the bytes after delivery? No → Chunk
-(referenced); yes → Template (copied).
+(referenced); yes → Template (copied). **Always-on by definition**: every file in `chunks/`
+reaches every session and every seat of each importing project on every turn, so the library
+holds only the rules that must bind before any Skill could fire; a body read on a signal — a
+merge, a parallel-work signal, an implementation run — is a **Skill**, not a Chunk
+([ADR 0014](docs/adr/0014-floor-is-a-location.md)).
 _Avoid_: Template (the copied mechanism — they coexist), snippet, include,
-partial, fragment.
+partial, fragment; situational chunk (a contradiction — that body is a Skill).
+
+**floor**:
+The text a session or a seat receives on every turn without asking for it: the global instruction
+file, the project's Host adapter, the project contract and the Chunks they import. Measured in
+words per project by `wc -w`, global file excluded, against the ceiling ADR 0014 sets. Distinct
+from the **host floor** — the system prompt, tool schemas and skill roster a host adds regardless,
+which this repo cannot cut and which a seat-token probe reports beside the floor, never inside it.
+_Avoid_: always-on set, baseline, preamble; overhead (the host's part, not this one).
 
 **dev-base**:
 The bundle Chunk every dev Profile imports: a single `chunks/dev-base.md` that recursively
-includes the eight universal base Chunks (git-sync-branch-start, git-commit-format,
-git-confirm-destructive, sandbox-auto, parallel-work, verify-gate, dev-practice, implement-run). Claude Code
-expands its `@import` lines; Codex follows the bundle's explicit read directive. The git-flow fork
-and the tracker chunk (`backlog-core` or `tracker-github`) are deliberately NOT in it — the
-Profile imports each explicitly, because `@import` cannot be undone.
+includes the four floor Chunks (git-sync-branch-start, git-commit-format,
+git-confirm-destructive, verify-gate). Claude Code expands its `@import` lines; Codex follows the
+bundle's explicit read directive. Its membership *is* the always-on list — the engine derives the
+Codex read list from it, and no other manifest or header field routes a Chunk (ADR 0014). The
+tracker chunk (`backlog-core` or `tracker-github`) is deliberately NOT in it — the Profile imports
+it explicitly, because `@import` cannot be undone; the git-flow fork is a Skill the Profile names,
+not a Chunk it imports.
 _Avoid_: base chunk (it is a *bundle* of Chunks), boilerplate.
 
 **Profile**:
 The declarative recipe for a project TYPE — which Chunks it imports (always **dev-base** plus its
-extras), which git-flow fork it selects, which Templates it stamps, and its per-project knob and
-inline-leaf prompts. Data consumed by the single `init-project` engine, not a Skill itself. Adding
+extras), which git-flow fork it selects (a Skill named in both adapters since ADR 0014), which
+Templates it stamps, and its per-project knob and inline-leaf prompts. Data consumed by the single `init-project` engine, not a Skill itself. Adding
 a new project type = adding a Profile; the engine never changes
 ([ADR 0003](docs/adr/0003-single-init-project-engine.md)).
 _Avoid_: project type (a Profile is the *recipe* for a type), generator (that is `init-project`;
