@@ -111,12 +111,20 @@ never `completed`.
 
 A session may file `origin:found`, `origin:review`, `origin:spec-review` and `origin:chore`
 tickets alone; **filed alone, they are always `gate:decide`**, so the frontier holds only what the
-owner put there. One the owner approves at creation carries the gate they name. Four sections,
-verbatim: `## Found while`, `## Evidence`, `## What a fix has to weigh` (or `## What to build`),
-`## Acceptance`. On an `origin:review` or `origin:spec-review` ticket, `## Evidence` links the
-review and names the commit SHA it was taken against. **No internal date window in a body** — an
-issue is not a calendar and a stale date flags nothing; schedule lives in the plan doc or ADR
-that owns it.
+owner put there. One the owner approves at creation carries the gate they name.
+
+**Search the open issues before creating one** — `gh issue list --state open -L 200 --search
+'<a noun from the finding>'`, plus the frontier query's own output where you have run it. A defect
+met mid-ticket is exactly the kind an earlier session already filed; `gh issue create` succeeds
+either way, and a duplicate buried inside an otherwise-sound multi-part ticket leaves no trace.
+Where one exists, **comment on it with the new evidence instead** — a second sighting, on a
+different subject and independently measured, is worth more to that ticket than a second ticket is.
+
+Four sections, verbatim: `## Found while`, `## Evidence`, `## What a fix has to weigh`
+(or `## What to build`), `## Acceptance`. On an `origin:review` or `origin:spec-review` ticket,
+`## Evidence` links the review and names the commit SHA it was taken against. **No internal date
+window in a body** — an issue is not a calendar and a stale date flags nothing; schedule lives in
+the plan doc or ADR that owns it.
 
 ### Wayfinder, and boards
 
