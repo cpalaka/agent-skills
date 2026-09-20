@@ -5,7 +5,7 @@ description: How to trust a reading and how to file a negative claim. Use before
 
 # Verification discipline
 
-One question sits under every rule here: **could more than one true state of the world produce this same reading?** A check that cannot go red discriminates nothing, and it reports success. The cure is a **control**: a known-bad the instrument must catch, a known-present needle the search must find. Until the detector has shown it can disagree with you, its agreement is evidence for nothing.
+One question sits under every rule here: **could more than one true state of the world produce this same reading?** A check that cannot go red discriminates nothing, and it reports success. The cure is a **control**: a known-bad the instrument must catch, a known-present needle the search must find. Until the detector has shown it can disagree with you, its agreement is evidence for nothing. **The mirror costs more and hides better: a criterion that cannot go green.** It reads red against a correct deliverable, so it presents as a finding rather than as a broken instrument and the cure never lands — ask what a pass would look like and whether the sources can produce it. And a before/after comparison changes the subject, never the instrument: re-run the control under the same prompt and rubric as the live arm, or the difference you read is your own edit to the instrument.
 
 ## Red it first
 

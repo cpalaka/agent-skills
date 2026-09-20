@@ -127,3 +127,13 @@ host, and nothing here depends on it ([ADR 0008](docs/adr/0008-public-private-sp
   check. A small closed gated set survives a clause being added; an allowlist does not. Where one
   already exists, the cheap guard is a grep that enumerates the operations the body instructs and
   asserts each is named on one side or the other.
+- **A governing sentence still needs a pointer at each clause it governs.** The predicate above
+  is read by whoever reads a Chunk top to bottom and by nobody who arrives at one clause cited
+  from another file — `verify-gate` cites `git-flow-squash` § (a), another repository cites § (a)
+  and § (d) — and for them a missing pointer degrades not to the governing rule but to nothing,
+  leaving the clause reading as a direct instruction. Measured on #26: a seat that had the
+  predicate in hand applied it to one clause and not the next. A pointer carrying the destination
+  and no part of the resolution costs a wasted detour when stale, never a wrong answer, so it is
+  not a second store of the rule. Derive which clauses carry one by grep over the governed nouns
+  and assert marker set equals hit set — membership is then a command's output rather than a
+  judgment that accretes exceptions.
