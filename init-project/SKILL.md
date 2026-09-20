@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Scaffold (or migrate) a dev project onto the Chunk library, driven by a declarative project-type Profile. Use when setting up a new dev project, adopting the chunk library in an existing one, or adding a new project type.
+description: Scaffold (or migrate) a dev project onto the Chunk library, driven by a declarative project-type Profile. Use when setting up a new dev project, adopting the chunk library in an existing one, adding a new project type, or when a workflow skill falls back to writing local ticket files because the project declares no tracker.
 ---
 
 # init-project — the Chunk-library scaffolding engine
