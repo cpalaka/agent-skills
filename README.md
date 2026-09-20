@@ -96,6 +96,25 @@ maintained; it is not repeated here.
 
 ## The Skills
 
+### git-flow-squash
+
+The default git-flow fork: integration is a local **squash-merge** to `main`, no PRs, no merge
+commit. That last part is why the rest of it exists — with no merge commit to inspect afterwards,
+the pause at the staged squash is the only review surface the change will ever get, so the Skill
+spells out what has to be true at that moment. The three rules that ride the fork together —
+squash-merge, the typed `<type>/task-NNN` branch prefix, no commit SHA in the tracker notes — are
+coupled by [ADR 0002](docs/adr/0002-git-flow-structural-fork.md) and must not be taken apart; a
+fourth covers local review and the `main` push gate. Around them sit the measured footguns: the
+squash carries the branch's final tree and nothing else, a sign-off approves a tree rather than a
+branch name, a second writer can spill into `git status` between approval and merge, and `main`
+held by another worktree is merged into without taking it. Other bodies cite the four as § (a) to
+§ (d).
+
+**When to use:** at task start when naming a branch, and at integration — before any squash-merge
+to `main`, any push of `main`, any PR, or deleting a merged branch.
+
+[`SKILL.md`](git-flow-squash/SKILL.md)
+
 ### godot-architecture-review
 
 A convergent, re-runnable architecture review and refactor campaign for Godot projects — *A
@@ -108,6 +127,23 @@ session.
 or you want to set up the review loop.
 
 [`SKILL.md`](godot-architecture-review/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/godot-architecture-review/SKILL.md)
+
+### implement-run
+
+How one ticket is actually run: the five seats and what each one may not do (the coordinator writes
+no diff, the gate-runner never wrote the diff it re-runs), the advisor's three budgeted slots and
+the fallback when only one is affordable, the review pair, and the closing run record under four
+fixed headings. The seat boundaries are the point — a run where the writer also grades its own
+output has no measurement in it, only a claim. It reads the project contract's
+`knobs:implement-run` block by marker, so `shape`, `layout`, `gate_runner` and `advisor` vary per
+project without the body changing. Named `implement-run` rather than `implement` so it sits beside
+the third-party `/implement` stub instead of shadowing it
+([ADR 0014](docs/adr/0014-floor-is-a-location.md)). Slash-only.
+
+**When to use:** running one ticket end to end — dispatching implementers, consulting the advisor,
+taking the review, writing the run record.
+
+[`SKILL.md`](implement-run/SKILL.md)
 
 ### init-project
 
@@ -146,6 +182,24 @@ lenses, fan-out → verify discipline), `COORDINATOR-PANE.md` (run shapes, inter
 sessions, heartbeats, peer coordination) and `GRANTS.md` (hands-off execution grants).
 
 [`SKILL.md`](multi-agent-policy/SKILL.md)
+
+### parallel-work
+
+The two modes of doing more than one task at once — **waves** (a dependency-free fan-out to
+background subagents) and **attended worktrees** (a human driving two or more tasks hands-on) —
+and the decision rule that picks between them, whose first branch is that one task takes neither.
+Both modes are entered on an explicit signal only: a busy checkout is not one, and two sessions
+sharing a checkout is the failure both modes exist to avoid, so the Skill carries the tell and the
+list of git commands that destroy a peer's uncommitted work without printing anything. It also
+carries what a worktree does *not* buy you — filesystem isolation is not tool-state isolation, and
+a fresh interactive worktree inherits none of the gitignored host config the parent session runs
+on. Merge and Done are delegated to `git-flow-squash`, never inlined.
+
+**When to use:** on an explicit parallel-work signal — running 2+ tasks concurrently, fanning
+background subagents out over dependency-free work, any `git worktree` setup — and when a checkout
+turns out to have a second writer.
+
+[`SKILL.md`](parallel-work/SKILL.md)
 
 ### refresh-context
 
