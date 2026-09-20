@@ -49,6 +49,8 @@ One question sits under every rule here: **could more than one true state of the
 
 **The installed artifact and the repo file are two files. Diff them by digest, and check *which way* they differ.** A symlinked store inverts the usual drift: the checkout *is* the install, so a `git checkout` to test a branch silently downgrades every other skill. Test by extraction (`git archive <ref> <dir> | tar -x -C <scratch>`) and digest-match against the branch blob.
 
+**A skill's trigger reliability is a measurement, not an assumption.** "The loader fires from context now" is an absence claim about every session it did not fire in. Before retiring an explicit-invocation rule on it, count `"skill":"<name>"` Skill-tool calls against the session count in that project's transcripts (`~/.claude/projects/<cwd-slug>/*.jsonl`, with `/usr/bin/grep`). Measured 2026-09-20: `godot-gotchas` invoked in 1 of 105 sessions of a Godot project, after its explicit-invocation preference had been retired on exactly that premise.
+
 ### Read the artifact, not the oracle
 
 A status field, health endpoint, summary line, or your own report is computed from state that outlives the failure, so it stays green while the work does not happen. None of these emitted an error:
