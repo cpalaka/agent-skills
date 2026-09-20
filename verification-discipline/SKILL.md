@@ -37,6 +37,26 @@ by reading. Distinct from the absorption and moving-oracle rules above, where th
 tracks the fault: here the instrument is looking somewhere else entirely, and the giveaway is that
 you cannot name the mutation that reds it.
 
+**An instrument whose *form* cannot represent the question returns clean, and clean is exactly
+what a real absence returns.** Line orientation, regex dialect and ad-hoc reimplementation each
+bound what a check can express; when the question falls outside that bound the check does not
+error, it reports the same zero an honest all-clear reports. Three of these in one day
+(2026-09-20, #48). A *line-oriented* `git grep`, asked whether any file still called a moved body
+a "chunk", read clean over a real defect both before and after the fix, because the body's name
+sat on the previous line from the word `chunk` — the check that works joins the file and searches
+a window, and calibrated on a real pre-fix tree it fires on the gloss in a stamped project's
+adapter and goes silent after. `\b` inside `git grep -E` matches nothing on this machine and exits
+1, so a word-boundary sweep for count words across three adapters returned a clean zero, while the
+same alternation without `\b` returned 4 on a file already known to contain them. And a
+hand-rolled `grep -f` over a pattern file mis-parsed 3 of its 10 input lines and disagreed with
+the real tool it was standing in for, all the while printing what a clean run prints. So the
+control has to exercise the instrument's *shape*, not just its subject: for a cross-line question
+the known-bad must itself be cross-line, and a hand-rolled stand-in for a real tool is calibrated
+against that tool, never against expectation. Distinct from the axis rule immediately above, and
+narrower: there the assertion or the control fails to vary along the axis the criterion names, and
+the repair is to aim it at that axis; here the instrument's form cannot express the axis at all,
+so no choice of subject repairs it and the repair is a different instrument.
+
 **A verdict computed from the thing it checks holds by construction and checks nothing.** `git diff $M HEAD` is empty for every input when `M` was built from `HEAD^{tree}`; `${M}^1 == origin/main` holds for every input when `M` was built with `-p origin/main`. Two recipes shipped both as "derive the verdict before pushing" while the one precondition that carried the safety (linear descent, `git merge-base --is-ancestor`) went unchecked, and a skipped rebase reverted a peer's landed file with both green (2026-09-05). Before trusting a derived verdict, name the input that makes it false; if there is none, it is a paste guard, not a verdict.
 
 **Calibrating the instrument and falsifying the claim are different acts. Do both.** Write the one-line corruption of the deliverable's central claim, confirm the suite reds, keep whatever check reds. The corruption breaks exactly *one* branch of the rule under test; a coarse one reds the suite for the wrong reason. Commit before you corrupt, so the revert lands on the state under test: `git checkout -- <file>` restores HEAD and deletes an uncommitted diff. Then re-run the gate against the tree that ships. **On a file git is not yet tracking, that escape is gone and every git-shaped proof of the revert with it**: `git status` prints `?? <file>` before the corruption and after the revert alike, so a botched revert leaves no signal anywhere and the deliberately-broken version ships behind a green run. Take the file's `sha256` before you corrupt, re-take it after reverting, require equality, and make the green run the last one in the record so nothing follows it that could have moved the file (2026-09-18).
