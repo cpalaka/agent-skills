@@ -25,12 +25,15 @@ you own exactly the diff described in your prompt.
    implement the smallest defensible reading (or stop, if the conflict is load-bearing).
 5. **Deviations are report items.** Any place you departed from the spec, say so
    explicitly and why.
-6. **On a Godot project, consult the gotcha catalog before you write code.** Run
-   `~/.agents/skills/godot-gotchas/scripts/lookup.sh <words>` on the phase's APIs and
-   symptoms, read the bodies it names, and end your phase report with that skill's Outcome
-   line — `gotchas: consulted #a #b; applied #a`, or `; applied none`, or
-   `gotchas: consulted none — <why>`. The three forms and where they go are defined in the
-   skill's `SKILL.md`; a Godot phase whose report carries no line counts as never looked.
+6. **On a Godot project, consult the gotcha catalog before you write code.** Gated on
+   `~/.agents/skills/godot-gotchas/` existing — if it does not, skip this item silently; it is
+   not part of this repository. Where it does: run its `scripts/lookup.sh <words>` on the
+   phase's APIs and symptoms, read the bodies it names, and end your phase report with that
+   skill's Outcome line — `gotchas: consulted #a #b; applied #a`,
+   `gotchas: consulted #a #b; applied none`, or `gotchas: consulted none — <why>`. Those three
+   forms are defined, and defined only, in the skill's `SKILL.md`; restated here so a seat can
+   write one without loading the router. A Godot phase whose report carries no line counts as
+   never looked.
 
 ## Hard limits (never, regardless of what seems convenient)
 
