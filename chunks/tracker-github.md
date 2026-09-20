@@ -1,132 +1,160 @@
 <!-- chunk:tracker-github | kind: value-variant | single-source: agent-skills/chunks/tracker-github.md -->
 <!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
      Edit here only — no per-project copies, no parity. -->
-<!-- The tracker fork's GitHub side: a project imports this OR backlog-core, never both. It is a
-     drop-in owner for every clause git-sync-branch-start, git-commit-format, git-flow-squash,
-     parallel-work and dev-practice defer to "the tracker chunk". -->
+<!-- The tracker fork's GitHub side: a project imports this OR backlog-core, never both. -->
 
-## Task tracking (GitHub Issues + Project)
+## Task tracking (GitHub Issues)
 
-GitHub Issues in the **REPO** repository are the **single source of progress** for all
-forward-looking work, not memory files, doc ledgers, or a second board. `docs/adr/` stays the only
-decision system; design docs, specs and plans stay in `docs/`. The **repository-qualified issue URL**
-(`https://github.com/<owner>/<repo>/issues/<number>`) is an issue's durable identity: use it
-wherever an issue is named, never a bare `#<number>`, which resolves differently in another
-repository. Per-project values live in this project's
-`<!-- knobs:tracker-github -->` block, not in this chunk: the repository (**REPO**), the private
-Project's title and number (**PROJECT**), its four column names (**COLUMNS**: todo, in progress,
-review, done), the agent provenance label (**AGENT_LABEL**), and where per-issue records live
-(**RECORDS_DIR**).
+Issues on **REPO** are the **single source of progress**, not memory files or doc ledgers;
+`docs/adr/` stays the only decision system. They are as public as the repository: same hygiene
+rules as code. All through `gh`; no PR surface; comments are the evidence.
 
-**Nothing on the board authorizes work.** Project membership, a label, an open state, an assignee
-and a status value all describe where work stands. None is a grant, and an issue sitting in the
-todo column is not claimable until it has its own start record.
+**Multi-line bodies and comments go through a temporary UTF-8 file inside the repository and
+`--body-file`, removed after the write** — sandboxed and unsandboxed shells resolve different
+`$TMPDIR`, so `"$(cat …)"` collapses to empty and `gh` still reports success. **A leak guard
+never sees a `gh` write**; it scans the git object store. Where one exists, screen each body
+through it from a path the scan walks, with a known-bad planted beside it, and read the match
+**count**, not the exit status: the expected count is the plant's own matches, and anything above
+it is a real hit. Confirm a candidate plant actually matches the guard's list before trusting a
+clean result. `gh issue list` lags a fresh creation and truncates silently — confirm with
+`gh issue view <n>`.
 
-**Session start: read the live issue and its Project status, then set the in-progress column.**
-Read the issue live before the session's first write, with its start-authorization comment and the
-documents it links; a cached summary, a plan doc or a prior session's handoff is not the issue.
-Once the start record checks out, the coordinator sets the in-progress column **before**
-implementation begins or resumes, and the review column when a concrete result is ready. Never
-leave underway work in the todo column, and never read a status update as authorization for the
-work it describes.
+### Two label axes
 
-**Start authorization is an issue comment, and an agent transcribes it, never originates it.** The
-comment quotes the human's authorization, names the exact scope or revision it covers, and links
-the source conversation or retained decision record. Each issue needs its own, and an approval of
-one concrete result never covers the next. Per-issue records (start record, verification, review,
-handoff) live under **RECORDS_DIR** so the issue body keeps resolving after the branch is gone.
+- **gate**, one per workable issue: `gate:agent` (a session starts and closes it alone),
+  `gate:accept` (a session works it; the owner accepts before it closes), `gate:decide` (a
+  decision or grill first; no session starts the work, though a session may relabel it on the
+  owner's say-so).
+- **origin**, one per non-wayfinder workable issue: `origin:spec` (child of a `Spec:` parent),
+  `origin:review` (out of a code review), `origin:spec-review` (out of a spec review, off-chain),
+  `origin:found` (a defect met while doing other work), `origin:chore` (maintenance and
+  housekeeping).
+- A `Map:` parent carries `wayfinder:map`; a wayfinder ticket under it carries
+  `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling` or `wayfinder:task`
+  **instead of** an origin.
 
-**Routine updates are pre-authorized. Every other write is not.** During authorized work on an
-issue that has an active authorization record, an agent may update the issue description, append
-comments, assign the issue, and move it among non-done statuses without asking again. The grant
-covers the GitHub mechanics for those exact updates and nothing else. Explicit human approval stays
-required for:
+Thirteen labels per repository, and all thirteen must exist before the first ticket is filed or
+the first map charted. The Profile that stamps a project mints them, skipping any already
+present; `gh label create <name>` is the manual fallback.
 
-- new scope or new acceptance criteria;
-- queue creation or issue decomposition;
-- marking work complete, closing as completed, and moving to the done column;
-- deleting records or remote refs;
-- integration, merge, force-push, and deployment.
+### Parents
 
-`git-confirm-destructive`'s gate on `gh` **writes** stands; this chunk narrows it for the routine
-updates above and for nothing else. Reads (`gh issue view`, `gh issue list`, Project reads) were
-never gated and still are not.
+A `Spec:` or `Map:` title prefix marks a parent, which carries **no gate and no origin label**, so
+gate queries return only claimable work. Create every spec child in one `gh issue create`:
+`--parent` takes the `Spec:` parent, `--blocked-by` takes prerequisite **siblings** and never the
+parent — a child blocked by its own parent is permanently off the frontier — and a first child
+with no prerequisite passes no `--blocked-by` at all. A parent closes with its last child in the
+same approval; `gh issue view <parent> --json subIssues --jq '[.subIssues.nodes[].state] |
+length > 0 and all(. == "CLOSED")'` says whether that was the last one, and reads false for a
+childless parent rather than true. A completed chain's parent closes plain
+(`gh issue close <n>`); one whose chain was never filed closes not planned
+(`gh issue close <n> --reason "not planned"`); closed any other way, it is reopened
+(`gh issue reopen <n>`).
 
-**Completion: sign-off recorded in a comment against the reviewed result.** The comment names what
-was reviewed (the revision or SHA of the reviewed tree), not the branch, so a base that moved after
-review is visible. Only then may the issue close as completed and move to the done column. **The
-project's contract says what one sign-off covers**; absent that statement, completion, integration
-and the push are three separate approvals. A green gate, a review result or a status change never
-substitutes for it. Retirement is the other exit: work abandoned rather than finished closes as
-**not planned** and leaves the board after approval, never as done.
+**Decomposition — filing a parent's chain of children — needs an explicit go-ahead before the
+first `gh issue create`**: propose titles plus one-liners, wait for a yes. A single unplanned
+ticket is not decomposition. A standing CLI authorization removes permission prompts on
+mechanics, not decision authority over scope or structure.
 
-**Branch, commit and footer forms: this chunk owns them.**
+### Frontier and claim
 
-- Branch name is `<type>/gh-<number>-<slug>`, `<type>` being the conventional-commit type.
-  `git-sync-branch-start` delegates branch naming to the tracker and git-flow pairing; this is its
-  tracker half. Existing branches keep their current names.
-- `git-commit-format` **defers the commit scope and footer here**: subject
-  `<type>(<area>/gh-<number>): <summary>`, footer `Refs https://github.com/<owner>/<repo>/issues/<number>`.
-  `git log --grep gh-<number>` then resolves issue to commits.
-- **No automatic-closing keywords** (`Fixes #N`, `Closes #N`, and the rest). Closing is a human
-  gate, and a keyword closes the issue on merge without one.
-- Work with no issue omits the issue scope and the footer, and branches as `<type>/<slug>`.
-- The git-flow variant's `task-NNN` branch form and its board-notes policy are the other tracker's;
-  ignore them, and there is no board-grooming push exception here. A project importing this chunk
-  is **not** board-less, so `git-flow-squash`'s board-less exception does not fire either. Where a
-  variant says "mark it Done on the branch before the merge", **there is nothing to mark on the
-  branch**: closing the issue and moving it to the done column are GitHub writes made after
-  sign-off, so the integration commit carries code only. The rest of the variant applies
-  unchanged, including base revalidation, the gate rerun after a rebase, and per-integration
-  push approval.
-- `dev-practice`'s "human Done-gate" pointer resolves to the completion clause above.
+The **frontier** is the open, unassigned `gate:agent` issues whose blocked-by issues are all
+closed; the next ticket is the lowest-numbered.
 
-**Acceptance criteria live in the issue body as a checklist.** Phrase them as the specific checks
-that prove *this* change; standing gates belong in the project contract (`verify-gate`), not
-repeated per issue. Check a criterion only once it is empirically proven, never one that needs the
-human's eyes.
+```sh
+gh issue list --label gate:agent --search "no:assignee" -L 200 --json number,blockedBy \
+  --jq '[.[]|select([.blockedBy.nodes[].state]|all(.=="CLOSED"))]|min_by(.number)'
+```
 
-**Supersede a criterion in place; never delete one.** Sibling records, review notes and other
-issues cite criteria by position, so removing one renumbers the rest and every citation below it
-silently points at the wrong criterion. Rewrite the retired one as a marker instead:
-`SUPERSEDED by <issue URL>. Was: "<original text>". <Why it can no longer be observed.>`
+`-L 200` is load-bearing: the default 30, newest-first, truncates the **oldest** — the issue
+`min_by` returns. The same query with `--label gate:accept` lists those instead. An empty result
+means an empty frontier **or** a label that was never minted, since a missing label lists as zero
+issues at exit 0 — `gh label list -L 200` tells the two apart, and defaults to 30 itself.
+**Read the live issue before the session's first write**; a cached summary, a dispatch prompt
+or a prior session's handoff is not the issue. Then claim it with
+`gh issue edit <n> --add-assignee @me`. That flag **adds** rather than sets, so two sessions can
+both succeed: re-read the assignees after the write, and if there is more than one, remove your
+own (`--remove-assignee @me`) and stand down.
 
-**Propagate a finding onto the issue it constrains, before the producing issue closes.** A hard
-requirement becomes an acceptance criterion on the dependent issue; a pointer becomes a comment
-naming the source issue and document. The dependent issue's body is what a future session reads
-first, and a document it may never open is not enough. **A finding never goes homeless:** if it
-constrains no existing issue it still needs an owner, a new issue, an ADR or a named note, before
-the producing issue closes.
+### Footer by gate, and the closing record
 
-**Decomposition needs an explicit go-ahead before the first `gh issue create`.** Propose the list
-(titles plus one-liners) and wait for a yes. A spec that says "decompose this into issues" names
-the eventual work; it does not pre-approve a decomposition now. A standing CLI authorization
-removes permission prompts on mechanics; it does not transfer decision authority over scope or
-structure.
+The squash commit's footer is chosen by gate label: `Closes #<n>` under `gate:agent`, closing the
+issue atomically with the merge; `Refs #<n>` under `gate:accept`, leaving it open for the owner;
+no footer under `gate:decide`, never worked.
 
-**Relationship fields are documentation until enforcement is verified.** A blocked-by relation, a
-sub-issue or a dependency note records sequencing *intent*; never design a control on one unless
-someone measured that it stops a claim. Write the intent into the criterion text instead.
+**The closing record is a comment** — `gh issue comment <n> --body-file <f>` — carrying each
+acceptance criterion by number with its evidence, and the **commit SHA** of the tree that was
+reviewed — a SHA, never a branch name, so a base that moved after review is visible. The record
+is the tick. `gh issue edit --body` replaces a body wholesale and **the body is the spec**, so
+**state** never goes back into it. Two body writes are permitted, both spec changes rather than
+state: supersede-in-place, since citations resolve by number —
+`SUPERSEDED by #<n>. Was: "<original text>". <why it can no longer be observed>` — and adding
+an acceptance criterion to a ticket that has not started, which is how the rule below lands a
+hard requirement.
 
-**Provenance and hygiene.**
+**A finding never goes homeless.** Before the producing ticket closes, a hard requirement becomes
+an acceptance criterion on the ticket it constrains and a pointer a comment naming the source; one
+constraining no ticket still needs an owner — a new ticket, an ADR or a named note.
 
-- Every issue created through an agent carries the **AGENT_LABEL** label, set at create time. The
-  discriminator is the creation *mechanism*, not the idea's origin; issues the human files directly
-  stay unlabeled.
-- **No internal date windows in issue bodies.** An issue is not a calendar. A date written into a
-  body goes stale the moment the plan moves, and nothing flags it. Schedule lives in the plan doc
-  or the ADR that owns it.
-- **A retired tracker's preserved files are history, never a second board.** Read them for
-  provenance; do not run their CLI writes and do not restore them as a parallel queue. A project
-  regeneration must preserve this tracker choice rather than reapply an old profile default.
-- Issues are repository content and as public as the repository. Same hygiene rules as code.
+### Acceptance and re-gating
 
-**Parallel work: the coordinator alone writes the tracker.** `parallel-work` defers its
-board-ownership clause here. In a wave, only the coordinator writes issue or Project fields; a
-child gets the issue URL and the explicit source documents in its prompt and writes nothing back.
-Its report is a candidate for the coordinator to verify, never a status change. With one exception:
-in attended worktrees each interactive session writes the fields of the issue it owns, so that
-issue's routine updates are fine; creating or decomposing issues stays behind the human gate above. The tracker keeps no files
-in the tree, so there are no tracker rows to stage and no local id collision to avoid. That retires
-one instance of the hazard, not the hazard: `parallel-work`'s rule that filesystem isolation is not
-tool-state isolation still binds for every other tool a worktree session runs.
+Closing a `gate:accept` ticket quotes the owner's accepting reply and the commit SHA they saw, in
+the same approval as the close: acceptance is transcribed, never inferred. A rejection is quoted
+in a comment, the ticket left open, gate unchanged. A `gate:decide` ticket is re-gated by the
+owner relabelling it, or by a session quoting their reply and applying the gate they named. A
+decline closes it **not planned** with the reply quoted; abandoned work takes that exit too,
+never `completed`.
+
+### Unplanned tickets
+
+A session may file `origin:found`, `origin:review`, `origin:spec-review` and `origin:chore`
+tickets alone; **filed alone, they are always `gate:decide`**, so the frontier holds only what the
+owner put there. One the owner approves at creation carries the gate they name. Four sections,
+verbatim: `## Found while`, `## Evidence`, `## What a fix has to weigh` (or `## What to build`),
+`## Acceptance`. On an `origin:review` or `origin:spec-review` ticket, `## Evidence` links the
+review and names the commit SHA it was taken against. **No internal date window in a body** — an
+issue is not a calendar and a stale date flags nothing; schedule lives in the plan doc or ADR
+that owns it.
+
+### Wayfinder, and boards
+
+A wayfinder ticket gets its gate in the same create call: `research` → `gate:agent`, `prototype`
+and `grilling` → `gate:decide`, `task` → `gate:accept` unless the owner says otherwise at chart
+time. A board a project keeps alongside this tracker is a view: **an agent never writes a board
+field**, which would be a second source of status.
+
+### Commit forms, and clauses deferred here
+
+Scope `<type>(<area>/#<n>)`, branch `<type>/<n>-<slug>`, footer by gate; work with no issue omits
+both and branches `<type>/<slug>`. Another repository's issue is `owner/repo#<n>` — a bare number
+resolves in the wrong one. Anchor a log search, `git log -E --grep '#<n>([^0-9]|$)'`, because
+`#25` also matches `#250`.
+
+`git-flow-squash` resolves here:
+
+- merge model unchanged; the branch prefix takes the issue number in place of `task-NNN`;
+- **nothing is marked Done on the branch** — the closing record is a comment posted after the
+  merge, so the integration commit carries code only: no Done-marking and no board change rides
+  along, though its message still carries the footer;
+- no board notes, so the notes-SHA policy has no subject; the reviewed commit's SHA is in the
+  closing record;
+- a project importing this chunk is **not** board-less — board-less means no task ids, and here
+  the issue numbers are the ids — so that exception does not fire;
+- no tracker files in the tree: no board-grooming push analogue, and no rows to stage;
+- the pre-push audit predicate rides the fork, untouched.
+
+`dev-practice`'s Done-gate resolves to the closing record. Under `parallel-work` the coordinator
+alone writes issues, excepting an attended worktree session on the issue it owns.
+`git-confirm-destructive`'s gate resolves here to a **gated set**, not a list of exemptions:
+creating an issue, closing one, reopening one and rewriting a body are gated. Every other write
+this convention instructs — assigning and releasing, labelling and re-gating, minting a label,
+commenting — needs no approval. The set is stated as what is gated because an exemption list
+goes stale every time a clause adds a write. Reads were never gated.
+
+### Knobs
+
+`<!-- knobs:tracker-github -->` carries exactly **REPO** (`owner/repo`) and **RESULTS_DIR** — the
+path, relative to the repository root, where a `gate:accept` ticket's result note goes, or `none`
+for comments only. A contract still naming `PROJECT`, `COLUMNS`, `AGENT_LABEL` or `RECORDS_DIR`
+is on the retired five-knob shape: those four move into the project's own policy file, never back
+into this chunk.

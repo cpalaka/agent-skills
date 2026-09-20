@@ -280,7 +280,7 @@ delivery? No → Chunk. Yes → Template.
 | `git-flow-squash.md` | The git-flow fork — local squash-merge, typed branch prefix, no SHA in the board notes ([ADR 0013](docs/adr/0013-retire-unused-chunks.md)). |
 | `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
 | `backlog-core.md` | Task tracking with backlog.md (the Backlog-CLI alternative to `tracker-github.md`). |
-| `tracker-github.md` | Task tracking with GitHub Issues and a private Project (the alternative to `backlog-core.md`). |
+| `tracker-github.md` | Task tracking with GitHub Issues — gate and origin labels, no board (the alternative to `backlog-core.md`). |
 | `parallel-work.md` | Parallel work — waves and attended worktrees. |
 | `implement-run.md` | How one ticket is run under `/implement` — the seats, the advisor's slots, the run record. |
 | `sandbox-auto.md` | Sandbox session-init baseline (see the `sandbox-and-permissions` Skill for denials). |

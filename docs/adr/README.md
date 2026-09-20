@@ -16,11 +16,13 @@ entry, not a quiet edit.
 | [0009](0009-init-project-emits-contract-and-two-adapters.md) | `init-project` emits one shared contract and two thin host adapters |
 | [0010](0010-fragment-bullets-declare-their-targets.md) | Fragment bullets declare their targets; migrate withholds a failing bullet whole, never rewrites it |
 | [0011](0011-roles-not-cost-tiers.md) | Capability roles, not cost tiers, decide which model fills a seat (supersedes 0006) |
+| [0012](0012-issue-status-is-derived.md) | Issue status is derived from open state, gate label and blocked-by; never from a board or a body rewrite |
 | [0013](0013-retire-unused-chunks.md) | Three Chunks retire on a zero-importer measurement; the git-flow fork keeps one side (supersedes 0002 in part) |
 
-**0012 is claimed, not free.** Spec issue #23 reserved it for a tracker ADR and cites that number
-in a public issue body, so this entry took 0013 — when two hand-numbered sequences collide and
-theirs is already cited outside its branch, yours renumbers.
+**0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
+it for the tracker ADR and cited that number in a public issue body, so the entry written first
+took 0013 instead — when two hand-numbered sequences collide and theirs is already cited outside
+its branch, yours renumbers. The reservation has now been filled by the entry it was held for.
 
 **0004 is deliberately absent.** These numbers are the original ones from the single repo this
 library was split out of (ADR 0008), kept so a reference to "ADR 0002" means the same document in
