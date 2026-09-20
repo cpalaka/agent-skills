@@ -37,6 +37,19 @@ diff is approved per (d), mark the task Done **on the branch**, commit it there.
   naming what will later justify keeping it, and again when its task closes; where nothing else
   reads it, it is output, not evidence. **Prune it before the branch merges**, where the bullet
   above makes the deletion free.
+- **A reader that is itself dead keeps nothing alive — test liveness transitively, from the live
+  set outward.** The bullet above is satisfied by "an ADR, a standing doc", and a *retired*
+  design doc still answers to that description, so a naive inbound-reference count reads three
+  and the file looks load-bearing. Measured 2026-09-20: four design docs in one repo (6,256
+  words) were each cited two or three times, and every citation came from another member of the
+  same dead set — a `git grep` outside their own directory returned nothing. So do not count
+  inbound references. Name what is live first, then ask what IT reads, and follow that out; a
+  cluster no live file reaches is dead however densely it cites itself.
+- **Bulk deletion is durable only once the PREMISE is retired in writing.** Where a whole group
+  of artifacts exists because of a goal, a menu or a phase that has since lapsed, record that it
+  lapsed — in a file that survives the deletion — and cite that record from the change. Delete
+  without it and the next session restores the group from the same still-live instruction that
+  produced it, correctly, having no way to know the reason is gone.
 - **Another session's commit on YOUR branch: cherry-pick it to `main` FIRST, then squash.** (d)
   checks `git log origin/main..main` for a peer's work on local `main`; the branch is the blind
   spot, and in a shared checkout a peer commits to whatever branch is checked out — yours. A plain
