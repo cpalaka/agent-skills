@@ -250,7 +250,7 @@ _Avoid_: backlog, queue, todo column.
 
 **closing record**:
 The comment a session posts when it closes an issue: each acceptance criterion by number with its
-evidence, the reviewed tree's SHA, and, on a `gate:accept` issue, the owner's accepting reply
+evidence, the reviewed commit's SHA, and, on a `gate:accept` issue, the owner's accepting reply
 quoted. It is the tick — the issue body's checkboxes are never rewritten for state.
 _Avoid_: sign-off (the owner's reply, which the record quotes), run record (the `implement-run`
 Chunk's name for the same comment on an implementation ticket — same thing, that Chunk's word).

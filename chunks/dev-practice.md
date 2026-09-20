@@ -21,7 +21,8 @@ before writing code; one-line fixes, token tweaks and doc edits skip the approva
 the planning method by question type: fuzzy idea → `grilling`; data-model or state-machine doubt
 → `prototype`; feel/look doubt → build minimal + an `agent-browser` screenshot loop;
 codebase-bound, clear-what/unclear-how → plan mode. (Verify step = `verify-gate`; sign-off = the
-human Done-gate, in `backlog-core` for board-driven projects or the project's own inline rule.)
+Done-gate the tracker chunk (`backlog-core` or `tracker-github`) sets, or the project's own
+inline rule.)
 
 **Drive `agent-browser` yourself, in the parent session.** Unit tests and DOM-class checks miss
 real render bugs, so a visual or interactive slice needs a real-browser pass before it is done: do

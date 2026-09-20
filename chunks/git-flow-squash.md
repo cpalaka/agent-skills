@@ -10,14 +10,18 @@ no-SHA-in-notes — ride this fork **together** and must stay coupled (ADR 0002)
 fresh `main` and a correctly-named branch per `git-sync-branch-start`; write commit subjects and
 footers per `git-commit-format`.
 
-**Board-less projects** (no `backlog-core` imported — e.g. a prototype with no `backlog/`): there
-are no task ids, so branches are `<type>/<slug>` (e.g. `feat/vacuum-suction`) and every `task-NNN`
-reference drops — the branch-name id, the `Refs task-NNN` footer, the `<area>/task-NNN` commit
-scope, and (c)'s notes policy. The integration mechanics apply unchanged.
+**Board-less projects** (neither `backlog-core` nor `tracker-github` imported — e.g. a
+prototype with no tracker at all): there are no task ids, so branches are `<type>/<slug>`
+(e.g. `feat/vacuum-suction`) and every `task-NNN` reference drops — the branch-name id, the
+`Refs task-NNN` footer, the `<area>/task-NNN` commit scope, and (c)'s notes policy. The
+integration mechanics apply unchanged. A project importing `tracker-github` is **not**
+board-less, and every clause below that names a task id, a board, Done-marking or `--notes`
+resolves as that chunk's deferred-clauses section says; the integration mechanics stay this
+fork's.
 
 **(a) Integration = squash-merge — code + Done collapse into ONE commit on `main`.** After the
-diff is approved per (d), mark the task Done **on the branch**, commit it there, then
-squash-merge.
+diff is approved per (d), mark the task Done **on the branch**, commit it there.
+(`tracker-github` resolves this.) Then squash-merge.
 
 - **The squash carries the branch's FINAL TREE and nothing else — a file added and then deleted on
   the branch never enters `main`'s history at all.** Prune heavy or throwaway artifacts
@@ -58,11 +62,12 @@ squash-merge.
 **(b) Branch name = typed prefix `<type>/task-NNN`.** A conventional-commit `<type>/` prefix
 (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`) followed by the backlog task id zero-padded to
 3 digits — e.g. `feat/task-003`, optionally with a short kebab description.
+(`tracker-github` resolves this.)
 
 **(c) NO commit SHA in the backlog `--notes`.** Done is marked on the branch before the merge,
 so no squash SHA exists at marking time — and none is appended afterwards: `--notes` carries the
 summary only, never a hash. The task↔commit link is the subject scope + the `Refs task-NNN`
-footer (`git log --grep`), so a recorded SHA buys nothing.
+footer (`git log --grep`), so a recorded SHA buys nothing. (`tracker-github` resolves this.)
 
 **(d) No PRs — review locally; push to `main` only on per-branch diff approval.**
 
@@ -76,7 +81,7 @@ footer (`git log --grep`), so a recorded SHA buys nothing.
   maintenance — `chore(backlog): …` commits with no code or asset change — needs no per-branch
   diff approval. Verify the claim rather than asserting it (`git log origin/main..main` and a
   `--stat` showing only `backlog/`); the moment anything else rides along, the ordinary gate
-  applies again.
+  applies again. (`tracker-github` resolves this.)
 - **Before that push, `git log origin/main..main` must contain only your squash commit.** In a
   multi-session repo your local `main` can already carry another session's unpushed work, and
   your push publishes it with the approver having no way to know. If the list is not just yours,

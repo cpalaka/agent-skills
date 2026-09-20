@@ -34,13 +34,16 @@ refuses or would carry the changes along (`git-sync-branch-start`). When you see
   because a checkout is busy; a worktree you did not create is someone else's session, not a
   spare. A throwaway clone or worktree that only runs a gate (`verify-gate`) is not parallel
   work and needs no signal.
-- **Board with two writers:** each session commits only the task-file edits it made — its own
-  row and any dependent rows it pinned — by explicit path (`backlog-core`).
+- **Board with two writers:** where the tracker keeps rows in the tree, each session
+  commits only the task-file edits it made — its own row and any dependent rows it
+  pinned — by explicit path. Whether it keeps rows at all is the tracker chunk's
+  (`backlog-core` or `tracker-github`).
 
 **Mode A — Waves (dependency-free fan-out via background subagents).** For multiple tasks
 with no shared state and no ordering between them:
 
-- **The coordinator alone** syncs `main` and marks each task In Progress before fanning out.
+- **The coordinator alone** syncs `main` and claims each task before fanning out, in whatever
+  form of claim the tracker chunk (`backlog-core` or `tracker-github`) sets.
 - Per task, from the repo root, create the worktree under the **worktree path prefix** knob
   (`git worktree add <prefix>-<slug> -b <branch> main`) and run the **install command** in
   it. No settings copy needed here: a subagent **inherits the parent session's permission
@@ -68,10 +71,11 @@ with no shared state and no ordering between them:
   smaller", "tests pass") as a claim, not a measurement, and diff the real output against
   source yourself.
 
-**Mode B — Attended worktrees (you hands-on, 2+ tasks concurrently).** Each interactive worktree
-session **writes board fields for the task it owns** — so per-session status edits are fine;
-only `task create` stays main-repo-only (the max+1 ID scan collides under concurrency, see
-`backlog-core`).
+**Mode B — Attended worktrees (you hands-on, 2+ tasks concurrently).** On a board-driven
+project each interactive worktree session **writes board fields for the task it owns** — so
+per-session status edits are fine; only `task create` stays main-repo-only (the max+1 ID scan
+collides under concurrency, see `backlog-core`). Which tracker writes such a session may make
+at all is the tracker chunk's (`backlog-core` or `tracker-github`).
 
 - Set up with `git worktree add <prefix>-<slug> -b <branch> origin/main`. Branching off
   fresh `origin/main` already satisfies the standing sync-`main`-first step, so don't re-run

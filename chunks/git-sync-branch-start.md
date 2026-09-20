@@ -7,10 +7,11 @@
 At the start of any task, get onto a **fresh `main`** before you branch. The default branch is
 `main`.
 
-**Sync `main` before the first *write*, not before the first read.** Listing the board
-(`backlog-core`), reading the task and running `git status -sb` all stay available — they are how
-you learn whose work is in the tree. What the sync must precede is the new task's *writes*: its
-branch, its board edit, its commits.
+**Sync `main` before the first *write*, not before the first read.** Listing the board or the
+issue frontier that the tracker chunk (`backlog-core` or `tracker-github`) names, reading the
+task and running `git status -sb` all stay available — they are how you learn whose work is in
+the tree. What the sync must precede is the new task's *writes*: its branch, its tracker write,
+its commits.
 
 **Clear your own leftovers first.** Before `git checkout main`, commit (or stash) anything *you*
 left in the working tree on the branch you are leaving, staging by explicit path
@@ -43,4 +44,4 @@ Run it **even if you think you're already on `main` and up to date.** Sibling wo
 since the previous session, and branching from a stale base silently builds on outdated code.
 Create the feature branch only once that has completed, so the new branch's base is current.
 (Branch *naming* is the integration model's concern — see `git-flow-squash`. Wiring the branch to
-a task id and the board is `backlog-core`'s.)
+a task id and the tracker is the tracker chunk's — `backlog-core` or `tracker-github`.)

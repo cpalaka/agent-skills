@@ -80,7 +80,9 @@ own (`--remove-assignee @me`) and stand down.
 
 The squash commit's footer is chosen by gate label: `Closes #<n>` under `gate:agent`, closing the
 issue atomically with the merge; `Refs #<n>` under `gate:accept`, leaving it open for the owner;
-no footer under `gate:decide`, never worked.
+no footer under `gate:decide`, never worked. **That close lands with a lag** — a session reading
+back its own push can still see `OPEN` seconds afterwards. Re-read
+`gh issue view <n> --json state` rather than closing by hand or re-pushing.
 
 **The closing record is a comment** — `gh issue comment <n> --body-file <f>` — carrying each
 acceptance criterion by number with its evidence, and the **commit SHA** of the tree that was

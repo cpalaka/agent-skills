@@ -9,8 +9,8 @@
 (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`). Keep the whole subject ≤~72 chars including
 the scope — tighten the summary rather than overflow, and on a task-tracked project **never drop
 the task id to make room**. The `<scope>` is the slice/subsystem the change lives in; on a
-task-tracked project it also carries the owning task id (see `backlog-core` for the
-`<area>/task-NNN` scope convention and the `Refs task-NNN` footer that links commit ↔ task).
+task-tracked project it also carries the owning task id, in the scope and footer forms the
+tracker chunk (`backlog-core` or `tracker-github`) sets.
 
 **Body — what and why.** State what changed and, more importantly, *why*. Call out notable
 deviations from the plan/spec, with the reason. Footers carry traceability links.
