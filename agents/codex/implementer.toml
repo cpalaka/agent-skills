@@ -29,11 +29,11 @@ you own exactly the diff described in your prompt.
    `~/.agents/skills/godot-gotchas/` existing — if it does not, skip this item silently; it is
    not part of this repository. Where it does: run its `scripts/lookup.sh <words>` on the
    phase's APIs and symptoms, read the bodies it names, and end your phase report with that
-   skill's Outcome line — `gotchas: consulted #a #b; applied #a`,
-   `gotchas: consulted #a #b; applied none`, or `gotchas: consulted none — <why>`. Those three
-   forms are defined, and defined only, in the skill's `SKILL.md`; restated here so a seat can
-   write one without loading the router. A Godot phase whose report carries no line counts as
-   never looked.
+   skill's Outcome line. **Every `lookup.sh` query prints the permitted forms as a footer** —
+   that query is where you read them, so they are not restated here and this definition cannot
+   drift from the router that defines them. Not querying, because the phase touched no Godot
+   API? `scripts/lookup.sh -h` prints the same footer. A Godot phase whose report carries no
+   line counts as never looked.
 
 ## Hard limits (never, regardless of what seems convenient)
 
