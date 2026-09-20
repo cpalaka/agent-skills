@@ -41,19 +41,22 @@ owner to switch, continuing on Planner only if they say so. Read the body for th
 
 **Three slots**, each announced.
 
-1. **Pre-dispatch**, always: one pass over the drafted spec, whose premises you checked against
-   the source first — looking for a false or unverified premise, **a missing hard limit, an
-   observable that cannot go red, and a fourth you paste verbatim:** *what will this run raise that
-   the ticket does not list?* — it names no claim of yours, so it audits your world, not your
-   sentence. Check the spec's prescribed *mechanisms* against its own stated *intent*, not only its
-   premises against the source: neither a conformance review nor a gate written from that spec can
-   catch a mechanism that contradicts it, because the code matches. **A prose deliverable** (a
-   record, a Skill, a Chunk) loads in no gate: its observable is an independent reader given the
-   source rows, not the writer's table, calibrated by one planted absent row whose count is read,
-   beside a playthrough by a fresh agent following it.
+1. **Pre-dispatch**, always — spawned or held (Fallback): one pass over the drafted spec, whose
+   premises you checked against the source first — looking for a false or unverified premise, **a
+   missing hard limit, an observable that cannot go red, and a fourth you paste verbatim:** *what
+   will this run raise that the ticket does not list?* — it names no claim of yours, so it audits
+   your world, not your sentence. The seat definition's fourth differs — a finding it supplies,
+   not a question you ask; never sync the two lists. Check the spec's prescribed *mechanisms*
+   against its own stated *intent*, not only its premises against the source: neither a
+   conformance review nor a gate written from that spec can catch a mechanism that contradicts
+   it, because the deliverable matches. **A prose deliverable** (a record, a Skill, a Chunk) loads
+   in no gate: its observable is an independent reader given the source rows, not the writer's
+   table, calibrated by one planted absent row whose count is read, beside a playthrough by a
+   fresh agent following it.
 2. **Pre-merge**: completeness critic and counter-critic in one consult — on unless the ticket
    body carries `Advisor: pre-dispatch only` anywhere in it (a local-file ticket carries
-   it in the file).
+   it in the file). The marker cancels the reading; a meter never does — Fallback says where it
+   goes instead.
 3. **Floating**: a reading you would otherwise decide silently or put to the owner — a review
    finding you want to reject, one that would change an acceptance criterion, a ticket premise
    that reads false against the source, a gate still red after one `diagnosing-bugs` loop. A

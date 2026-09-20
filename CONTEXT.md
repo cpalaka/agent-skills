@@ -199,11 +199,20 @@ _Avoid_: orchestrator (the older name; "orchestrate" survives only as the toggle
 with "solo"), main session (true but says nothing about the role), driver.
 
 **Slot**:
-One budgeted consult of the advisor seat within a ticket. Two are fixed — the pre-dispatch pass
-over the execution spec, and the pre-merge critic — and one floats for whatever the coordinator
-would otherwise ask the user or decide silently. A fourth need goes to the user.
+One budgeted position for the advisor's judgment within a ticket, filled by consulting the seat or,
+where it cannot be spawned, by holding the judgment yourself. Three are named — the pre-dispatch
+pass over the execution spec, the pre-merge critic, and one floating for whatever the coordinator
+would otherwise put to the owner or decide silently. A tight meter can fund only the first, which
+then also carries the capped form. A fourth need goes to the owner.
 _Avoid_: trigger (the condition that may spend a slot, not the slot), consult (the act of
 spending one), call.
+
+**capped form**:
+What a run record calls the advisor's pre-merge reading when a tight meter leaves one affordable
+slot, given before the diff exists rather than after it. `chunks/implement-run.md`'s Fallback
+paragraph carries the conditions.
+_Avoid_: slot 2 (the reading it stands in for; calling it that claims evidence from a diff that
+did not yet exist), second consult, pre-merge slot.
 
 ### Issue tracking
 
