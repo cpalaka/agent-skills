@@ -17,6 +17,24 @@ One question sits under every rule here: **could more than one true state of the
 
 **A predicate whose expected value is read from the source under test cannot be redded by a control that mutates that source.** The fault lands, the subject moves — and the oracle moves with it, so the assertion holds and the control passes green. A capture predicate compared a scene node's height against the scene constant that height is written from, and the spec's own named control for it zeroed that constant: both sides went to zero, `is_equal_approx(0.0, -0.0)` was true, and the predicate could not fail for the property it named (2026-09-19). Repair by asserting the *thing the predicate names* rather than the source — there, the node's own sign (`position.y < 0.0`), which the mutation cannot follow. It ships easily because reading the expected value from one owner is the correct fix for a stale copied constant. Ask of every predicate: what mutation reds this, and does that mutation move the reference too? Distinct from the absorption rule above: the fault is fully observable and the *instrument* tracks it.
 
+**An assertion must vary along the axis the criterion names, and the fixture must make that axis
+vary.** A suite can be sensitive, calibrated and still blind on exactly the property the
+acceptance criterion is about, because the assertion reads a different axis than the sentence
+does. Three instances in one ticket, in a 35-assertion suite that already ran a known-bad for
+every check (2026-09-20, skills #5): the criterion enumerated three verdict states and two were
+anchored, so dropping the suffix from the third passed; the criterion said a finding prints
+*inside* a block and the assertions grepped whole output for the finding plus a separate grep for
+the block's header, so printing the finding inline and leaving the block empty passed — the
+buffering mechanism, the ticket's actual subject, could be deleted entirely; and the criterion
+said `--staged` scopes against the *index*, but the fixture's tree equalled its index, so the
+scanner could have been written against HEAD and passed. The repair is mechanical once named:
+enumerate what the sentence enumerates (assert all three states, not a sample), assert containment
+by pulling the window between two markers rather than searching the whole output, and build the
+fixture so the two candidate references actually disagree. All three were found by mutation, none
+by reading. Distinct from the absorption and moving-oracle rules above, where the instrument
+tracks the fault: here the instrument is looking somewhere else entirely, and the giveaway is that
+you cannot name the mutation that reds it.
+
 **A verdict computed from the thing it checks holds by construction and checks nothing.** `git diff $M HEAD` is empty for every input when `M` was built from `HEAD^{tree}`; `${M}^1 == origin/main` holds for every input when `M` was built with `-p origin/main`. Two recipes shipped both as "derive the verdict before pushing" while the one precondition that carried the safety (linear descent, `git merge-base --is-ancestor`) went unchecked, and a skipped rebase reverted a peer's landed file with both green (2026-09-05). Before trusting a derived verdict, name the input that makes it false; if there is none, it is a paste guard, not a verdict.
 
 **Calibrating the instrument and falsifying the claim are different acts. Do both.** Write the one-line corruption of the deliverable's central claim, confirm the suite reds, keep whatever check reds. The corruption breaks exactly *one* branch of the rule under test; a coarse one reds the suite for the wrong reason. Commit before you corrupt, so the revert lands on the state under test: `git checkout -- <file>` restores HEAD and deletes an uncommitted diff. Then re-run the gate against the tree that ships. **On a file git is not yet tracking, that escape is gone and every git-shaped proof of the revert with it**: `git status` prints `?? <file>` before the corruption and after the revert alike, so a botched revert leaves no signal anywhere and the deliberately-broken version ships behind a green run. Take the file's `sha256` before you corrupt, re-take it after reverting, require equality, and make the green run the last one in the record so nothing follows it that could have moved the file (2026-09-18).
