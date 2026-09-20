@@ -172,7 +172,7 @@ model name, so a model release does not silently invalidate the routing. Carries
 (every seat is a definition; a bare spawn inherits the parent), the meter check, effort pinned
 `high`, and the rule that model IDs live in run artifacts and never in durable prose
 ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). The procedure an implementation run follows
-is not here — it is the `implement-run` Chunk, which every dev project loads.
+is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.
 
 **When to use:** before a delegated implementation, a review with sub-agents, or any fan-out from
 a planning session. Not for a single read-only sub-agent.
@@ -214,8 +214,9 @@ to glossary-only, and exit cleanly when nothing changed. Slash-only.
 
 ### sandbox-and-permissions
 
-Claude Code sandbox denials and permission-allowlist safety. The `sandbox-auto` Chunk carries the
-session-init baseline; this Skill carries what you need only once a denial actually fires, or you
+Claude Code sandbox denials and permission-allowlist safety. The session-init baseline is a
+one-line bullet in each project's Claude adapter; this Skill carries its shape, and what you need
+once a denial actually fires, or you
 are about to edit `permissions.allow` — where a broad glob silently disables a gate in every
 session and every subagent.
 
@@ -326,18 +327,13 @@ delivery? No → Chunk. Yes → Template.
 
 | Chunk | Covers |
 |---|---|
-| `dev-base.md` | The bundle every Profile imports; recursively includes eight universal base Chunks. |
-| `dev-practice.md` | Dev practice defaults — planning, diagnosis, TDD, browser QA. |
-| `verify-gate.md` | The gate to run before any commit or handoff. |
-| `git-commit-format.md` | Commit format and hygiene. |
+| `dev-base.md` | The bundle every Profile imports; includes the four universal base Chunks below. |
 | `git-sync-branch-start.md` | Sync main, then branch off it, at task start. |
-| `git-flow-squash.md` | The git-flow fork — local squash-merge, typed branch prefix, no SHA in the board notes ([ADR 0013](docs/adr/0013-retire-unused-chunks.md)). |
+| `git-commit-format.md` | Commit format and hygiene. |
 | `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
+| `verify-gate.md` | The gate to run before any commit or handoff. |
 | `backlog-core.md` | Task tracking with backlog.md (the Backlog-CLI alternative to `tracker-github.md`). |
 | `tracker-github.md` | Task tracking with GitHub Issues — gate and origin labels, no board (the alternative to `backlog-core.md`). |
-| `parallel-work.md` | Parallel work — waves and attended worktrees. |
-| `implement-run.md` | How one ticket is run under `/implement` — the seats, the advisor's slots, the run record. |
-| `sandbox-auto.md` | Sandbox session-init baseline (see the `sandbox-and-permissions` Skill for denials). |
 
 Per-project variation belongs in **knobs** (an engine-written tagged block in the project's
 `CLAUDE.md`) or an **inline-leaf** (hand-authored, project-specific prose) — never in a Chunk.
@@ -345,14 +341,27 @@ Per-project variation belongs in **knobs** (an engine-written tagged block in th
 
 ## Skills these bodies name
 
-Several Skills here delegate to third-party Skills by name. They are not bundled; install the
-ones you want from their own repos.
+Bodies here — Skills, Profiles, Templates and seat definitions — name third-party Skills as
+things an agent runs. They are not bundled; install the ones you want from their own repos. One
+row per third-party Skill, because a body may name some of a repo's Skills and not others.
 
-| Named by | Skill | Install from |
+| Skill | Named by | Install from |
 |---|---|---|
-| `spec-review`, `multi-agent-policy` | `to-spec`, `to-tickets`, `implement`, `code-review`, `tdd` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `refresh-context`, `godot-architecture-review`, `tournament`, `chunks/dev-practice.md` | `grilling`, `grill-with-docs`, `domain-modeling`, `codebase-design`, `diagnosing-bugs`, `prototype` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `godot-architecture-review`, the `godot` Profile | `godot-gdscript-patterns` | [`wshobson/agents`](https://github.com/wshobson/agents) |
+| `to-spec` | `spec-review`, `multi-agent-policy`, the `AGENTS.md` Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `to-tickets` | `spec-review`, `multi-agent-policy`, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `implement` | `spec-review`, `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `grilling` | `refresh-context` (both hosts), `godot-architecture-review`, `tournament`, `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `grill-with-docs` | `multi-agent-policy`, `tournament` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `domain-modeling` | `refresh-context` (both hosts), `godot-architecture-review`, the `godot` Profile's domain Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `codebase-design` | `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `diagnosing-bugs` | `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `prototype` | `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `godot-gdscript-patterns` | `godot-architecture-review`, the `godot` Profile | [`wshobson/agents`](https://github.com/wshobson/agents) |
+
+Derived, not stored: sweep the shipped bodies for each name, then read every hit — a
+`wayfinder:grilling` label value and a JavaScript `Object.prototype` share a spelling with a Skill
+and are not one.
 
 Every one of these is optional. Where a body calls a Skill that may not be installed, the
 reference is existence-gated and the step skips.

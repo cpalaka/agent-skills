@@ -29,8 +29,17 @@ refuses or would carry the changes along (`git-sync-branch-start`). When you see
   in-flight work, with no output. Park what you were about to do and ask the peer to commit. Your
   own worktree or clone is the way forward only on an explicit parallel-work signal (next
   bullet); with no signal, wait.
+- **Uncommitted, non-conflicting changes follow a branch switch.** They do not stay behind: a
+  `checkout` on a dirty tree silently carries that work — yours or the peer's — onto the branch
+  you land on, `main` most often. The damage compounds from there. The source branch is left with
+  *no* commit to merge, a squash-merge of it is a no-op, and a later push can publish a different,
+  already-committed change in place of the one you meant. That is why clearing your own leftovers
+  before a switch (`git-sync-branch-start`) is a rule and not tidiness, and why a switch belongs
+  in the list of operations above.
 - **Stage by explicit path, and re-verify the branch immediately before every commit** —
-  `git-commit-format` owns both rules.
+  `git-commit-format` owns both rules. **Landed on the integration branch, your commit only?**
+  Fast-forward only — `git merge-base --is-ancestor main <sha> && git branch -f main <sha>` —
+  never `git checkout main` while another session holds the checkout.
 - **Worktrees only on an explicit parallel-work signal.** Mode A or B is chosen, never assumed
   because a checkout is busy; a worktree you did not create is someone else's session, not a
   spare. A throwaway clone or worktree that only runs a gate (`verify-gate`) is not parallel
@@ -48,7 +57,7 @@ with no shared state and no ordering between them:
 - Per task, from the repo root, create the worktree under the **worktree path prefix** knob
   (`git worktree add <prefix>-<slug> -b <branch> main`) and run the **install command** in
   it. No settings copy needed here: a subagent **inherits the parent session's permission
-  mode and sandbox** (see `sandbox-auto`).
+  mode and sandbox** (the baseline's shape and recovery: the `sandbox-and-permissions` Skill).
 - **Host differences.** The inheritance above is Claude Code's. On **Codex**, native subagents
   inherit the parent's sandbox, MCP servers and skills unless the role TOML overrides them:
   `mcp_servers = {}` parses but inherits every server; disabling one needs its full transport
@@ -87,7 +96,7 @@ at all is the tracker chunk's (`backlog-core` or `tracker-github`).
   travel with the new worktree. Host differences:
   - **Claude Code:** `.claude/settings.local.json`. **Copy it into the worktree's `.claude/`
     first** (`cp .claude/settings.local.json <prefix>-<slug>/.claude/`) or the session silently
-    runs without the defaults (see `sandbox-auto`).
+    runs without the defaults (its shape: the `sandbox-and-permissions` Skill).
   - **Codex:** `.codex/config.toml`, so the session has no project MCP servers until you supply
     that file in the worktree before launch.
 

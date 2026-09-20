@@ -97,7 +97,7 @@ row along with your misfire.
 the task-file change there (`auto_commit` stays false, so the edit batches with code — one
 task-file change per code commit). Merging never auto-closes a task; Done is set by `task edit`
 only, after sign-off. Whether the task notes carry a commit SHA, and when, is a merge-model
-decision this chunk defers to `git-flow-squash`.
+decision this chunk defers to the `git-flow-squash` Skill — load it at integration.
 
 With two sessions on one checkout, each session commits only the task-file edits **it made** — its
 own row and any dependent rows it pinned — by explicit path; `git add -A` or `git add backlog/`

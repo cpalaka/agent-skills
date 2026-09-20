@@ -1,11 +1,12 @@
 ---
 type: backlog
-# dev-base is always imported by the engine; it already pulls verify-gate +
-# dev-practice. Add only the explicit, un-bundleable imports here.
+# dev-base is always imported by the engine; it already pulls the three git-* chunks +
+# verify-gate. Add only the explicit, un-bundleable imports here.
 imports:
   - backlog-core
 fork: git-flow-squash       # the ADR-0002 default and, since ADR-0013, the only variant.
-                            # Exactly one fork is ever imported.
+                            # Exactly one, and it is imported nowhere: the engine names it as a
+                            # Skill in both adapters (`/git-flow-squash`, `$git-flow-squash`).
 templates:                  # board conventions arrive via the backlog-core @import (the old
                             # claude-section.md Template was promoted INTO that chunk). Two stamped
                             # assets, both host-neutral and both reached through the contract:
@@ -32,7 +33,9 @@ knobs:
       - "<filing gate — new gotchas/ADRs filed (or N/A)>"
       - "Debug/scaffolding instrumentation reverted"
       - "User sign-off received"
-  # verify-gate + dev-practice are imported via dev-base; we only supply their knob values.
+  # verify-gate is imported via dev-base. parallel-work and implement-run are Skills that no
+  # project imports; they read their block by marker out of the contract, exactly as the Chunks
+  # did (ADR 0014). Either way we only supply the values.
   verify-gate:              # one key per step of the chunk's invariant sequence, same eight keys
                             # in every Profile — vary the commands, never the key set.
     dir: "<the directory the gate runs in>"
@@ -43,11 +46,8 @@ knobs:
     smoke: "<bring it up, confirm the affected surface, bring it down>"
     secret_scan: "<grep pattern; expect zero matches>"
     env: "<any required env>"
-  dev-practice:
-    test_roster: "<pointer to the authoritative required-coverage list, e.g. a PRD section>"
-    spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against>"
   parallel-work:
-    # parallel-work rides dev-base and is value-variant: it names two knobs the
+    # parallel-work is a Skill, not an import, and still value-variant: it names two knobs the
     # engine writes into <!-- knobs:parallel-work --> in the project's contract.
     worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree; the last path
                                                         # segment IS the task-branch name, so the worktree layout
@@ -55,7 +55,7 @@ knobs:
                                                         # project's own convention here, not this shape.
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
   implement-run:
-    # implement-run rides dev-base too. These four are the chunk's OWN defaults — the values that
+    # implement-run is a Skill too, read by marker. These four are its OWN defaults — the values that
     # apply wherever the block is absent, so a project stamped before this entry existed runs on
     # exactly them. Written out here because they are then the project's saved pick: the coordinator
     # states them at the start of a run and asks only where a ticket cannot fit them.

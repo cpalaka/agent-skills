@@ -76,8 +76,9 @@ edge case is expected; a gotcha is surprising); mirroring a universal catalog in
 **Parity**:
 The alignment between a project's docs and the source Skill that seeded them. A *parity check* is
 the audit; a *parity table* is its output, presented for approval before any write. Applies to
-**Templates** only — a **Chunk** has no parity lifecycle, which is why every Chunk header says so —
-and of those, only a Profile's own assets have a check that exists (see **Template**).
+**Templates** only — a **Chunk** is referenced, never copied, so nothing of it can drift and it has
+no parity lifecycle; every Chunk header names the one file to edit — and of those, only a Profile's
+own assets have a check that exists (see **Template**).
 _Avoid_: equivalence, feature-parity.
 
 **Drift**:
@@ -133,9 +134,10 @@ partial, fragment; situational chunk (a contradiction — that body is a Skill).
 **floor**:
 The text a session or a seat receives on every turn without asking for it: the global instruction
 file, the project's Host adapter, the project contract and the Chunks they import. Measured in
-words per project by `wc -w`, global file excluded, against the ceiling ADR 0014 sets. Distinct
-from the **host floor** — the system prompt, tool schemas and skill roster a host adds regardless,
-which this repo cannot cut and which a seat-token probe reports beside the floor, never inside it.
+words per project by `wc -w`, global file excluded, against the ceiling ADR 0014 sets and ADR
+0015 amends. Distinct from the **host floor** — the system prompt, tool schemas and skill roster
+a host adds regardless, which this repo cannot cut and which a seat-token probe reports beside
+the floor, never inside it.
 _Avoid_: always-on set, baseline, preamble; overhead (the host's part, not this one).
 
 **dev-base**:
@@ -223,7 +225,7 @@ spending one), call.
 
 **capped form**:
 What a run record calls the advisor's pre-merge reading when a tight meter leaves one affordable
-slot, given before the diff exists rather than after it. `chunks/implement-run.md`'s Fallback
+slot, given before the diff exists rather than after it. The `implement-run` Skill's Fallback
 paragraph carries the conditions.
 _Avoid_: slot 2 (the reading it stands in for; calling it that claims evidence from a diff that
 did not yet exist), second consult, pre-merge slot.

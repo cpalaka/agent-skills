@@ -1,6 +1,7 @@
 ---
 type: godot
-imports: []                 # No UNCONDITIONAL imports beyond dev-base + the fork.
+imports: []                 # No UNCONDITIONAL imports beyond dev-base. The fork is imported
+                            # nowhere — it is a Skill the engine names in both adapters.
                             # backlog-core is CONDITIONAL (like blender-mcp-guide): the recipe's
                             # "Board (conditional)" step decides it at apply time and wires it
                             # (import line + knob block + init) — never the default knob pass.
@@ -125,19 +126,15 @@ knobs:
     smoke: "open the project / F5 the affected scene (a green test run is not a played scene)"
     secret_scan: "git grep -niE -e '(api[_-]?key|secret|password|token)[[:space:]]*=([^=]|$)' --and --not -e 'do-not-print' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match. [[:space:]], not \\s (git grep -E on macOS matches \\s only as a literal, measured 2026-09-04); =([^=]|$) skips == comparisons while still catching an assignment whose value sits on the next line; -i catches API_KEY = …; 'do-not-print' is the reserved sentinel a fixture needing a secret-shaped literal must use, and nothing else in the tree may contain it. Re-calibrate against known-bad plus the benign shapes whenever this line changes (measured 2026-09-13: 4 benign matches before, 0 after)"
     env: "$GODOT → the editor binary (macOS app path → `godot` on PATH); run from the repo root. The runner writes its capture files under $TMPDIR, so the runner as scaffolded needs no sandbox bypass (measured 2026-09-03) — but that holds only while it greps `^SCRIPT ERROR` alone and the tree has no `.blend`. Sandboxed, Godot is denied `user://logs` and the CA store and prints `ERROR:` for each (godot-gotchas #88), and a `.blend` import crashes at GPU detection (#47). So the typecheck step above, and any runner tightened to grep `^ERROR:`, run with the sandbox off"
-  dev-practice:
-    # test-roster: where the authoritative list of required-coverage modules lives.
-    test_roster: "the project board (backlog) if present, else the design docs under docs/; new gameplay systems with verifiable runtime behaviour get a tests/test_<topic>.gd before implementation"
-    # spec-verify: the source surface a spec's [reuse] claims are checked against.
-    spec_verify_src: "the project's GDScript/scene tree (res://) + addons/"
   parallel-work:
-    # parallel-work rides dev-base (value-variant): the engine writes these into the project's
-    # <!-- knobs:parallel-work --> block. Solo prototypes rarely fan out, but the chunk is always
-    # imported via dev-base, so it needs values, not an empty block.
+    # parallel-work is a Skill, imported by nothing, and still value-variant: the engine writes
+    # these into the project's <!-- knobs:parallel-work --> block, which the Skill reads by marker
+    # exactly as the Chunk did (ADR 0014). Solo prototypes rarely fan out, but the block is always
+    # written, so it needs values rather than being left empty.
     worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree
     install: "npm ci --prefix tools/mcp (rehydrate the frozen MCP launcher tree), then import once (open the editor or `godot --headless --path . --import`) so the global class cache exists — else tests/run_tests.sh false-FAILs fixture_pass.gd"
   implement-run:
-    # implement-run rides dev-base (value-variant) as well. These four are the chunk's OWN defaults
+    # implement-run is a Skill read by marker (value-variant) as well. These four are its OWN defaults
     # — the values in force wherever the block is absent, so a Godot project stamped before this
     # entry existed already runs on exactly them. Stamping them makes them that project's saved
     # pick: the coordinator states them at the start of a run and asks only where a ticket cannot

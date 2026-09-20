@@ -140,7 +140,7 @@ both and branches `<type>/<slug>`. Another repository's issue is `owner/repo#<n>
 resolves in the wrong one. Anchor a log search, `git log -E --grep '#<n>([^0-9]|$)'`, because
 `#25` also matches `#250`.
 
-`git-flow-squash` resolves here:
+`git-flow-squash` is a Skill — load it at task start and at integration; it resolves here:
 
 - merge model unchanged; the branch prefix takes the issue number in place of `task-NNN`;
 - **nothing is marked Done on the branch** — the closing record is a comment posted after the
@@ -153,8 +153,8 @@ resolves in the wrong one. Anchor a log search, `git log -E --grep '#<n>([^0-9]|
 - no tracker files in the tree: no board-grooming push analogue, and no rows to stage;
 - the pre-push audit predicate rides the fork, untouched.
 
-`dev-practice`'s Done-gate resolves to the closing record. Under `parallel-work` the coordinator
-alone writes issues, excepting an attended worktree session on the issue it owns.
+The `implement-run` Skill's Done gate resolves here to the closing record. Under `parallel-work`
+the coordinator alone writes issues, excepting an attended worktree session on the issue it owns.
 `git-confirm-destructive`'s gate resolves here to a **gated set**, not a list of exemptions:
 creating an issue, closing one, reopening one and rewriting a body are gated. Every other write
 this convention instructs — assigning and releasing, labelling and re-gating, minting a label,

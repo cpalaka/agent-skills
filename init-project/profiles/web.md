@@ -1,17 +1,18 @@
 ---
 type: web
 # Beyond dev-base (which is always imported and recursively pulls the base
-# chunks incl. verify-gate + dev-practice). A web project is board-driven
-# here, so it imports backlog-core; the fork below is imported explicitly too
-# (a fork can never ride dev-base — @import cannot be undone).
+# chunks: the three git-* files + verify-gate). A web project is board-driven
+# here, so it imports backlog-core. The fork below is imported nowhere — it is
+# a Skill the engine names in both adapters.
 imports:
   - backlog-core
 fork: git-flow-squash      # the default (ADR-0002) and, since ADR-0013, the only variant.
 templates: []              # none — backlog's claude-section.md is promoted into the
                            # backlog-core chunk, so no profile stamps it; web carries no Template assets.
 knobs:
-  # backlog-core is an explicit import; verify-gate, dev-practice, parallel-work
-  # and implement-run ride dev-base. Every one is value-variant, so the engine still writes a knob
+  # backlog-core is an explicit import and verify-gate rides dev-base; parallel-work and
+  # implement-run are Skills that no project imports and that read their block by marker
+  # (ADR 0014). Every one is value-variant, so the engine still writes a knob
   # block for each, into the project's shared contract (docs/agents/project-workflow.md) —
   # never into an adapter, and never into a chunk.
   #
@@ -45,11 +46,8 @@ knobs:
     smoke: "bring the dev server up in the background (`npm run dev`, or the project's package manager and script name), request the affected route, and read the route's OWN rendered content — the server's ready banner is not the verdict, and a route that 500s or renders an error boundary still prints that banner. Then stop the server and confirm the port is free. PASS = the affected route's expected content observed AND no server process left behind; either half missing is a FAIL"
     secret_scan: "grep -rEn '<secret-leak pattern>' over the working tree from repo root — expect ZERO matches"
     env: "<where the deployed secrets live — an env file on the host, a secrets manager, the platform's own store; never in the repo and never in the client runtime>"
-  dev-practice:
-    test_roster: "<pointer to the authoritative required-coverage list, e.g. a PRD section>"
-    spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against, e.g. the app dir's src/>"
   parallel-work:
-    # parallel-work rides dev-base and is value-variant: it names two knobs the
+    # parallel-work is a Skill, not an import, and still value-variant: it names two knobs the
     # engine writes into <!-- knobs:parallel-work --> in the project's contract.
     worktree_path_prefix: "../<proj>-task-NNN-<slug>"   # where `git worktree add` puts each tree; the last path
                                                         # segment IS the task-branch name, so the worktree layout
@@ -57,8 +55,8 @@ knobs:
                                                         # project's own convention here, not this shape.
     install: "<the fresh-worktree install command, e.g. `npm install` in the app directory>"
   implement-run:
-    # implement-run rides dev-base too, and unlike the values above none of these is a `<…>` shape
-    # to answer: they are the chunk's OWN defaults, which apply wherever the block is absent, so a
+    # implement-run is a Skill too, read by marker, and unlike the values above none of these is a
+    # `<…>` shape to answer: they are its OWN defaults, which apply wherever the block is absent, so a
     # project stamped before this entry existed runs on exactly them. They become that project's
     # saved pick — the coordinator states them at the start of a run and asks only where a ticket
     # cannot fit them.
@@ -77,7 +75,7 @@ generic ones, so this Profile declares no `adapters:` fragments either.
 
 **Three answers the project owes before anything is written**, because nothing here can
 guess them and each one is wrong by default: **where the toolchain runs** (repo root or an
-app subdirectory — it fills the `verify-gate`, `dev-practice` and `parallel-work` values),
+app subdirectory — it fills the `verify-gate` and `parallel-work` values),
 **where the deployed secrets live** (the `verify-gate` `env` value), and **the task-branch
 convention** (the `parallel-work` prefix). A fourth, **the deploy target**, is not a knob at
 all — deploy is inline-leaf, so ask for it and hand it to whoever writes the contract's
@@ -102,8 +100,8 @@ manifest knob or shared chunk carries these:
   re-run and would lose it.
 - **The framework skill list** — which framework or UI skills to invoke proactively and
   their triggers (before touching a component, for reusable component APIs, for route
-  animations, and so on). The `dev-practice` chunk explicitly leaves this list as
-  inline-leaf, not a knob, because the set changes per project and per framework.
+  animations, and so on). This list is inline-leaf, not a knob, because the set changes
+  per project and per framework — no shared Chunk or Skill can carry it.
 - **Exact toolchain / version pins** — the framework, router, build tool and language
   versions, several of which a meta-framework typically pins through its own peer deps, plus
   the pin table and the bump policy — in a doc of its own once it outgrows a paragraph.

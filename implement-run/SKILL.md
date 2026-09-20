@@ -6,7 +6,8 @@ disable-model-invocation: true
 
 ## Implementation runs (`/implement`)
 
-Where the `/implement` stub and this chunk differ, this chunk wins.
+This Skill is the procedure, and it is loaded by name. The third-party `/implement` stub is not
+edited, shadowed or wrapped: invoking that stub runs its own five lines and none of what follows.
 
 **Knobs** (`<!-- knobs:implement-run -->` in the project contract file named by your host adapter):
 `shape` (`subagents`, `coordinator-pane`, `workflow`; default `subagents`), `layout`
@@ -20,7 +21,7 @@ or `coordinator`; default `gate-runner`), `advisor` (a seat name or `none`; defa
 **The seats**, each from a pinned definition.
 
 - **Coordinator** — the main loop: drafts the per-phase execution spec, dispatches the other
-  seats, adjudicates every finding against source, merges on the project's `git-flow-*` chunk's
+  seats, adjudicates every finding against source, merges on the project's `git-flow-*` Skill's
   terms; it writes no implementation diff, and runs no gate where a runner resolves. **The
   execution spec is prose in the dispatch prompt, not a file** — nothing commits it; a ticket that
   wants a durable spec says so and names where it goes.
@@ -36,6 +37,14 @@ or `coordinator`; default `gate-runner`), `advisor` (a seat name or `none`; defa
   the prompt; `/code-review`'s sub-agents are this seat.
 - **Gate-runner** — the project's own `.claude/agents/gate-runner.md`; the seat re-running a gate
   never wrote the diff.
+
+**Plan-approval is a gate.** The chain is **pick → plan approval → implement → verify →
+sign-off**. For non-trivial scope, plan briefly in chat (1–5 bullets) and get the plan approved
+before writing code; one-line fixes, token tweaks and doc edits skip the approval round. Route the
+planning method by question type: fuzzy idea → `grilling`; data-model or state-machine doubt →
+`prototype`; feel/look doubt → build minimal + an `agent-browser` screenshot loop; codebase-bound,
+clear-what/unclear-how → plan mode. Verify = `verify-gate`; sign-off = the Done gate the project's
+tracker chunk sets, or the project's own inline rule.
 
 **Start sequence.** State the knob values in force, asking only where the ticket cannot fit them.
 State the role this session is on — Planner is the metered one — and if it is not Builder, ask the
@@ -80,6 +89,14 @@ Gate-runner unavailable: run the gates yourself and say so.
 constraint arrives as an instruction the seat follows silently; only its *why* can be refuted, and
 the seat is often the one reader positioned to refute it (measured 2026-09-19).
 
+**The same holds when work passes to the *user* mid-slice: restate the invariants it depends on,
+not just the next step.** That is the quieter half, because the user did follow what you wrote.
+Name what must still be true when it comes back — the state that must not move, the step that must
+precede a save, how many things may be in flight at once — even where a prior round covered it,
+since the handoff is read on its own. Verify the returned state against those invariants rather
+than the user's report of it: they report the instruction, not the invariant (measured
+2026-09-14).
+
 **Review.** Hand the reviewers the measurements a spec summarises, not just the spec; re-check a
 refuted finding about safety or data loss; a finding proves the defect, not the remedy. After
 fixes, re-run the affected checks and take a targeted review, reopening the full one only where
@@ -94,6 +111,13 @@ under the Knobs paragraph's install gate.
 
 **The run record.** One closing comment on the ticket — in it, where the ticket is a file — under
 four headings: `Slots`, `Gates`, `Review`, `Deviations`.
+
+**Load `git-flow-squash` before the merge** — or whichever `git-flow-*` Skill the project's `fork:`
+names. Nothing in the close fires it from context: description-matched triggering was measured at
+**1 invocation in 105 sessions** for another Skill, so a pointer at the moment of use is the
+trigger. A squash run without its clauses fails silently in the direction of a lost tree — a
+peer's unpushed commit riding along on the push, a branch deleted against a moved `main`, an
+approval spent on a tree that no longer exists. Name it, then merge.
 
 **Posting it, the merge and the close are one approval, not three** — separate asks buy round
 trips and gate nothing the first approval covered. Offer the diff, the record and the close

@@ -7,12 +7,14 @@ the leak-guard's identity file, the no-attribution commit policy, and the existe
 private Skills. This file is the Codex entry point, not a duplicate of it.
 
 **Read three more files before running a ticket here**, since Codex expands no import directives:
-`docs/agents/project-workflow.md` (this repository's contract — the knob values for both chunks
-below, and its own rules: the wrap-commit push carve-out and the playthrough that closes a prose
-deliverable), `~/.codex/chunks/implement-run.md` (the procedure the `implement-run` knobs
-configure) and `~/.codex/chunks/tracker-github.md` (the tracker convention the `tracker-github`
-knobs configure). `CLAUDE.md` reaches all three by `@import`, the last one nested inside the
-contract; on this host the read is the mechanism.
+`docs/agents/project-workflow.md` (this repository's contract — the knob values below, and its own
+rules: the wrap-commit push carve-out and the playthrough that closes a prose deliverable), the
+**`implement-run` Skill** under `~/.agents/skills/implement-run/SKILL.md` (the procedure the
+`implement-run` knobs configure — it is a Skill, not a Chunk, so there is no
+`~/.codex/chunks/implement-run.md` to read) and `~/.codex/chunks/tracker-github.md` (the tracker
+convention the `tracker-github` knobs configure). `CLAUDE.md` imports only the contract, with the
+tracker chunk nested inside it, and loads the Skill by name; on this host every one of the three is
+an explicit read.
 
 This repository is the canonical source for the Skills and Chunks it contains. Claude Code
 discovers Skills through `~/.claude/skills/`; Codex discovers them through `~/.agents/skills/`.

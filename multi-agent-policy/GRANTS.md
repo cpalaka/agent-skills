@@ -2,7 +2,7 @@
 
 Read this when the owner wants a ticket, or a chain of them, executed with zero involvement —
 merges, pushes, cleanup and Done included. Nothing loads it by default, and it narrows the
-`implement-run` Chunk rather than overriding it: a grant converts a ticket's gates, it never
+`implement-run` Skill rather than overriding it: a grant converts a ticket's gates, it never
 skips them (established 2026-08-03).
 
 - **Record the grant in the artifact the executing session will read**, the task's own notes, and

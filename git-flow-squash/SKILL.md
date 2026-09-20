@@ -1,6 +1,6 @@
 ---
 name: git-flow-squash
-description: The default git-flow fork — integration is a local squash-merge to main with no PRs, the typed branch prefix, and no commit SHA in the tracker notes. Use at task start when naming a branch, and at integration — before any squash-merge to main, before pushing main, before opening a PR, before deleting a merged branch. Other bodies cite its clauses as § (a) to § (d).
+description: The default git-flow fork — integration is a local squash-merge to main with no PRs, the typed branch prefix, and no commit SHA in the tracker notes. Use at task start when naming a branch, and at integration — before any squash-merge to main, before pushing main, before opening a PR, before deleting a merged branch, and before committing a heavy or generated artifact. Other bodies cite its clauses as § (a) to § (d).
 ---
 
 ## git-flow — squash (default variant)
@@ -29,6 +29,28 @@ diff is approved per (d), mark the task Done **on the branch**, commit it there.
   (screenshots, fixtures, generated output) **before** the merge, on the branch, as an ordinary
   commit. The same deletion **after** the merge only tidies the working tree: the bytes are
   already in `main`'s history, recoverable by a rewrite alone. Git reports nothing either way.
+- **Evidence kept is evidence something still READS.** A committed artifact that proves a
+  criterion earns its place only while something other than its own closed task points at it — an
+  open task, an ADR, a standing doc, a sibling row citing it by name. That exclusion is the whole
+  rule: each file is cited by exactly one task and that task is always Done by the time you get
+  here, so "something cites it" is true of everything and decides nothing. Apply it at creation,
+  naming what will later justify keeping it, and again when its task closes; where nothing else
+  reads it, it is output, not evidence. **Prune it before the branch merges**, where the bullet
+  above makes the deletion free.
+- **Another session's commit on YOUR branch: cherry-pick it to `main` FIRST, then squash.** (d)
+  checks `git log origin/main..main` for a peer's work on local `main`; the branch is the blind
+  spot, and in a shared checkout a peer commits to whatever branch is checked out — yours. A plain
+  squash then folds their unrelated change into your commit under your task's subject, and the
+  failure is silent in the worst way: the merge succeeds, the commit is well-formed, the diff is
+  correct, and only their *message* is destroyed — the one artifact that said why the change
+  exists. Measured 2026-09-20 (skills #3): the absorbed commit's message recorded the incident
+  that motivated it, and nothing in the merge would have mentioned it. So: `git cherry-pick <sha>`
+  onto `main`, then `git merge --squash <branch>` — their content is already in, so it contributes
+  nothing to the squash, and no history of theirs is rewritten. Verify rather than assume, with
+  `git cherry -v main <branch>`: the cherry-picked commit prints `-` (present by content) while
+  your squashed commits print `+`. `git branch -d` will then refuse the branch as "not fully
+  merged", which is normal after any squash — confirm with an empty `git diff <branch> main`
+  before forcing, never on the strength of the merge having succeeded.
 - **A sign-off approves a TREE, not a branch name. If the base moved between approval and merge,
   rebase and RE-RUN THE VERIFY GATE on the rebased result before merging.** The conflict-free
   rebase is the dangerous case: nothing warns, and the pre-rebase green measured a combination

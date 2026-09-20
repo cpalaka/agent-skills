@@ -5,20 +5,21 @@ Operating notes for working **in this repo**. For what each Skill is and how to 
 …) read [`CONTEXT.md`](CONTEXT.md) — it is not auto-loaded. Check [`docs/adr/`](docs/adr/) when a
 decision in your area may already be settled.
 
-This repository runs its own tickets under the same procedure it ships. Three imports carry it,
-two of them named here — the implementation chunk, and this repository's own contract, which is
-hand-written rather than engine-stamped and says why:
+This repository runs its own tickets under the same procedure it ships. **The procedure itself is
+not imported**: `implement-run` is a Skill, slash-only, so a run loads it by name and a session
+that never starts one never carries it. One import is named here — this repository's own contract,
+hand-written rather than engine-stamped, which says why:
 
-@~/.claude/chunks/implement-run.md
 @docs/agents/project-workflow.md
 
-The first is an external import, so it needs this project's one-time approval on a fresh session
+That is an external import, so it needs this project's one-time approval on a fresh session
 before it expands ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md)); until then the
 line is inert text, which looks identical to a loaded import. **A sub-agent has it worse**: this
-file reaches a dispatched seat with both import lines *deleted*, so nothing marks the gap at all
+file reaches a dispatched seat with the import line *deleted*, so nothing marks the gap at all
 (measured 2026-09-17 by having a seat quote back what it received). A seat that needs the
-procedure, the knob values or the tracker convention opens all three files itself: the two above,
-and `~/.claude/chunks/tracker-github.md`, which the contract imports one hop deeper and which no
+procedure, the knob values or the tracker convention opens all three files itself: the contract
+above, the `implement-run` Skill under whichever skill root this host uses, and
+`~/.claude/chunks/tracker-github.md`, which the contract imports one hop deeper and which no
 seat ever expands.
 
 ## Load-bearing facts
@@ -133,11 +134,27 @@ host, and nothing here depends on it ([ADR 0008](docs/adr/0008-public-private-sp
   asserts each is named on one side or the other.
 - **A governing sentence still needs a pointer at each clause it governs.** The predicate above
   is read by whoever reads a Chunk top to bottom and by nobody who arrives at one clause cited
-  from another file — `verify-gate` cites `git-flow-squash` § (a), another repository cites § (a)
-  and § (d) — and for them a missing pointer degrades not to the governing rule but to nothing,
-  leaving the clause reading as a direct instruction. Measured on #26: a seat that had the
+  from another file, and for them a missing pointer degrades not to the governing rule but to
+  nothing, leaving the clause reading as a direct instruction. Measured on #26: a seat that had the
   predicate in hand applied it to one clause and not the next. A pointer carrying the destination
   and no part of the resolution costs a wasted detour when stale, never a wrong answer, so it is
-  not a second store of the rule. Derive which clauses carry one by grep over the governed nouns
-  and assert marker set equals hit set — membership is then a command's output rather than a
-  judgment that accretes exceptions.
+  not a second store of the rule. **Never enumerate the citing clauses in this bullet** — the
+  enumeration that used to sit here went stale on #47, when `verify-gate` stopped citing
+  `git-flow-squash` § (a) and started pointing at the Skill to load at integration instead.
+  Derive membership instead — per lettered clause, the marker set must equal the governed-noun hit
+  set, so it is a command's output rather than a judgment that accretes exceptions. For
+  `git-flow-squash`, whose governing sentence defers task ids, the board, Done-marking and
+  `--notes` to the tracker chunk:
+
+  ```sh
+  awk '/^\*\*\([a-z]\)/{c=substr($0,1,5)} c&&/task id|task-NNN|backlog|--notes|Done/{n[c]=1}
+       c&&/resolves this/{m[c]=1} END{for(k in n) print (k in m?"ok  ":"GAP ") k}' \
+      git-flow-squash/SKILL.md | sort
+  ```
+
+  **Calibrate before believing a clean run** — strip one marker, or append a clause naming a
+  governed noun; both were measured to report `GAP` (#47). `grep -rn '§ ('` finds *citations*, not
+  markers, and as of #47 returns no `chunks/` hit at all, so it can never perform this derivation;
+  it is the census that bounds a **renumber** instead — one citing consumer is outside this
+  repository and no grep here can see it, so a clause letter is never renumbered on an in-repo
+  count alone.

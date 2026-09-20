@@ -10,12 +10,12 @@ Nothing loads this by default. Read it when you are
   interactive child sessions);
 - sharing a live system you mutate or observe with a peer session (§ Cross-session coordination).
 
-The `implement-run` Chunk governs the run itself — the seat roster, the slots, the run record. This
-file carries only the pane mechanics that Chunk points at, and relaxes nothing there.
+The `implement-run` Skill governs the run itself — the seat roster, the slots, the run record. This
+file carries only the pane mechanics that Skill points at, and relaxes nothing there.
 
 ## Choosing the orchestration shape
 
-Three shapes deliver a delegated implementation run. The `implement-run` Chunk takes the pick from
+Three shapes deliver a delegated implementation run. The `implement-run` Skill takes the pick from
 the project's `shape` knob and asks only where the ticket cannot fit it; this table is what that
 question reads from. All three burn the same usage window.
 

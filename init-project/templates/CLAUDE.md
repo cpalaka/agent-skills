@@ -10,15 +10,16 @@ What stays in this file is Claude Code mechanics and nothing else.
 
 ## Claude Code mechanics (this host only)
 
-- **Session baseline:** sandbox on, `permissions.defaultMode: auto`, both in
-  `.claude/settings.local.json` (gitignored, so it does not travel with a clone or a worktree).
-  Shape and recovery: the `sandbox-auto` chunk.
-- **MCP registration:** `.mcp.json` is this adapter's project-scope MCP config. It takes effect only
-  after a Claude Code **restart**; so does any change to the user-scope `~/.claude.json`.
-- **Project-local subagents live in `.claude/agents/`** — dispatch them with the `Agent` tool.
-- **Skills fire from context here.** Where the contract names a skill to read when you touch the
-  work it covers, this host loads it on its own; everything else is invoked explicitly.
-- **Skill and command spelling on this host is `/name`** (`/refresh-context`, `/implement`, …). The
-  contract names skills without a prefix; add the slash here.
+- **Session baseline:** sandbox on, `permissions.defaultMode: auto`, in gitignored
+  `.claude/settings.local.json`, which no clone or worktree carries; shape and recovery: the
+  `sandbox-and-permissions` Skill.
+- **MCP registration:** `.mcp.json` (project) and `~/.claude.json` (user) take effect only on
+  **restart**.
+- **Project-local subagents:** `.claude/agents/`, via the `Agent` tool.
+- **Skills fire from context here, spelled `/name`** — the contract drops the prefix. One it names
+  for work you touch fires; anything else you invoke. This project's git-flow fork is *<`/name`,
+  filled at init>*. **Invoke a skill when it holds knowledge you don't** — project gotchas, tool
+  quirks, a procedure with a known failure mode — never to be told how to work. Its description
+  naming your situation is the signal; weigh the read against what you'd otherwise get wrong.
 
 <!-- profile:claude-mechanics -->

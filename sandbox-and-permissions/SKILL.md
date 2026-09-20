@@ -5,9 +5,34 @@ description: Claude Code sandbox denials and permission-allowlist safety. Use wh
 
 # Sandbox denials & permission-allowlist safety
 
-The `sandbox-auto` chunk carries the session-init baseline (sandbox on, `auto` mode, where the
-settings file lives). This Skill carries what you need only once a denial fires, or you are about
-to edit permissions.
+Each stamped project states the session-init baseline — sandbox on, `auto` mode — in its
+`CLAUDE.md` adapter's **Session-baseline** bullet; the shape of the settings file that baseline
+lives in, and what the sandbox then denies, are the next section here. The rest of this Skill is
+what you need only once a denial fires, or you are about to edit permissions.
+
+## The baseline's shape, and the two writes it denies
+
+**Where it lives + minimum shape.** Both settings sit in `.claude/settings.local.json`
+(gitignored — personal, not committed):
+
+```jsonc
+{
+  "permissions": { "defaultMode": "auto" /*, "allow": [...] */ },
+  "sandbox": { "enabled": true }
+}
+```
+
+**Session-init, not toggleable.** No tool call changes either mid-session: both, and MCP servers,
+are read once at session start. Confirm the indicators at session start; if the file lacks them,
+update it and **restart** before proceeding. A fresh session needs this configured explicitly —
+the file is gitignored, so it does not travel with a clone or a new worktree. (How defaults reach
+subagents vs. fresh worktree sessions: `parallel-work`.)
+
+**Two writes the sandbox denies.** Reads are unrestricted; writes are not. (a) Bash writes to any
+path **outside this repo** — use the Write/Edit tools instead, or run the command with the sandbox
+disabled. (b) A `git checkout`/`switch`/`merge`/`rebase`/`stash pop` that must modify a **tracked
+file under `.claude/`** — run those with the sandbox off. Both fail `Operation not permitted`;
+don't burn a retry. (b) does not fail cleanly, either — the section below is its recovery.
 
 ## A git op half-switched the tree
 

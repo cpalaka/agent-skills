@@ -178,6 +178,12 @@ So "the project's MCP servers aren't there" has two causes that look identical f
 session: the servers are misconfigured, or the directory-trust prompt was never answered. Check the
 `[projects."…"]` entry before debugging the server.
 
+**Codex reads no repo `.mcp.json`.** That file is the other host's project-scope MCP config, and
+nothing here loads it or says it was skipped — a project's servers go in the `.codex/config.toml`
+above, with **absolute** launcher paths, because a relative `cwd` resolves against the
+**launch directory**, not the repo. Both land in the same place an untrusted project does: the
+server is simply absent from `codex mcp list`, never reported broken.
+
 ## `codex sandbox` is not a usable probe here
 
 The `codex sandbox` subcommand looks like the right instrument for testing a policy without

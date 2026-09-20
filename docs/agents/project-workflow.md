@@ -8,12 +8,14 @@ checkout-is-the-install rule, the hooks, the leak guard, the commit-attribution 
 **Hand-written, and it stays that way.** Every other project gets this file stamped by
 `init-project`. This repository is where that engine lives, and running it here would make the
 engine's output a source file of the engine. So there is no engine run here, now or later: the knob
-block below is maintained by hand, in the shape the engine writes, and the `chunks/` bodies that
-read it are imported one at a time rather than through `dev-base`.
+block below is maintained by hand, in the shape the engine writes, and the bodies that read it are
+reached one at a time rather than through `dev-base`: the tracker Chunk by import, the
+`implement-run` Skill by name.
 
 ## Execution and review defaults
 
-The `implement-run` chunk carries the procedure. This block carries what varies here.
+The `implement-run` **Skill** carries the procedure — it is slash-only, so a run loads it by name
+and reads the block below by marker. This block carries what varies here.
 
 <!-- knobs:implement-run -->
 - shape: subagents
@@ -26,8 +28,14 @@ The `implement-run` chunk carries the procedure. This block carries what varies 
   once it has landed and show `git worktree list` in the closing record.
 - gate_runner: coordinator — this repository stamps no project-local agents, so no gate-runner seat
   resolves and the coordinator runs the gates and says so. The gates are the leak-guard scan
-  (`.githooks/leak-guard.sh scan`), the word and count checks a ticket names, and resolution checks
-  on both hosts' symlinks; there is no test suite and no typecheck.
+  (`.githooks/leak-guard.sh scan`), **the floor check** below, the word and count checks a ticket
+  names, and resolution checks on both hosts' symlinks; there is no test suite and no typecheck.
+  **The floor check**, run before any commit here: `wc -w` over every file in `chunks/`, each
+  condensed Chunk against 250 and `dev-base` against 80, the two tracker Chunks reported with no
+  target — **and the four-plus-bundle sum reported too**, because a per-file reading passes with
+  four files at 249 while the floor grows, and ADR 0014 § 7 (amended by ADR 0015) exists
+  because nothing warned while it grew. A red reading is a decision the closing record names,
+  not a block.
 - advisor: advisor
 <!-- /knobs:implement-run -->
 

@@ -27,8 +27,10 @@ type: <name>
 imports:            # chunk ids to @import BEYOND dev-base (dev-base is always imported)
   - backlog-core    # e.g.
 fork: git-flow-squash      # exactly one git-flow variant, and squash is the only one today
-                           # (ADR 0002, ADR 0013). The fork is imported explicitly, never via
-                           # dev-base (@import cannot be undone).
+                           # (ADR 0002, ADR 0013). The key names the integration model the project
+                           # selects, so a merge-commit variant can still arrive later. It is NOT
+                           # imported: the fork is a Skill, emitted into BOTH adapters' skill
+                           # lists — `/git-flow-squash` on Claude, `$git-flow-squash` on Codex.
 templates: []              # Template assets to stamp: [{src, dest, refresh?}]
 adapters:                  # optional: this type's fragments for the four engine Templates.
   claude: adapter-claude.md   #   inserted at <!-- profile:claude-mechanics --> in CLAUDE.md
@@ -53,15 +55,15 @@ knobs:                     # per value-variant chunk → the values to write int
     smoke: "..."
     secret_scan: "..."
     env: "..."
-  dev-practice: { test_roster: "...", spec_verify_src: "..." }
+  parallel-work: { worktree_path_prefix: "...", install: "..." }
 ---
 ## Bespoke setup
 <imperative steps the manifest can't express, or "None.">
 ```
 
 **The manifest carries shape; the project carries values.** A project-specific knob value is filled
-at apply time — prompt the user, or derive it from the repo. Pure-invariant chunks (`git-*`,
-`sandbox-auto`) have no knob block. **The `verify-gate` key set is the same eight in every
+at apply time — prompt the user, or derive it from the repo. Pure-invariant chunks (`git-*`) have
+no knob block, and no `fork` declares one today. **The `verify-gate` key set is the same eight in every
 Profile** — five for the chunk's invariant sequence, three (`dir`, `build_check`, `env`) for what it
 reads alongside them — so a Profile varies the commands, never the keys; a step the project has no
 command for says so in its value rather than going missing.
@@ -187,20 +189,29 @@ the targets a `<!-- requires: -->` comment names, so the fragment target check d
   stub replacement keeps its position in its own fragment's order**: a fragment running Working in
   this repo → godot-ai addon → Running emits the addon section between those two, not after both.
 
-  **Write a tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` for each chunk in `knobs`
-  that is actually imported** (it rides dev-base, it is the chosen `fork`, or it is in `imports`);
-  on re-run, replace *only* the content between the tags, and insert the block if absent. **The
-  values inside an existing block are this project's own answers, not the manifest's:** a re-run
-  keeps them and fills from the manifest only an absent block. What it does change between existing
-  tags is the key set — a key the Profile has added or renamed since the last stamp is added or
-  renamed in place, its value answered from the project as at apply time. **Never write knob values
-  into a chunk file**: they live here, and the chunks read them out by marker. **A chunk listed in
-  `knobs` but NOT imported** — a CONDITIONAL import, e.g. the godot Profile's `backlog-core` — gets
-  its block from the Profile's conditional recipe step at the moment that step adds the import, at
-  the position the Profile's `knobs` order gives it, never from this default pass; a board-less
-  project must not be left with a dangling `<!-- knobs:backlog-core -->` block. **The engine owns
-  the header and the knob blocks and nothing else here:** it never edits a project section it did
-  not write.
+  **Write a tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` for each id in `knobs` that
+  is either actually imported** (it rides dev-base, or it is in `imports`) **or read by marker by a
+  Skill — today `parallel-work` and `implement-run`, which are Skills no project imports and which
+  read their block out of this contract exactly as the Chunks did (ADR 0014 § decision 2).**
+  Today's `fork` is neither — `git-flow-squash` declares no knobs — so it gets no block; a later
+  one that reads a block by marker qualifies under that second limb like any other Skill, and the
+  test decides it, not the key it arrived under.
+  On re-run, replace *only* the content between the tags, and insert the block if absent. **Delete,
+  tags and all, any `<!-- knobs:<id> -->` block whose id the Profile's `knobs` no longer lists at
+  all** — a chunk the library has retired, which a re-run would otherwise preserve forever (ADR 0014
+  § decision 3). Absence from `knobs` is the whole test, so this never touches a block the Profile
+  still declares, including a conditional one: that one's presence is the recipe step's call, below.
+  **The values inside an existing block are this project's own answers, not the manifest's:** a
+  re-run keeps them and fills from the manifest only an absent block. What it does change between
+  existing tags is the key set — a key the Profile has added or renamed since the last stamp is
+  added or renamed in place, its value answered from the project as at apply time. **Never write
+  knob values into a chunk file**: they live here, and the chunks and Skills read them out by
+  marker. **A chunk listed in `knobs` whose import is CONDITIONAL** — e.g. the godot Profile's
+  `backlog-core` — gets its block from the Profile's conditional recipe step at the moment that
+  step adds the import, at the position the Profile's `knobs` order gives it, never from this
+  default pass; a board-less project must not be left with a dangling
+  `<!-- knobs:backlog-core -->` block. **The engine owns the header and the knob blocks and nothing
+  else here:** it never edits a project section it did not write.
 
   **The inner shape of a knob block is fixed**, because a chunk reads it by marker out of a file it
   never sees whole: **one bullet per key, `- <key>: <value>`, the key spelled exactly as the Profile
@@ -208,22 +219,25 @@ the targets a `<!-- requires: -->` comment names, so the fragment target check d
   multi-item value (a DoD list) is a numbered list indented under its bullet:
 
   ```
-  <!-- knobs:dev-practice -->
-  - test_roster: the project board, falling back to the design docs under `docs/`.
-  - spec_verify_src: the project's own source tree.
-  <!-- /knobs:dev-practice -->
+  <!-- knobs:parallel-work -->
+  - worktree_path_prefix: `../<proj>-<n>-<slug>`
+  - install: `npm ci`
+  <!-- /knobs:parallel-work -->
   ```
 - **`CLAUDE.md` — the thin Claude Code adapter.** The import block, in order:
-  `@~/.claude/chunks/dev-base.md`, then the `fork` (`@~/.claude/chunks/<fork>.md`), then each
-  `imports` entry, then **`@docs/agents/project-workflow.md`** — an `@` import, not a prose pointer,
-  so the project rules stay always-loaded. If `CLAUDE.md` exists, merge into the existing import
+  `@~/.claude/chunks/dev-base.md`, then each `imports` entry, then
+  **`@docs/agents/project-workflow.md`** — an `@` import, not a prose pointer, so the project rules
+  stay always-loaded. **The `fork` is not in the import block at all**: it is a Skill, and the
+  engine writes it into the Template's skill-list slot as `/<fork>` — `/git-flow-squash` today.
+  If `CLAUDE.md` exists, merge into the existing import
   block with **exact-line dedup**; never duplicate or reorder hand-placed imports. Below it, the
   Template's one section — `## Claude Code mechanics (this host only)` — carrying host mechanics
   only, its `.claude/agents/` bullet unconditional because every Profile stamps the gate seat there.
   **No knob block and no project rule may remain in this file.**
 - **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: the chunks
-  `~/.claude/chunks/dev-base.md` bundles — read it for the list, eight today — plus the `fork`
-  plus each `imports` entry. It expands into **item 3 of the read list**, not a free-standing
+  `~/.claude/chunks/dev-base.md` bundles — read it for the list — plus each `imports` entry. **The
+  `fork` is not on that list**: it is a Skill, written instead into the Template's skill-list slot
+  as `$<fork>` — `$git-flow-squash` today. The read list expands into **item 3**, not a free-standing
   sentence, and it carries the count so a reader can tell a short read from a complete one:
   `These <count> files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
   then the file names with their `.md` suffixes. `<count>` is the length of the list you just
@@ -260,8 +274,9 @@ freeze, because they point into a tree that does not exist yet.
 
 **4. Merge `.claude/settings.local.json`.** Apply the Profile's `settings` delta (if any): union its
 `allow` globs into `permissions.allow`, and add its `enabled_mcp_servers` to `enabledMcpjsonServers`.
-If the target file is absent, create it from the `sandbox-auto` baseline
-(`{"permissions":{"defaultMode":"auto"},"sandbox":{"enabled":true}}`) plus that delta. If present:
+If the target file is absent, create it from the session baseline the Claude adapter Template's
+**Session baseline** bullet names — `{"permissions":{"defaultMode":"auto"},"sandbox":{"enabled":true}}`,
+whose shape and recovery live in the `sandbox-and-permissions` Skill — plus that delta. If present:
 **union `permissions.allow` by strict exact-string dedup** — keep both of two overlapping
 `Bash(...)` patterns rather than semantically merging them — set `enabledMcpjsonServers` as the
 Profile requires, **preserve every other top-level key**, and write back. Never clobber. Keep
@@ -348,11 +363,13 @@ design, so refusing it for that would make migrate fail on its own output.
 **1. Refuse what this is not for.** No `@~/.claude/chunks/dev-base.md` line in `CLAUDE.md` means
 this is not a chunk-library project: say so and stop — the right tool is init.
 
-**2. Require every knob block that should exist.** For each value-variant chunk the file imports —
-`verify-gate`, `dev-practice` and `parallel-work` (they ride dev-base), plus `backlog-core` where it
-is imported — its `<!-- knobs:<id> -->` block must be present. If one is missing, **refuse and name
-it**. Never synthesise a knob value: the values are measured facts about that project, and a guessed
-gate command is worse than no migration. **`implement-run` is the exemption** — its Chunk states
+**2. Require every knob block that should exist.** Same membership as the init pass: every
+value-variant id the file imports **or** a Skill reads by marker — `verify-gate` (it rides
+dev-base) and `parallel-work` (a Skill now, imported by nothing, still read by marker), plus
+`backlog-core` where it is imported — its `<!-- knobs:<id> -->` block must be present. If one is
+missing, **refuse and name it**. Never synthesise a knob value: the values are measured facts about
+that project, and a guessed gate command is worse than no migration. **`implement-run` is the
+exemption** — that Skill states
 that its defaults apply where the block is absent, so a project stamped before it existed has none:
 a fact about when the project was stamped, not a gap the user must fill. Migrate it without one and
 say so.
@@ -490,8 +507,8 @@ later creates returns through the Profile's parity check, not through either mod
 
 ## Profiles
 
-Read `profiles/` for the roster. Today: `backlog.md` (board-driven — dev-base + the fork +
-`backlog-core`), `github.md` (GitHub-issue-driven — `tracker-github`, the two pointer Templates, a
+Read `profiles/` for the roster. Today: `backlog.md` (board-driven — dev-base plus `backlog-core`,
+the fork named as a Skill in both adapters), `github.md` (GitHub-issue-driven — `tracker-github`, the two pointer Templates, a
 remote check before the first write and the thirteen-label mint), `web.md` (the npm-shaped toolchain
 gate; app directory, secrets location and task-branch convention answered at apply time), `godot.md`
 (the heavy bespoke recipe — MCP install, `project.godot` edits, lockfile-freeze — and its own

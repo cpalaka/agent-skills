@@ -49,6 +49,14 @@ for a coordinator — is the only Planner seat inside an implementation run.
   none fits. The Agent tool pins only `model`. No higher path. A seat dispatch never passes
   `model`: the parameter takes family aliases only, and overrides the definition's probe-resolved
   ID (the alias lag below).
+- **Drive `agent-browser` yourself, in the parent session — never a subagent.** A subagent's
+  screenshot is never returned to the parent, so a visually-AC'd task comes back reporting success
+  with nobody having seen the page, and the acceptance passes unverified. Visual and feel work is
+  therefore the one class that runs **attended**, not in a wave: do the browser pass yourself
+  rather than punting "eyeball this" to the owner. (Driving it: the `errors` buffer is cumulative
+  and `--clear` is a **no-op**, so run `close --all` before each `open` or a page inherits the
+  previous page's errors and attribution is wrong; and some framework errors — SSR, hydration —
+  surface on `errors`, never on `console`, so a clean `console` is not a clean page.)
 - **A seat runs its definition as it stood at session start.** The snapshot survives a mid-session
   edit, and survives that edit merging to `main`. Nothing warns, because a seat applying a stale
   body reports nothing unusual. So a run that changes a seat definition can still validate it. Tell
@@ -71,8 +79,9 @@ dispatchable for weeks (2026-08-25); nothing else reads those fields.
 
 ## The run itself
 
-The `implement-run` Chunk carries the procedure — seat roster, the advisor's three slots, the
-fallback when a seat does not resolve, the run record. Every dev project loads it.
+The `implement-run` Skill carries the procedure — seat roster, the advisor's three slots, the
+fallback when a seat does not resolve, the run record. It is slash-only: no project loads it, a
+run invokes it by name.
 
 ## Sibling files
 

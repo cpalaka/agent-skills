@@ -1,13 +1,16 @@
 ---
 type: github
-# dev-base is always imported by the engine; it already pulls verify-gate, dev-practice,
-# parallel-work and implement-run. Add only the explicit, un-bundleable imports here.
+# dev-base is always imported by the engine; it already pulls the three git-* chunks and
+# verify-gate. parallel-work and implement-run are Skills, imported by nothing, that read their
+# knob block by marker out of the contract (ADR 0014). Add only the explicit, un-bundleable
+# imports here.
 imports:
   - tracker-github          # UNCONDITIONAL — this is the tracker-typed Profile, so there is nothing
                             # to decide at apply time. A project imports this OR backlog-core,
                             # never both; the chunk's own header states that fork.
 fork: git-flow-squash       # the ADR-0002 default and, since ADR-0013, the only variant.
-                            # Exactly one fork is ever imported.
+                            # Exactly one, and it is imported nowhere: the engine names it as a
+                            # Skill in both adapters (`/git-flow-squash`, `$git-flow-squash`).
 templates:                  # the tracker CONVENTIONS arrive via the tracker-github @import. These
                             # two stamped assets are host-neutral pointers, both reached through
                             # the contract: the canonical tracker pointer for skills that look up
@@ -54,11 +57,8 @@ knobs:
     smoke: "<bring it up, confirm the affected surface, bring it down>"
     secret_scan: "<grep pattern; expect zero matches>"
     env: "<any required env>"
-  dev-practice:
-    test_roster: "<pointer to the authoritative required-coverage list, e.g. a spec section>"
-    spec_verify_src: "<source tree dir that spec [reuse] claims are grepped against>"
   parallel-work:
-    # parallel-work rides dev-base and is value-variant: it names two knobs the
+    # parallel-work is a Skill, not an import, and still value-variant: it names two knobs the
     # engine writes into <!-- knobs:parallel-work --> in the project's contract.
     worktree_path_prefix: "../<proj>-<n>-<slug>"        # where `git worktree add` puts each tree; the last path
                                                         # segment IS the task-branch name, so the worktree layout
@@ -67,7 +67,7 @@ knobs:
                                                         # own convention here, not this shape.
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
   implement-run:
-    # implement-run rides dev-base too. These four are the chunk's OWN defaults — the values that
+    # implement-run is a Skill too, read by marker. These four are its OWN defaults — the values that
     # apply wherever the block is absent, so a project stamped before this entry existed runs on
     # exactly them. Written out here because they are then the project's saved pick: the
     # coordinator states them at the start of a run and asks only where a ticket cannot fit them.
