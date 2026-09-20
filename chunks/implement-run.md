@@ -99,6 +99,13 @@ in one message, saying which acceptance reading you took and why, and act on the
 A ticket whose acceptance needs the owner's attended run stays open: the push is not the
 acceptance.
 
+**A criterion your run missed is the owner's to re-cost, and the ask must not make your reading
+the default.** *The criterion was wrong* is the predictable output of an overrun run, and it is
+sometimes true — but the deliverable is already on disk, so an ask shaped as *land it and decide
+later* installs your preference by silence, and nobody files a follow-up to undo it. Produce the
+alternative as an artifact the owner can diff, not as a number you describe, and leave the
+criterion unticked whichever they pick.
+
 **Never rewrite the ticket's body — append a comment.** `gh issue edit --body` and its equivalents
 replace a body wholesale, and the body is the spec, so an edit to tick one acceptance checkbox can
 silently take the spec with it. Leave the checkboxes for the owner, and put every observation,

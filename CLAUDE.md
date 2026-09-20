@@ -119,3 +119,11 @@ host, and nothing here depends on it ([ADR 0008](docs/adr/0008-public-private-sp
 - Both bootstrap scripts take the clone location from their own path. Nothing here may assume
   where the clone lives.
 - Run `.githooks/leak-guard.sh scan` before a push you care about, not only on the hook path.
+- **Never write a rule as a list of exemptions — name the gated set and relax the rest.** An
+  enumerated "these are exempt" sentence sits far from the clauses that add members, nothing
+  couples the two, and it goes stale in silence. In one ticket the same sentence inverted its own
+  polarity, then excluded the very operation it existed to exempt, then missed one added a line
+  below it, and an enumeration found four more — each caught by a different reader, none by a
+  check. A small closed gated set survives a clause being added; an allowlist does not. Where one
+  already exists, the cheap guard is a grep that enumerates the operations the body instructs and
+  asserts each is named on one side or the other.
