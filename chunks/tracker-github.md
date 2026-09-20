@@ -86,10 +86,14 @@ back its own push can still see `OPEN` seconds afterwards. Re-read
 
 **The closing record is a comment** — `gh issue comment <n> --body-file <f>` — carrying each
 acceptance criterion by number with its evidence, and the **commit SHA** of the tree that was
-reviewed — a SHA, never a branch name, so a base that moved after review is visible. The record
-is the tick. `gh issue edit --body` replaces a body wholesale and **the body is the spec**, so
-**state** never goes back into it. Two body writes are permitted, both spec changes rather than
-state: supersede-in-place, since citations resolve by number —
+reviewed — a SHA, never a branch name, so a base that moved after review is visible. **Post it
+after the last commit mutation**: an amend — the common one is fixing the footer to match the
+gate after the squash — rewrites the SHA, and one already posted to a sibling ticket is then
+dead, with the comment well-formed, `gh` reporting success and nothing resolving it. Re-read
+`git rev-parse --short HEAD` between the last commit and the first tracker write that cites it.
+The record is the tick. `gh issue edit --body` replaces a body wholesale and **the body is the
+spec**, so **state** never goes back into it. Two body writes are permitted, both spec
+changes rather than state: supersede-in-place, since citations resolve by number —
 `SUPERSEDED by #<n>. Was: "<original text>". <why it can no longer be observed>` — and adding
 an acceptance criterion to a ticket that has not started, which is how the rule below lands a
 hard requirement.
