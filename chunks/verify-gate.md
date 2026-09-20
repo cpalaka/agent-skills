@@ -24,5 +24,5 @@ the gate that loads it. Where none does, that is coverage **as inspection**, not
 **Docs synced** before the commit: `CONTEXT.md`, ADRs, any spec the project keeps, for new domain
 language or a load-bearing decision. Part of the gate, not a follow-up.
 
-Only a clean gate permits a commit (`git-commit-format`) or handoff. Seats: `implement-run`,
-slash-only so nothing lists it.
+Only a clean gate permits a commit (`git-commit-format`) or handoff. Integration: load
+`git-flow-squash`. Seats: `implement-run`, slash-only so nothing lists it.
