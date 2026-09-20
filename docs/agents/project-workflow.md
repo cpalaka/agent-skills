@@ -45,21 +45,25 @@ file as a confound, with file attribution as the discriminator.
 
 ## Issue tracker
 
-Work lives in GitHub issues on [cpalaka/agent-skills](https://github.com/cpalaka/agent-skills/issues),
-through the `gh` CLI. There is no board and no PR surface.
+Work lives in GitHub issues, driven through the `gh` CLI; the convention is the Chunk's, and the
+values under it are this repository's.
 
-- **Reading.** Open work is `gh issue list --label ready-for-agent`. Ignore every issue whose title
-  begins `Spec: ` — those are parents and close when their children do. The next ticket is the
-  lowest-numbered issue left whose `blockedBy` issues are all closed
-  (`gh issue view <n> --json blockedBy`, nested under `.blockedBy.nodes`). `gh issue list` lags a
-  fresh creation by seconds and returns a partial list silently, so confirm a new issue with
-  `gh issue view <n>`.
-- **Writing.** Progress, evidence and run records are **issue comments**, under the `implement-run`
-  chunk's rules for the closing record. Bodies and comments go through a temporary UTF-8 file and
-  `--body-file`.
-- **The leak guard does not see a `gh` write.** It scans the git object store only, so grep any
-  body or comment file against both pattern lists before posting (`CLAUDE.md` § Load-bearing
-  facts). Every `gh` write is a human-gated action.
-- **Closing.** The squash-merge and the run record close the ticket together, in one approval with
-  the push; a ticket whose acceptance needs the owner's own run stays open until they accept. The
-  git flow is unchanged — squash, per `chunks/git-flow-squash.md`.
+@~/.claude/chunks/tracker-github.md
+
+That import is external and carries the same one-time-approval caveat as the one in
+[`CLAUDE.md`](../../CLAUDE.md) ([ADR 0001](../adr/0001-import-from-home-chunk-delivery.md)); a
+seat opens `chunks/tracker-github.md` itself.
+
+The block below is maintained by hand, for the reason at the top of this file.
+
+<!-- knobs:tracker-github -->
+- REPO: cpalaka/agent-skills
+- RESULTS_DIR: none
+<!-- /knobs:tracker-github -->
+
+Two pointers sit beside it, hand-written here for the same reason:
+
+- **`docs/agents/issue-tracker.md`** — the canonical tracker pointer. `code-review`'s Spec axis
+  reads it by path; `triage`, `to-tickets` and `wayfinder` expect it by description.
+- **`docs/agents/triage-labels.md`** — the map from the triage-label roles skills speak in to this
+  tracker's gate labels.
