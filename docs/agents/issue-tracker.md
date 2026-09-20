@@ -1,10 +1,11 @@
 # Issue tracker
 
-<!-- HAND-WRITTEN. This repository stamps nothing
-     (project-workflow.md § Hand-written, and it stays that way).
-     Template home when the github Profile exists (#28):
-     init-project/profiles/github/templates/issue-tracker.md. Conventions are authoritative in
-     chunks/tracker-github.md — a pointer, not a second copy. -->
+<!-- HAND-WRITTEN, and authoritative for THIS repository. This repository stamps nothing
+     (project-workflow.md § Hand-written, and it stays that way), so nothing generates this file.
+     init-project/profiles/github/templates/issue-tracker.md stamps the same file into a project
+     that IS stamped; it is the shape this one mirrors, not its source, and neither is generated
+     from the other. Conventions are authoritative in chunks/tracker-github.md for both — a
+     pointer, not a second copy. -->
 
 GitHub issues, all through `gh`; the repository is the `REPO` knob in
 `docs/agents/project-workflow.md`. The convention (the label axes, the frontier, the closing

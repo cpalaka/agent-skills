@@ -106,6 +106,11 @@ Four target families, and no others:
 A `states:` claim is decided by reading the file and asking whether it *behaves* as claimed, never
 by string match; a missing file fails the form; a claim may not contain `;`, which separates targets.
 
+**A `## Bespoke setup` section may declare itself a precondition.** One HTML comment on the line
+above its heading, `<!-- precondition -->`, moves that section out of step 5 and into **step 0**,
+before anything is written. It is the recipe's second marker, unrelated to `<!-- requires: -->`
+above, and step 0 states its rule and its grep.
+
 The comment is the Profile's and is never emitted: **every mode strips it on insertion.** A bullet
 with no comment presupposes nothing and is always inserted. Init inserts every bullet (step 1); the
 check that reads the comments is Migrate mode's **fragment target check** (its step 6).
@@ -147,6 +152,28 @@ target — `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md .claude/agent
 .claude/settings.local.json`, plus any path the Profile's `templates`/recipe touches — and for each
 thing that exists, plan to merge or skip. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
+
+**A Profile's recipe may declare a precondition step, and it runs here**, before step 1 writes
+anything. The engine fixes the position; the recipe says only what the step checks and what happens
+when the check fails. **This is the inverse of step 6's freeze**, which runs where the recipe puts
+it — a precondition's place is not the recipe's to choose, because **no step in this algorithm
+removes a line it wrote**, so a check whose failure should stop the stamp is worth nothing once the
+first write has landed.
+
+**A precondition is declared by a marker, never by how its heading is worded.** The line
+`<!-- precondition -->` immediately above a `##`/`###` heading in `## Bespoke setup` makes that
+section one; a section without the marker is an ordinary recipe step and runs at step 5, however its
+heading reads. **Read the set off a command, not off the recipe's intent** — a prose heading that
+merely *says* it runs early is the failure this marker exists to prevent, reading as a precondition
+to a careful reader and as an ordinary step to a literal one:
+
+```sh
+grep -A1 '^<!-- precondition -->$' profiles/<type>.md | grep '^#'
+```
+
+**The adjacency is the whole check**, so do not use a bare `grep -c` for the marker: a Profile that
+*mentions* the marker in its own prose matches that and is not thereby declaring anything. The
+marker is the Profile's and is never emitted.
 
 **1. Write the contract, the two adapters and the gate seat.** Fragments go in whole — init writes
 the targets a `<!-- requires: -->` comment names, so the fragment target check does not run here.
@@ -244,6 +271,10 @@ under `~/.claude/skills` or `~/.agents/skills`); where it is not, skip that read
 
 **5. Run the Profile's `## Bespoke setup` recipe.** The escape hatch for what a manifest can't
 express — a CLI `init`, editing `project.godot`, a pinned tool install. Empty for simple types.
+**Minus every section the recipe marks `<!-- precondition -->`, which step 0 has already run** —
+those are the one part of the section this step does not re-run, and re-running a check whose whole
+point was to fire before the first write buys nothing. Everything else in `## Bespoke setup` runs
+here, in the order the recipe gives it.
 
 **6. Lockfile-freeze (when the recipe declares pinned installs).** Install once into a local tree,
 **commit the lockfile, not the modules**, gitignore the module tree (append with exact-string
@@ -460,6 +491,8 @@ later creates returns through the Profile's parity check, not through either mod
 ## Profiles
 
 Read `profiles/` for the roster. Today: `backlog.md` (board-driven — dev-base + the fork +
-`backlog-core`), `web.md` (the npm-shaped toolchain gate; app directory, secrets location and
-task-branch convention answered at apply time), `godot.md` (the heavy bespoke recipe — MCP install,
-`project.godot` edits, lockfile-freeze — and its own Template assets).
+`backlog-core`), `github.md` (GitHub-issue-driven — `tracker-github`, the two pointer Templates, a
+remote check before the first write and the thirteen-label mint), `web.md` (the npm-shaped toolchain
+gate; app directory, secrets location and task-branch convention answered at apply time), `godot.md`
+(the heavy bespoke recipe — MCP install, `project.godot` edits, lockfile-freeze — and its own
+Template assets).

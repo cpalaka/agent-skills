@@ -120,8 +120,8 @@ Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adap
 not write the diff ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). It also
 stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
 recipe. Adding a project type means adding a `profiles/<type>.md`; the engine never changes
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `backlog`, `web`, and `godot`
-Profiles.
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `backlog`, `github`, `godot`, and
+`web` Profiles.
 
 **When to use:** setting up a new project, adopting the Chunk library in an existing one, or
 adding a new project type.
