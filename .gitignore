@@ -23,6 +23,4 @@ __pycache__/
 # these reach `leak-guard.sh scan`, and a ticket's own notes carry absolute home paths — so the
 # tree gate goes permanently red and stops carrying information (measured 2026-09-19: 22 hits from
 # three working files, against 2 from the planted canary). Durable output belongs on the ticket.
-# TRAP this creates: `scan` skips ignored paths, so an issue body drafted HERE screens clean
-# whatever it holds. Draft anything destined for a `gh` write at the repo root, scan, then delete.
 .scratch/
