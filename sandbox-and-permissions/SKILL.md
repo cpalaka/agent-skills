@@ -231,9 +231,17 @@ The sandbox or harness causes each of these, but none prints a denial.
   `git log`/`reflog` before assuming loss.
 - **Locale:** macOS system bash is 3.2 (no `declare -A`); `sort` dies on non-ASCII input
   without `LC_ALL=C`, and `comm`/`join` must run under the SAME locale as the sort that fed
-  them — mismatched collation silently misaligns.
+  them — mismatched collation silently misaligns. Two more that fail **green** rather than
+  loudly: macOS `awk` in a UTF-8 locale can die `towc: multibyte conversion failure` partway
+  through non-ASCII input, printing **nothing** and exiting **0** — a silent miss, not an
+  error, so pin `LC_ALL=C` on any `awk` reading prose; and bash 3.2 bracket ranges are
+  **collation**-ordered there, so `case $s in *[A-Z]*)` matches `abc`. Use
+  `LC_ALL=C grep '[A-Z]'` where the test must be codepoint-ordered. Both bit the same script
+  on 2026-09-20 — one made a lookup tool return nothing in an ordinary terminal for a day, the
+  other would have made a correct scan report a false red — and a harness running with `LANG`
+  unset reads green on both, so the suite is not the place you will find out.
 
-(measured 2026-07-26, 07-29, 07-30, 08-02, 08-25, 08-30; each burned a real session)
+(measured 2026-07-26, 07-29, 07-30, 08-02, 08-25, 08-30, 09-20; each burned a real session)
 
 ## Not every hang is a denial
 
