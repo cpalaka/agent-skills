@@ -58,7 +58,9 @@ that is local config, not tracked — a fresh clone has neither until someone se
   *beside* the draft bodies in one scan, so a single run proves the list live and the bodies clean —
   and read the match *count*, since the exit status cannot separate your canary from a real hit
   (2026-09-18: four run-record bodies, one templated calibration sentence, `5 match(es)` where 1
-  was expected). Write it as "a known-bad drawn from the configured author's name", never the
+  was expected) — and wire that count to the write: the `gh` call runs inside a test of the
+  count, never `&&`-chained after a printed one (2026-09-19: a body at three matches went up on
+  #44 that way). Write it as "a known-bad drawn from the configured author's name", never the
   literal.
   **A calibration that plants a pattern's own text certifies nothing.** The identity entries
   reach `grep -E` as regexes and 43 of the 48 do not match their own text, so planting one raw
