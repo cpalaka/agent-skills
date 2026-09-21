@@ -134,8 +134,15 @@ partial, fragment; situational chunk (a contradiction — that body is a Skill).
 **floor**:
 The text a session or a seat receives on every turn without asking for it: the global instruction
 file, the project's Host adapter, the project contract and the Chunks they import. Measured in
-words per project by `wc -w`, global file excluded, against the ceiling ADR 0014 sets and ADR
-0015 amends. Distinct from the **host floor** — the system prompt, tool schemas and skill roster
+words per project by `wc -w`, global file excluded. Composed **per adapter**: the Host adapter plus
+every contract it `@`-imports, then `dev-base` and the four Chunks
+([ADR 0016](docs/adr/0016-floor-ceiling-is-acceptance-time.md) § 5). Its **ceiling is
+acceptance-time** — a condensing ticket states and measures its own target, and no standing number
+is inherited (ADR 0016 § 1, amending ADR 0014 § 7 and ADR 0015 § 2). A measurement also states its
+**basis** — source, emitted or live (ADR 0016 § 7). The standing gates and their numbers are ADR
+0016 § 2's table and this repository's floor check; they are not restated here, because a glossary
+that copies a gate's value is a second store that changes every time the gate does. Distinct from
+the **host floor** — the system prompt, tool schemas and skill roster
 a host adds regardless, which this repo cannot cut and which a seat-token probe reports beside
 the floor, never inside it.
 _Avoid_: always-on set, baseline, preamble; overhead (the host's part, not this one).

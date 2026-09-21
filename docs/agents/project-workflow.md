@@ -32,10 +32,14 @@ and reads the block below by marker. This block carries what varies here.
   names, and resolution checks on both hosts' symlinks; there is no test suite and no typecheck.
   **The floor check**, run before any commit here: `wc -w` over every file in `chunks/`, each
   condensed Chunk against 250 and `dev-base` against 80, the two tracker Chunks reported with no
-  target — **and the four-plus-bundle sum reported too**, because a per-file reading passes with
-  four files at 249 while the floor grows, and ADR 0014 § 7 (amended by ADR 0015) exists
-  because nothing warned while it grew. A red reading is a decision the closing record names,
-  not a block.
+  target — **and the four-plus-bundle sum against 1,080**, because a per-file reading passes with
+  four files at 249 while the floor grows, and ADR 0014 § 7 (amended by ADR 0015, then by
+  [ADR 0016](../adr/0016-floor-ceiling-is-acceptance-time.md)) exists because nothing warned while
+  it grew. 1,080 is the constructed maximum of the per-file caps, not a number fitted to the
+  measurement, so the two are read as the pair ADR 0015 § 4 requires. The per-project floor ceiling
+  is **not** read here and is read nowhere else either: ADR 0016 § 1 makes it acceptance-time, and
+  § 4 declines to install an adapter-plus-contract gate anywhere until one has a trigger that can
+  go green. A red reading is a decision the closing record names, not a block.
 - advisor: advisor
 <!-- /knobs:implement-run -->
 

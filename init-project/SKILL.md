@@ -339,7 +339,7 @@ engine writes neither ignore.** Run `git check-ignore -q .codex/config.toml` and
 project's `.gitignore`: both files are per-clone and machine-local, so one line each machine-wide
 covers every project; (e) **both hosts need a new session after an MCP or settings change** —
 nothing re-reads either mid-session; (f) any fresh-clone rehydrate command from step 6; (g) step 7's
-figures — the two halves of the auto-loaded pair and the chunk total; (h) anything the Profile
+figures — every measurement step 7 lists, not a subset named here; (h) anything the Profile
 recipe defers to an interactive editor step.
 
 ## Migrate mode
@@ -478,7 +478,9 @@ holds here (the godot recipe's Board section where `backlog/` exists) — in bot
   the one that silently vanishes otherwise: a board section exists in no pre-contract `CLAUDE.md`,
   so nothing it carries would ever reach a migrated project.
 
-**7. Run verify-after-write** (init step 7), byte gate included.
+**7. Run verify-after-write** (init step 7) **in full** — every measurement it lists, gates included.
+Named as the whole step rather than as a list of the parts that carry over, because a list here goes
+stale in silence each time step 7 gains a measurement, and this line is the one migrate mode reads.
 
 **8. Hand off with the ledger and the init handoff.** The ledger: every line moved and where it
 went, every line flagged and why, every contract-fragment section offered for hand-adoption — a
