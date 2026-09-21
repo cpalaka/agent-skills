@@ -103,7 +103,12 @@ four `adapters:` fragments the engine inserts into those four at their markers. 
 the copy is partial and Profile-side only: godot's parity check diffs some of its `docs/` assets
 and the `claude` and `codex` fragments, while the `contract` and `gate_runner` fragments and all
 four engine-owned Templates are checked by nothing and drift unwatched in every stamped project
-([issue #17](https://github.com/cpalaka/agent-skills/issues/17)).
+([issue #17](https://github.com/cpalaka/agent-skills/issues/17)). One pair is unchecked by
+decision rather than by omission: the `github` Profile's `issue-tracker.md` and `triage-labels.md`
+Templates mirror this repository's hand-written `docs/agents/` pair and are deliberately divergent —
+both sides are pointers plus one table over the single-sourced `tracker-github` Chunk, so there is no
+second source for a convention to drift from, and a check would cost more than it saves
+([issue #43](https://github.com/cpalaka/agent-skills/issues/43)).
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
 **Fragment target check**:
