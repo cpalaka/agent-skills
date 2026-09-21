@@ -24,8 +24,10 @@ and reads the block below by marker. This block carries what varies here.
   change editing many Chunks at once takes one, because the checkout is the install and a
   half-rewritten library is live in every project the moment it touches disk.** It stages the edits
   into one squash; it is not isolation. Both hosts' symlinks keep pointing at the main checkout
-  while it runs, so a resolution check against them proves nothing until after the merge. Remove it
-  once it has landed and show `git worktree list` in the closing record.
+  while it runs, so a resolution check against them proves nothing until after the merge. It is also
+  a different absolute path — before trusting what a session rooted in one has loaded, read
+  § Issue tracker below, on external-include approval. Remove the worktree once it has landed and
+  show `git worktree list` in the closing record.
 - gate_runner: coordinator — this repository stamps no project-local agents, so no gate-runner seat
   resolves and the coordinator runs the gates and says so. The gates are the leak-guard scan
   (`.githooks/leak-guard.sh scan`), **the floor check** below, the word and count checks a ticket
@@ -62,11 +64,22 @@ values under it are this repository's.
 
 @~/.claude/chunks/tracker-github.md
 
-That import is external and carries the same one-time-approval caveat as the one in
-[`CLAUDE.md`](../../CLAUDE.md) ([ADR 0001](../adr/0001-import-from-home-chunk-delivery.md)); a
-seat opens `chunks/tracker-github.md` itself.
+**That import expands only where the host has approved external includes for this project path** —
+per absolute path, per machine, recorded as `hasClaudeMdExternalIncludesApproved` under this
+project's absolute-path entry in `~/.claude.json`, never in this repository.
+[ADR 0001](../adr/0001-import-from-home-chunk-delivery.md) settles how Chunks are delivered, not
+whether they load.
 
-The block below is maintained by hand, for the reason at the top of this file.
+**Claude Code: read the shape of your context, not its words.** Expanded, the Chunk arrives as an
+injected block of its own, under a `Contents of …` header ending in `chunks/tracker-github.md` —
+spelled absolute, never the `~/` form the `@` line uses. Unexpanded, no such block exists anywhere
+in your context. Any phrase quoted here would be in your context because this file is, so the
+block is the only honest discriminator. Present, the tracker convention is loaded and you may rely
+on it; absent, it is not — a dispatched seat reads absent even where the path is approved (#35) —
+and you open `chunks/tracker-github.md` yourself. (Codex expands no `@` line and reads the Chunk
+explicitly; nothing to check there.)
+
+The knob block below is maintained by hand, for the reason at the top of this file.
 
 <!-- knobs:tracker-github -->
 - REPO: cpalaka/agent-skills
