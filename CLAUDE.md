@@ -14,13 +14,19 @@ hand-written rather than engine-stamped, which says why:
 
 That is an external import, so it needs this project's one-time approval on a fresh session
 before it expands ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md)); until then the
-line is inert text, which looks identical to a loaded import. **A sub-agent has it worse**: this
-file reaches a dispatched seat with the import line *deleted*, so nothing marks the gap at all
-(measured 2026-09-17 by having a seat quote back what it received). A seat that needs the
-procedure, the knob values or the tracker convention opens all three files itself: the contract
-above, the `implement-run` Skill under whichever skill root this host uses, and
-`~/.claude/chunks/tracker-github.md`, which the contract imports one hop deeper and which no
-seat ever expands.
+line is inert text, which looks identical to a loaded import. **A dispatched seat is handed its
+parent's memoized hierarchy**, not a fresh walk — which is why #37's seats read the Chunk absent
+(their parent predated approval) while seven seats here received both hops, and why one
+dispatched after an edit was handed the paragraph that edit removed. Measured at the harness's
+own delivery record (#35). The seat boundary was never the variable.
+
+So a seat need not re-open the contract or the Chunk — but **check, and know what the check
+cannot tell you.** The block's presence (the contract's § Issue tracker test; if you cannot reach
+that file, absence is your answer) says the import expanded, never that it is fresh: the copy is
+the parent's session-start snapshot, so read disk for anything touching an edit made since.
+Reading absent, suspect approval first, a walk memoized before it second, the boundary last.
+Two things reached no payload: the `implement-run` Skill, which a seat needing the procedure
+opens itself, and block-level HTML comments — so a `<!-- knobs:… -->` marker is disk-only.
 
 ## Load-bearing facts
 

@@ -15,7 +15,9 @@ reached one at a time rather than through `dev-base`: the tracker Chunk by impor
 ## Execution and review defaults
 
 The `implement-run` **Skill** carries the procedure — it is slash-only, so a run loads it by name
-and reads the block below by marker. This block carries what varies here.
+and reads the block below by marker — **from the file, never from context**, because the loader
+strips every HTML comment on its own line from every injected copy (`CLAUDE.md` § the import
+paragraph). This block carries what varies here.
 
 <!-- knobs:implement-run -->
 - shape: subagents
@@ -54,8 +56,12 @@ frontier of the later bloat review (`/review-promotions`); a close-out commit ne
 **A prose deliverable is verified by an agent following it, never by re-reading it.** Everything
 here is prose an agent executes, so a ticket that changes a Skill, a Chunk or a Template closes on
 a playthrough against a throwaway target — "where did you guess, where did the text contradict
-itself, what did it name that does not exist" — and the Claude arm names the global instruction
-file as a confound, with file attribution as the discriminator.
+itself, what did it name that does not exist" — and the **dispatch** names the confound set,
+rather than leaving the arm to volunteer it. A Claude seat is handed the whole instruction
+hierarchy — both instruction files, this contract, the memory index, and the tracker Chunk where
+the path is approved — so the dispatch reads the seat's own delivery record and names what is in
+it, with file attribution as the discriminator. A Codex arm expands no `@` line and its set
+differs; read it rather than reciting this one.
 
 ## Issue tracker
 
@@ -75,9 +81,11 @@ injected block of its own, under a `Contents of …` header ending in `chunks/tr
 spelled absolute, never the `~/` form the `@` line uses. Unexpanded, no such block exists anywhere
 in your context. Any phrase quoted here would be in your context because this file is, so the
 block is the only honest discriminator. Present, the tracker convention is loaded and you may rely
-on it; absent, it is not — a dispatched seat reads absent even where the path is approved (#35) —
-and you open `chunks/tracker-github.md` yourself. (Codex expands no `@` line and reads the Chunk
-explicitly; nothing to check there.)
+on it; absent, it is not, and you open `chunks/tracker-github.md` yourself. A seat dispatched
+from a session that carries the block is handed it too (#35, measured at the delivery record);
+where one reads absent, suspect approval first, a parent walk memoized before it second, the
+seat boundary last. (Codex expands no `@` line and reads the Chunk explicitly; nothing to check
+there.)
 
 The knob block below is maintained by hand, for the reason at the top of this file.
 
