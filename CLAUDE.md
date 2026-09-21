@@ -67,8 +67,9 @@ that is local config, not tracked — a fresh clone has neither until someone se
   (2026-09-18: four run-record bodies, one templated calibration sentence, `5 match(es)` where 1
   was expected) — and wire that count to the write: the `gh` call runs inside a test of the
   count, never `&&`-chained after a printed one (2026-09-19: a body at three matches went up on
-  #44 that way). Write it as "a known-bad drawn from the configured author's name", never the
-  literal.
+  #44 that way). The shape is `out="$(scan)"; n="$(printf '%s' "$out" | grep -c BLOCKED)";
+  [ "$n" = 1 ] && gh …` — a test, not an `echo` of the count. Write it as "a known-bad drawn from
+  the configured author's name", never the literal.
   **A calibration that plants a pattern's own text certifies nothing.** The identity entries
   reach `grep -E` as regexes and 43 of the 48 do not match their own text, so planting one raw
   read `scan clean` over the tree holding it (measured 2026-09-17 gating issue #4). A known-bad
