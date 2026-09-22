@@ -194,6 +194,9 @@ the reason), and failed. Then end with this note, in the host's spelling:
   engine derives that path from its own resolved location, so both hosts read one file. To
   promote a source to auto-apply, add its marketplace name to `marketplaces` or its `owner/*`
   glob to `repos`.
+- **Deliberately deferred, not gaps:** `kepano/obsidian-skills` stays community (confirm-first),
+  and cadence is manual-only (no scheduled run). Confirm the user wants either reversed before
+  "fixing" it.
 - Set `GITHUB_TOKEN` in the environment to avoid GitHub rate limits on the clones.
 - **The engine needs only `python3`; the suite needs `pytest`, which a system `python3` often
   refuses to install.** From the skill directory (either host's path resolves to it):
