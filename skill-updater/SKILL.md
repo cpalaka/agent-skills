@@ -198,3 +198,15 @@ the reason), and failed. Then end with this note, in the host's spelling:
 - **The engine needs only `python3`; the suite needs `pytest`, which a system `python3` often
   refuses to install.** From the skill directory (either host's path resolves to it):
   `python3 -m venv .venv && .venv/bin/pip install pytest && .venv/bin/python -m pytest scripts/`.
+
+## `npx skills` CLI traps
+
+- **There is no dry run.** `check`, `update` and `upgrade` are one routine that applies every
+  change it finds (`-y` is hardcoded). Detect without applying: read `~/.agents/.skill-lock.json`,
+  sparse-clone each `source`, `diff -r` against `~/.agents/skills/<name>`.
+- **`add --skill a,b,c` silently installs nothing** — one `--skill` per call.
+- **A UTF-8 BOM on upstream `SKILL.md` fails `update` opaquely** ("✗ Failed to update") and stays
+  pending forever — upstream bug, skip it.
+- **Noise, not failure:** "PromptScript does not support global skill installation" during `add`;
+  and a SHA-pinned plugin showing an update that `claude plugin update` calls already-latest —
+  trust the CLI.
