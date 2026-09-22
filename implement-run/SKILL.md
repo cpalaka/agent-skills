@@ -50,6 +50,10 @@ tracker chunk sets, or the project's own inline rule.
 State the role this session is on — Planner is the metered one — and if it is not Builder, ask the
 owner to switch, continuing on Planner only if they say so. Read the body for the slot-2 marker.
 
+**A stateful editor is a second writer — close it for the dispatch window.** Its in-memory flush
+lands after the gates read the tree, so stale state passes green. Reopen it after standdown, and
+do not commit inside that window; under a worktree this lapses.
+
 **Three slots**, each announced.
 
 1. **Pre-dispatch**, always — spawned or held (Fallback): one pass over the drafted spec, whose

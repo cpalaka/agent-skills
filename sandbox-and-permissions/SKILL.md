@@ -188,7 +188,16 @@ run time. Use tool-native forms (`git diff REF -- file`) or `$TMPDIR` files — 
 
 ## Silent Bash traps — no denial, no error, wrong result
 
-The sandbox or harness causes each of these, but none prints a denial.
+None of these prints a denial. Most are sandbox- or harness-caused; the first is plain shell
+semantics that fails the same silent way.
+
+- **`VAR=value cmd "$VAR"` passes an EMPTY argument.** The assignment prefix applies to `cmd`'s
+  environment, but `"$VAR"` is expanded by the CURRENT shell *before* `cmd` runs — so it expands to
+  whatever `VAR` was already, usually nothing. `GODOT=/path tool "$GODOT" --import` hands `tool` an
+  empty binary argument; the run dies early, and **a diagnostic-grep over its output reads CLEAN** —
+  a gate that passes on a command that never executed. Export on its own line (`export VAR=value`,
+  then `cmd "$VAR"`), or have the tool resolve the value itself. The prefix form is only safe when
+  the command reads `VAR` from its own environment rather than taking it as an argument.
 
 - **Here-strings (`<<<`) and heredocs need a `/tmp` temp file the sandbox denies**, so a loop
   fed by one runs ZERO times with no loop-level error. Use `< <(printf '%s\n' "$VAR")`.

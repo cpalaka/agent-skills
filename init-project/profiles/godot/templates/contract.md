@@ -46,29 +46,28 @@
 
 ## godot-ai addon (vendored, TRACKED)
 
-`addons/godot_ai` is a plain vendored copy of upstream `hi-godot/godot-ai` at tag
-*<Fill at init: the tag checked out before vendoring.>*, **committed to git** (the version here must equal
-`addons/godot_ai/plugin.cfg`) — the checked-out tag pins BOTH the addon and the Python MCP server the
-dock fetches from PyPI via `uvx` (`uv` must be on PATH).
+`addons/godot_ai` is a vendored copy of upstream `hi-godot/godot-ai` at tag
+*<Fill at init: the tag checked out before vendoring.>*, **committed to git** — that tag pins both
+the addon and the Python MCP server the dock fetches from PyPI.
 
-**Since 3.2.4 the dock configures the MCP client itself, at USER scope** (measured 2026-09-02): on
-first enable it writes a stdio entry (`uvx --from godot-ai==<version> godot-ai attach --port 8000
---ws-port 9500 --disable-telemetry`) into the host's user-scope MCP config and deletes any
-project-scope `godot-ai` entry. Each host has its own such file — **your adapter names yours** — and
-each hardcodes the ports. **Ports are RESOLVED, not fixed:** the plugin walks on collision
-(`godot_ai/http_port` / `godot_ai/ws_port` EditorSettings override), so one dock port walk strands
-every host at once. **Apply a port fix to every host's user-scope config**, by re-running the dock's
-client setup where the dock can write that file and by hand where it cannot; fixing one host leaves
-the others pointing at a dead port. Never hardcode `8000`/`9500` in a probe or a kill recipe — a
-stale port can mislead a check into killing an unrelated process.
+**The dock registers each MCP client itself, at USER scope**, writing a generated `godot-ai attach`
+stdio entry into that host's own config — **your adapter names yours** — and deleting any
+project-scope `godot-ai` entry. **Ports are RESOLVED, not fixed:** the plugin walks them on
+collision, so one walk strands every host at once. **Apply a port fix to every host's user-scope
+config**, by re-running the dock's client setup where it can write that file and by hand where it
+cannot. Never hardcode `8000`/`9500` in a probe or a kill recipe — a stale port can mislead a check
+into killing an unrelated process. Telemetry is ON by default: set `GODOT_AI_DISABLE_TELEMETRY=true`
+before first launch.
 
-Project-scope MCP config carries no godot-ai entry on any host: it lists only godot-mcp and
-minimal-godot. `GODOT_AI_DISABLE_TELEMETRY=true` is set before first launch (telemetry is ON by
-default; the setting persists once written).
-
-**The addon self-updates in-editor** (gotcha #116) — that is why it is tracked, not ignored: an
-update lands as a diff you accept deliberately (`chore(mcp): vendor godot-ai X.Y.Z`), bumping the
-version line above in the same commit. Re-read `git status` before any merge.
+**The addon updates itself in-editor** — one button in the dock rewrites the whole tree, and it
+rewrites `project.godot` and `.mcp.json` on its own schedule (gotcha #116). That is why it is
+tracked, not ignored: the update lands as a diff you accept deliberately
+(`chore(mcp): vendor godot-ai X.Y.Z`), bumping the version above in the same commit, and
+**no project gate reads `addons/`** — the gotcha scan and `secret_scan` both exclude it — so
+`git status` is the only thing that announces it. **Do not hand-verify the release**: the addon
+authenticates the signed manifest, the archive inventory and a post-restart tree hash against the
+key in the *running* plugin (`utils/release_verifier.gd`). The one path that skips all of it is
+overlaying a source checkout on the tree, so never do that.
 
 ## Running
 
