@@ -53,10 +53,8 @@ for a coordinator — is the only Planner seat inside an implementation run.
   screenshot is never returned to the parent, so a visually-AC'd task comes back reporting success
   with nobody having seen the page, and the acceptance passes unverified. Visual and feel work is
   therefore the one class that runs **attended**, not in a wave: do the browser pass yourself
-  rather than punting "eyeball this" to the owner. (Driving it: the `errors` buffer is cumulative
-  and `--clear` is a **no-op**, so run `close --all` before each `open` or a page inherits the
-  previous page's errors and attribution is wrong; and some framework errors — SSR, hydration —
-  surface on `errors`, never on `console`, so a clean `console` is not a clean page.)
+  rather than punting "eyeball this" to the owner. Load `agent-browser-gotchas` before driving it:
+  several of its failures report success.
 - **A seat runs its definition as it stood at session start.** The snapshot survives a mid-session
   edit, and survives that edit merging to `main`. Nothing warns, because a seat applying a stale
   body reports nothing unusual. So a run that changes a seat definition can still validate it. Tell
