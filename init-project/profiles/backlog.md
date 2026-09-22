@@ -119,8 +119,9 @@ the repo root.)
      free-form (`-l a,b`) and emerge organically. After seeding, retire the old queue
      homes (point roadmap docs/memories at the board; never maintain two queues).
 
-5. **Adoption commit.** Commit the `backlog/` files by explicit path + the four emitted files
-   (`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md` and `.claude/agents/gate-runner.md`)
+5. **Adoption commit.** Commit the `backlog/` files by explicit path + the five emitted files
+   (`CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md`, `docs/agents/ADDING.md` and
+   `.claude/agents/gate-runner.md`)
    plus the two stamped `docs/agents/` pointers as one adoption commit. `auto_commit: false` means task-file changes
    always ride along with code commits thereafter (one task-file change per code commit).
 

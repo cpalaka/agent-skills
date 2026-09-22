@@ -10,8 +10,9 @@ description: Scaffold (or migrate) a dev project onto the Chunk library, driven 
 new cross-cutting rule is a new `chunks/<name>.md` (plus `dev-base.md` where it is universal). The
 engine and the `dev-base` bundle are stable; only Profiles grow. (ADR 0003.)
 
-**Every Profile emits the same four agent-facing files:** one shared **contract**, two thin **host
-adapters** over it (ADR 0009), and the project's **gate-runner seat** at
+**Every Profile emits the same five agent-facing files:** one shared **contract**, its
+**admission protocol** at `docs/agents/ADDING.md`, two thin **host adapters** over the contract
+(ADR 0009), and the project's **gate-runner seat** at
 `.claude/agents/gate-runner.md`, which re-runs the verify gate for a coordinator that did not write
 the diff (ADR 0011). Knob blocks live in the contract, host mechanics live in the adapters, and
 neither adapter carries a project rule.
@@ -32,7 +33,8 @@ fork: git-flow-squash      # exactly one git-flow variant, and squash is the onl
                            # imported: the fork is a Skill, emitted into BOTH adapters' skill
                            # lists — `/git-flow-squash` on Claude, `$git-flow-squash` on Codex.
 templates: []              # Template assets to stamp: [{src, dest, refresh?}]
-adapters:                  # optional: this type's fragments for the four engine Templates.
+adapters:                  # optional: this type's fragments for the four Templates that take
+                           #   one. `templates/ADDING.md` takes no fragment — it is stamped whole.
   claude: adapter-claude.md   #   inserted at <!-- profile:claude-mechanics --> in CLAUDE.md
   codex:  adapter-codex.md    #   inserted at <!-- profile:codex-mechanics --> in AGENTS.md
   contract: contract.md       #   inserted at <!-- profile:contract-sections --> in the contract
@@ -119,18 +121,28 @@ check that reads the comments is Migrate mode's **fragment target check** (its s
 
 ## The engine-owned Templates
 
-`templates/` beside this file holds the four Templates every Profile emits. They are engine-owned:
+`templates/` beside this file holds the five Templates every Profile emits. They are engine-owned:
 a Profile customises them through `adapters:` fragments and knob values, never by shipping its own
 copy.
 
 | Template | Stamped to | Tokens |
 |---|---|---|
 | `templates/project-workflow.md` | `docs/agents/project-workflow.md` | `{{PROJECT_NAME}}`, `{{KNOB_BLOCKS}}` |
+| `templates/ADDING.md` | `docs/agents/ADDING.md` | *(none — stamped whole)* |
 | `templates/CLAUDE.md` | `CLAUDE.md` | `{{PROJECT_NAME}}`, `{{IMPORT_LINES}}` |
 | `templates/AGENTS.md` | `AGENTS.md` | `{{PROJECT_NAME}}`, `{{CHUNK_READ_LIST}}` |
 | `templates/gate-runner.md` | `.claude/agents/gate-runner.md` | `{{PROJECT_NAME}}` |
 
-- **`{{PROJECT_NAME}}`** — the project's own name. Asked **once**, reused in all four.
+**`templates/ADDING.md` is the contract's admission protocol** — the reader test, the 16,384-byte
+cap step 7 gates, and what to do when a ticket's acceptance criterion demands a contract edit the
+test rejects. It is load-on-reference and carries no token, so it is stamped whole; the contract
+Template's header holds the one always-loaded line that points at it. **Skip if it exists**: a
+project that has tightened its own protocol keeps it, and the cost of skip-if-exists is the one
+step 7's gate-runner note already states — a later improvement reaches an already-stamped project
+only by hand.
+
+- **`{{PROJECT_NAME}}`** — the project's own name. Asked **once**, reused in every Template that
+  carries the token.
 - **`{{KNOB_BLOCKS}}`**, **`{{IMPORT_LINES}}`**, **`{{CHUNK_READ_LIST}}`** — derived in step 1: the
   tagged knob blocks in `knobs` order, the `@` import block in the order step 1 fixes, and the
   sentence naming the chunk files Codex must read.
@@ -150,8 +162,9 @@ blind-overwrites**, so a re-run against an updated Profile touches only what cha
 `CLAUDE.md` naming `~/.claude/chunks/…` and `AGENTS.md` naming `~/.codex/chunks/…` whichever host
 you are running on, so checking only the one your own host reads leaves the other adapter pointing
 at nothing, with no error at stamp time and none at the other host's next launch. Then inventory the
-target — `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md .claude/agents/gate-runner.md
-.claude/settings.local.json`, plus any path the Profile's `templates`/recipe touches — and for each
+target — `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md docs/agents/ADDING.md
+.claude/agents/gate-runner.md .claude/settings.local.json`, plus any path the Profile's
+`templates`/recipe touches — and for each
 thing that exists, plan to merge or skip. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
 
@@ -298,7 +311,7 @@ which versions — is Profile-leaf; only the godot Profile needs the mechanic to
 promoted until a second type does. **This is a mechanic, not a position in the sequence:** it runs
 where the recipe puts it, so read the recipe for the order and this step for what the freeze does.
 
-**7. Verify-after-write.** Re-inventory the expected outputs: the four emitted files exist; each
+**7. Verify-after-write.** Re-inventory the expected outputs: the five emitted files exist; each
 `@import` path resolves through the symlink; no stamped file still carries a `{{` token, an
 unconsumed `<!-- profile:… -->` marker, a `<!-- requires:` comment or a surviving `*<Fill at init:`
 prompt; no `##` heading in an emitted adapter has nothing under it. If the Profile sets a
@@ -314,10 +327,23 @@ the suite was empty.
 
 Then two measurements:
 
-- **The byte gate (it FAILS the stamp).** `wc -c AGENTS.md ~/.codex/AGENTS.md`; **each** figure must
-  be **≤ 32,768**, because the cap is per file, not across the loaded pair (measured 2026-09-04).
+- **The adapter byte gate (it FAILS the stamp).** `wc -c AGENTS.md ~/.codex/AGENTS.md`; **each**
+  figure must be **≤ 32,768**, because the cap is per file, not across the loaded pair (measured
+  2026-09-04).
   Over the cap, report both figures and **stop**: no silent trim, and not a stamp reported done.
   Codex's `project_doc_max_bytes` governs each auto-loaded file and truncates past it with no error.
+- **The contract byte gate (it FAILS the stamp).** `wc -c docs/agents/project-workflow.md`;
+  **≤ 16,384**. Same stop, same no-silent-trim. **This is a different kind of limit from the one
+  above and the two must not be reconciled**: the adapter cap prevents Codex truncating a file it
+  auto-loads, while the contract is never auto-loaded by that mechanism — it arrives through an
+  `@` import on one host and a mandatory read-list item on the other, so it can grow without limit
+  and pays full context cost in every session either way. The figure is a cost budget, not a
+  truncation guard. A fresh stamp lands around 10–11 KB, so this never fails day zero; it fails a
+  migrate of an already-bloated project and a re-run over one, which is when it is worth knowing.
+  Measured 2026-09-21 on the project this gate came from: the contract reached **47,873 bytes**,
+  46% over the *adapter* cap, while every figure step 7 collected stayed green — the gate was
+  measuring the 6 KB file and ignoring the 48 KB one it pointed at. `docs/agents/ADDING.md` carries
+  the protocol the project holds this budget with between stamps.
 - **The chunk total (recorded, never gated).** `wc -c` over the chunk files `AGENTS.md` names,
   summed. Those are tool-read on demand, outside the cap; the figure belongs in the handoff so a
   later reader knows what the adapter costs when it is followed.
@@ -375,7 +401,10 @@ a fact about when the project was stamped, not a gap the user must fill. Migrate
 say so.
 
 **3. Move the knob blocks verbatim** into the new `docs/agents/project-workflow.md`, under the
-engine's header, in the order they appeared.
+engine's header, in the order they appeared. **Stamp `templates/ADDING.md` to
+`docs/agents/ADDING.md` in the same step, whole and skip-if-exists** — the engine's header points
+at it, so a migrate that omits it emits a contract with a dangling link. Copying a tokenless
+Template is moving a file, not authoring prose, so it is in scope for this mode.
 
 **4. Move every project section verbatim** into the contract, after the knob blocks — same order,
 same prose.

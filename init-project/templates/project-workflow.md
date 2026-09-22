@@ -11,6 +11,10 @@ Dev-process rules are not here either: they come from the shared Chunk library, 
 `~/.claude/chunks` and `~/.codex/chunks` — edit a rule THERE, not here, and the edit reaches every
 project. The knob blocks below are what those Chunks read out of this file, by marker.
 
+**Every session on both hosts loads this file whole. Before adding to it, read
+[`ADDING.md`](ADDING.md)** — the reader test, the 16,384-byte cap, and what to do when a ticket's
+acceptance criterion says to record something here.
+
 {{KNOB_BLOCKS}}
 
 ## Project
