@@ -108,6 +108,7 @@ A status field, health endpoint, summary line, or your own report is computed fr
 | `tailscale ping` | `pong … 3ms` | **all** IP traffic on the host was blocked. Disco runs in userspace over any path and never touches routing or the firewall |
 | `git rev-parse HEAD` during a paused rebase | the upstream commit, matching `origin/<branch>` | your commit sat unapplied in the rebase; the rejection was three lines up |
 | the harness's "user rejected" on a tool call | rejected, not run | an interrupt arrived mid-flight and the write had already landed — a retried append duplicates silently |
+| `ffmpeg -v error -i X -f null -` (and `ffprobe` duration) | exit 0, empty stderr, full duration | zero audio frames decoded — the header claims the length. Gate on the `time=` ffmpeg reaches |
 
 - **A figure recovered from a summary of your own earlier work is a claim, not a measurement.** Context compaction keeps conclusions and drops the derivations that produced them, so a number that was wrong when written reads identical to one that was measured — and it sits in your own context rather than in a source you would think to re-check. Re-derive any figure before it enters a durable artifact: a ticket, a record, a commit message. Measured 2026-09-20 (#48): a summary carried an acceptance criterion's correction as "four should be two"; re-running the grep at both revisions gave three, and the wrong number was one edit from a published closing comment on a ticket whose whole subject is durable text naming things that no longer exist.
 
