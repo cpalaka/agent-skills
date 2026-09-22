@@ -13,7 +13,9 @@ Two roles, each defined by a property, not a model name — a rule naming a mode
   one whose subject is still being specified.
 
 No third role exists, and nothing cheaper. The meter, not the work's difficulty, is what you
-ration — which is why Builder is the default and Planner the exception.
+ration — which is why Builder is the default and Planner the exception. A Planner main loop
+rations its own reads too: delegate exploration, read only what adjudication needs, keep reports
+short.
 
 ## Which role a session runs on
 
