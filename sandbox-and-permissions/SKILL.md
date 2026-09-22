@@ -300,10 +300,36 @@ gate, in every session and every subagent. That is the whole risk model:
   let every write fall through.
 - **General rule:** never allowlist a broad or destructive glob. Specific, safe, read-shaped
   commands only. The destructive ops themselves (force-push, tag/remote deletion, `gh`
-  writes) are gated by the `git-confirm-destructive` chunk.
+  writes) are gated by the `git-confirm-destructive` chunk and, for git, the hook below.
 
 **Audit an existing allowlist against this** before adding to it — an entry that predates the
 rule is exactly as dangerous as one you'd add today.
+
+## The git gate is a hook, not a rule list
+
+`~/.claude/hooks/git-destructive-gate.py` (PreToolUse, `Bash`) replaced 232 `permissions.ask`
+rules with 29 start-anchored ones plus the hook, which parses the shell and gates git only in
+**command position**. Leading-`*` rules are substring matches on raw text — `Bash(*&& git stash
+push*)` fired on `grep -c 'git stash push --'`. **Never add one again**; extend `classify_git`,
+then `python3 git-destructive-gate.py --test`.
+
+**Not gated** — probe, don't trust a list (`printf '{"tool_name":"Bash","tool_input":{"command":"git add src/"}}' | python3 ~/.claude/hooks/git-destructive-gate.py`;
+empty = not gated): plain `git push` (`GIT_GATE_PLAIN_PUSH=1` flips it); `git add <dir>/` and
+`git add <path>`, since only `-A/--all/-u/.` are parsed — which is why "stage by explicit path"
+is a rule and not a guardrail; `git remote remove/rm/rename/set-url`. `scratchpad_only()` exempts
+a command whose every absolute/`~`/`$HOME` path is under `/private/tmp/claude-501/` or
+`/tmp/claude-501/` — **that exemption is how fixture work gets `branch -D`; don't ungate it
+globally.** Under auto mode Claude cannot edit this hook or `permissions.ask` even with a verbal
+grant: hand the owner an apply script.
+
+**Matching semantics.** Rules anchor at the command **start**: `Bash(git reset --hard*)` misses
+`git -C /path reset --hard`, which discarded a working tree on 2026-07-25 (v2.1.220). Compound
+commands match per-subcommand. Stripped before matching: `timeout time nice nohup stdbuf command
+builtin noglob` and bare `xargs`; **not** `npx`, `docker exec`, `direnv exec`, `mise exec`,
+`watch`, `setsid`, `flock`, `find -exec`. Precedence `deny > ask > allow`, max-wins; a hook's
+`"ask"` outranks a `Bash(git *)` allow too (2026-09-05, v2.1.261, controlled with
+`GIT_GATE_DISABLE=1`). Test by **side effect** in a scratch repo — did the file revert? — never
+exit code or self-report.
 
 ## `settings.local.json` merge contract — union, never clobber
 
