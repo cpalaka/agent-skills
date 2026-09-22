@@ -207,7 +207,10 @@ the reason), and failed. Then end with this note, in the host's spelling:
 - **There is no dry run.** `check`, `update` and `upgrade` are one routine that applies every
   change it finds (`-y` is hardcoded). Detect without applying: read `~/.agents/.skill-lock.json`,
   sparse-clone each `source`, `diff -r` against `~/.agents/skills/<name>`.
-- **`add --skill a,b,c` silently installs nothing** — one `--skill` per call.
+- **`--skill a,b,c` silently installs nothing** — space-separate (`--skill a b c`) or repeat the
+  flag. The agent id is `claude-code`; `-a claude` fails.
+- **`add` resolves no dependencies** — name every sibling skill in the one call. Keep the default
+  symlink install mode: this engine reads only `~/.agents/skills/<name>`.
 - **A UTF-8 BOM on upstream `SKILL.md` fails `update` opaquely** ("✗ Failed to update") and stays
   pending forever — upstream bug, skip it.
 - **Noise, not failure:** "PromptScript does not support global skill installation" during `add`;
