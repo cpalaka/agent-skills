@@ -219,6 +219,16 @@ parent's model.
 _Avoid_: delegate (acceptable shorthand for the implementer seat only), subagent (the host
 mechanism that fills a seat, not the seat), agent type (the host's field name).
 
+**seat tier**:
+Which seats a ticket's run dispatches, declared by a `Seats: light` or `Seats: full` line in the
+ticket body. **Light** is a documentation-and-records diff and keeps the implementer, the
+gate-runner and the Spec-axis reviewer; **full** is every seat, and the default when the line is
+absent, malformed, or contradicted by the ticket's named files or the implementer's diff. The
+`implement-run` Skill reads it.
+_Avoid_: gate tier (a project's own separate field for which gates a ticket runs; the two stay
+separate so neither drifts), gate label (the tracker label for what a session may do with the
+ticket), bare "tier" (ambiguous with both and with the retired cost tiers), docs mode / lite run.
+
 **Coordinator**:
 The main-loop session running an implementation ticket: it writes the per-phase execution spec,
 dispatches the seats, adjudicates every finding against source, and merges. It writes no
