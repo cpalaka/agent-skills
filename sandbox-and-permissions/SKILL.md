@@ -92,6 +92,13 @@ Worse than a denial, which at least announces itself.
   a refspec. Keep write → use → verify in one sandbox mode, and put anything a verdict, commit or
   push rests on at a path inside the repo. When a tool prints its own subject (project path,
   commit, run id), check it is the one you meant.
+- **With no sandbox configured, a "sandboxed" attempt succeeds and measures nothing.** The
+  baseline sits in gitignored settings, so a checkout or machine without it runs Bash unsandboxed
+  (2026-09-23: `touch ~/…` and an outbound `curl` both succeeded). Before quoting a sandbox result,
+  read `.sandbox` in every settings file. To measure under it anyway, run headless:
+  `echo "<prompt>" | claude -p --settings '{"sandbox":{"enabled":true,"allowUnsandboxedCommands":false}}' --allowedTools=Bash`.
+  Keep the `=` and the piped prompt: the flag is variadic, so `--allowedTools Bash "<prompt>"`
+  swallows the prompt and exits `Input must be provided`.
 - **`ps`, `pgrep` and `kill -0` cannot see processes** (`sysmond service not found`), so
   `ps || echo dead` reports a live process dead. Recheck sandbox-off before re-dispatching its
   work. A monitor watches output-file **size growth** instead — reads are unrestricted — over N
