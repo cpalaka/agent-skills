@@ -147,7 +147,8 @@ node "<installPath>/scripts/codex-companion.mjs" adversarial-review --json --bas
 
 `<installPath>` is read at run time, since a version bump moves it: the `user`-scope element, or the
 sole one, of the `plugins["codex@openai-codex"]` list in `~/.claude/plugins/installed_plugins.json`.
-Sandbox off: the Codex CLI needs network egress and the certificate store, which the sandbox denies.
+Sandbox off: sandboxed, the companion failed before reaching Codex, on EPERM creating its state
+directory under `$CLAUDE_PLUGIN_DATA` (2026-09-23); network egress, never reached, is unmeasured.
 Focus: the ticket's acceptance criteria verbatim plus the execution spec's hard limits, staged in a
 file inside the repository and removed after. The script takes focus only as positional text, with
 no focus-file flag, and acceptance criteria carry backticks and quotes that an inline argument would

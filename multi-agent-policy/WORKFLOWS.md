@@ -70,19 +70,30 @@ Why rationing became pricing: ADR 0006, superseded by
 - **Nobody in the fan-out can see asymmetry in the harness you built.** Before synthesising,
   re-read your own design for coverage given to one subject and not the other.
 
-## Vendor lenses: the direct CLIs, never the plugin bridges
+## Vendor lenses: the review script and direct CLIs, never the forwarding agents
 
 On any reasonably sized diff, after the internal pass, run Grok and Codex reviews framed for
 refutation; vendor diversity catches what same-family redundancy cannot (2026-07-17). The
 implementing delegate reviewing its own diff is a conflict of interest. Hold fix commits until every
 lens returns, or a lens re-reports fixed defects as live.
 
-Measured on grok-build 0.2.0 and the Codex companion as of July 2026; a disagreement with the live
-CLI means this section is stale. Confirm each binary resolves first (`command -v grok codex`).
+Direct CLIs measured July 2026 (grok-build 0.2.0), Codex companion 1.0.6 on 2026-09-23; a
+disagreement with the live CLI means this section is stale. Confirm each binary resolves first
+(`command -v grok codex`).
 
-**The bridges (`grok-build:grok-delegate`, `codex:codex-rescue`) return a schema-valid
-placeholder**, so as a finder lens they read clean at zero coverage. The direct CLIs return real
-findings synchronously (~6–8 min):
+**Never take a lens through a forwarding agent:**
+`codex:codex-rescue` and `grok-build:grok-delegate`, barred from polling, return a placeholder
+for a backgrounded forward, its launch line alone, reading clean at zero coverage (their
+definitions, grok-build 0.2.1); neither may call its plugin's review commands.
+
+**Codex on a run's diff is the companion's `adversarial-review --json --base <fixed point>`**
+(`implement-run` § Review); the companion's review commands return in the foreground (5,824 bytes
+over a 6-file commit, 2026-09-23), `--background` notwithstanding. `--base` diffs only commits,
+`merge-base(HEAD, base)` to `HEAD`, while Codex reads the live tree: fix commits wait for the lens,
+and a past commit is reviewed from a temporary worktree detached at it.
+
+Grok, and Codex on a custom prompt, take the direct CLIs, returning real findings synchronously
+(~6–8 min):
 
 ```sh
 grok  --cwd <dir> --always-approve -p "$(cat PROMPT.txt)"
@@ -97,9 +108,10 @@ codex exec --skip-git-repo-check -s read-only -C <dir> "$(cat PROMPT.txt)" < /de
 - **The exit code is worthless; assert `wc -c` on the output.** Arm a bounded watcher that reports
   the byte count either way. `codex exec` writes its transcript to stderr and only the report to
   stdout, so 0-byte stdout mid-run is normal.
-- **Hand vendors a read-only snapshot** — `git archive <sha> | tar -x -C $TMPDIR/…` plus a
+- **Hand a direct CLI a read-only snapshot** — `git archive <sha> | tar -x -C $TMPDIR/…` plus a
   `git diff` patch — which pins the reviewed SHA.
-- **Run them sandbox-off** (xAI hosts are not allowlisted). Liveness is a growing rollout file,
+- **Run them sandbox-off** (xAI hosts are not allowlisted; the companion hit EPERM creating its
+  `$CLAUDE_PLUGIN_DATA` state directory, 2026-09-23). Liveness is a growing rollout file,
   never `ps`/`pgrep`, which report a live process dead under the sandbox.
 - **Vendor findings skip the skeptic panels**: adjudicate each against source in the main loop,
   spawning scoped verifiers for deep HIGHs.
