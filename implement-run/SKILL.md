@@ -185,13 +185,42 @@ Builder seat after the lenses reads the real diff and every review, and spends n
 
 ## Workflow shape
 
-Hand-off points only. Before the script, you draft the execution spec and take the plan stop; it
-runs the implementer, the certifying gate, the native axes and at most one fix round; on its return
-you run the Codex lens over its result, dispatch the critic, adjudicate, merge and write the record.
-It never merges, writes the tracker or asks a question — none of those reaches a human turn from
-inside it. The script's fix round precedes the lens, so the script leaves its work committed —
-`--base` reads only commits — and fix commits after the lens are yours. Its launch, resume and
-adoption rules land with the script, a later ticket; until then `subagents` runs.
+Before the script, you draft the execution spec and take the plan stop; it runs the implementer,
+the certifying gate, the native axes and at most one fix round; on its return you run the Codex
+lens, dispatch the critic, adjudicate, merge and write the record. It never merges, writes the
+tracker or asks a question: none reaches a human turn from inside it. Its fix round precedes the
+lens, so it leaves its work committed (`--base` reads only commits); fix commits after the lens
+are yours.
+
+**Launch `workflow.js` beside this file by path**,
+`Workflow({scriptPath: "<this Skill's directory>/workflow.js", args})`, from a session started
+with this Skill's directory added (`--add-dir`): the tool refuses a `scriptPath` outside the
+working directory and added directories, even after a Read of the file. Without that, run
+`subagents`; a mid-session `/add-dir` is unmeasured. Never inline it: an inline `script` is a
+transcription — measured, the transcribing session dropped comments — not the file.
+`args`: `{ticket, checkout, fixedPoint, specPath, gateTier, roster, gateRunner?}` — `ticket` the
+issue reference; `roster` the whole plan-stop line after strikes, as an array (a comma string
+throws) — the script logs and skips the entries it does not own; `gateRunner` the `gate_runner`
+knob's seat when it is not `gate-runner`; `specPath` outside the checkout or ignored there, since
+the implementer commits everything and the spec stays uncommitted (§ Seats). It returns
+`{gates, findings, implementerReport, fixRound, dropped, gateReports}`. **Resume**: stop the run,
+relaunch with `resumeFromRunId` and the original `args` verbatim — a resume drops them, and
+identical ones keep the journal's cache keys. **It needs a gate-runner seat the launching session
+can dispatch**, and a project-local seat resolves only in a session rooted in that project; a
+project on `gate_runner: coordinator` has none, so runs `subagents`.
+
+**At return**, read the checkout's `git status --porcelain` yourself: non-empty means the script's
+work is not all committed, so the scripted run does not count and you finish the ticket under
+`subagents` from the commits already made, committing nothing on its behalf. `fixRound.ran` with
+`gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): gate it
+yourself before the lens. Reconcile `dropped` against `journal.jsonl`, and check the diff against
+the seat tier: a light roster whose diff reads full takes the upgrade § Seat tier names, under
+`Deviations`.
+
+**Adoption**: `subagents` stays every project's default until three clean scripted runs —
+certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it),
+calls sent reconciled against results returned in `journal.jsonl`, each agent's model read from
+its `agent-<id>.jsonl` — counted from the project's run records.
 
 ## Close
 
