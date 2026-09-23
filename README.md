@@ -185,19 +185,18 @@ sessions, heartbeats, peer coordination) and `GRANTS.md` (hands-off execution gr
 
 ### parallel-work
 
-The two modes of doing more than one task at once — **waves** (a dependency-free fan-out to
-background subagents) and **attended worktrees** (a human driving two or more tasks hands-on) —
-and the decision rule that picks between them, whose first branch is that one task takes neither.
-Both modes are entered on an explicit signal only: a busy checkout is not one, and two sessions
-sharing a checkout is the failure both modes exist to avoid, so the Skill carries the tell and the
-list of git commands that destroy a peer's uncommitted work without printing anything. It also
-carries what a worktree does *not* buy you — filesystem isolation is not tool-state isolation, and
-a fresh interactive worktree inherits none of the gitignored host config the parent session runs
-on. Merge and Done are delegated to `git-flow-squash`, never inlined.
+What to do when more than one writer touches a repository. Two sessions sharing a checkout is the
+failure the Skill exists to avoid, so it carries the tell and the git commands that silently
+destroy a peer's uncommitted work. Beyond that, a decision rule picks between two modes, both
+entered on an explicit signal only — **waves** (a dependency-free fan-out to background subagents)
+and **attended worktrees** (a human driving two or more tasks hands-on). It also carries what a
+worktree does *not* buy you: git writes in one fail under the sandbox, filesystem isolation is not
+tool-state isolation, and a fresh interactive worktree inherits none of the gitignored host
+config. Merge and Done are delegated to `git-flow-squash`.
 
-**When to use:** on an explicit parallel-work signal — running 2+ tasks concurrently, fanning
-background subagents out over dependency-free work, any `git worktree` setup — and when a checkout
-turns out to have a second writer.
+**When to use:** when a checkout turns out to have a second writer, on an explicit parallel-work
+signal — running 2+ tasks concurrently, fanning background subagents out over dependency-free
+work — and before any `git worktree` setup.
 
 [`SKILL.md`](parallel-work/SKILL.md)
 

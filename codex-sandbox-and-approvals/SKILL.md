@@ -184,6 +184,15 @@ above, with **absolute** launcher paths, because a relative `cwd` resolves again
 **launch directory**, not the repo. Both land in the same place an untrusted project does: the
 server is simply absent from `codex mcp list`, never reported broken.
 
+## Subagent roles inherit unless the role file overrides
+
+Native subagents inherit the parent's sandbox, MCP servers and skills unless the role TOML
+overrides them. `mcp_servers = {}` parses but inherits every server; disabling one needs its full
+transport (`command`/`args` or `url`) plus `enabled = false`. Every scalar key must precede the
+first `[mcp_servers.*]` table, or it is parsed into that table and the role is dropped. Roles load
+at session start only — restart the parent after editing one. (Moved from `parallel-work`; not
+re-measured with this document's battery.)
+
 ## `codex sandbox` is not a usable probe here
 
 The `codex sandbox` subcommand looks like the right instrument for testing a policy without

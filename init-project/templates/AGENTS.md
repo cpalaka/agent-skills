@@ -63,8 +63,8 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   `parallel-work` knob); the coordinator is the only seat that merges, runs the gates, and writes any
   board row but the child's own.
 - **A child may not merge or run the gates**, whatever its sandbox permits. Role-file mechanics —
-  inheritance, disabling a server, when a role file is read — are in the `parallel-work` Skill's
-  Host differences block; personal roles live in `~/.codex/agents/`.
+  inheritance, disabling a server, when a role file is read — are in the
+  `codex-sandbox-and-approvals` Skill; personal roles live in `~/.codex/agents/`.
 
 <!-- profile:codex-mechanics -->
 
