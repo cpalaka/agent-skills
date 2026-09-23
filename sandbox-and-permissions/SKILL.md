@@ -113,7 +113,8 @@ Worse than a denial, which at least announces itself.
 - **A sandboxed `mktemp -d` can return empty, and `cd ""` succeeds in place**, so
   `D="$(mktemp -d)"; cd "$D"` builds its fixtures or runs `git init` in the repo you stand in, every
   step reporting success. Guard with `[ -z "$D" ] || [ ! -d "$D" ]` and refuse. Recover with
-  `git reset --soft` + `git checkout <commit> -- <file>`, reading `git reflog` first.
+  `git reset --soft` + `git checkout <commit> -- <file>`, reading `git reflog` first. A probe that
+  runs gated git in that directory: § Allowlist hygiene, the git gate.
 - **Background jobs:** `$CLAUDE_JOB_DIR/tmp` is denied although the job prompt points there; use
   `$TMPDIR`. The harness appends `< /dev/null` to foreground commands only, so a stdin-reading
   CLI hangs in a background one: put `< /dev/null` on the **first** stage (on a pipeline's last
@@ -172,8 +173,13 @@ nothing when the command is not gated. Ungated: plain `git push` (unless `GIT_GA
 `git add <path>` (only `-A`/`--all`/`-u`/`.` are parsed, which is why staging by explicit path is a
 rule), and `git remote remove/rm/rename/set-url`. `scratchpad_only()` exempts a command whose
 every absolute path lies under `/tmp/claude-<uid>/`; that is how fixture work gets `branch -D`, so
-keep the exemption scoped. `GIT_GATE_DISABLE=1` is the control. Under auto mode Claude cannot edit
-the hook or `permissions.ask`, even with a verbal grant: hand the owner an apply script.
+keep the exemption scoped. It reads the command **text**: `P="$(mktemp -d)"` names no path, and
+one `~` or other absolute path anywhere in the command voids it, so both prompt. A throwaway-repo
+probe writes the root literally — `mktemp -d /tmp/claude-<uid>/probe.XXXXXX`, since `$(id -u)`
+hides it too — and keeps every other path relative. A probe asking only what `add -A` would stage
+runs no `add`: `git ls-files --others --exclude-standard` lists the same untracked set, ungated
+(all three measured 2026-09-23). `GIT_GATE_DISABLE=1` is the control. Under auto mode Claude
+cannot edit the hook or `permissions.ask`, even with a verbal grant: hand the owner an apply script.
 
 ## `settings.local.json` merge contract
 
