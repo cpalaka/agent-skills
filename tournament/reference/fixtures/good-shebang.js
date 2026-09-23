@@ -18,6 +18,6 @@ export const meta = {
 
 phase('Generate')
 const r = (await parallel([
-  () => agent('draft a name', { model: 'claude-opus-5', label: 'gen:0' }),
+  () => agent('draft a name', { model: 'opus', label: 'gen:0' }),
 ])).filter(Boolean)
 return { names: r }

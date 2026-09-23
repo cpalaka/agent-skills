@@ -5,7 +5,7 @@ description: >
   project gates below — in the checkout the coordinator names, reporting each verdict line, its log
   and its matches verbatim. Dispatch after an implementer's handoff and after every fix round.
   Never edits, never diagnoses, never re-runs a gate to make it green.
-model: claude-opus-5
+model: opus
 effort: high
 tools: Read, Grep, Glob, Bash
 ---

@@ -14,8 +14,8 @@ export const meta = {
 
 phase('Generate')
 const r = await parallel([
-  () => agent('draft a name', { model: 'claude-opus-5', label: 'gen:0' }),
-  () => agent('draft another name', { model: 'claude-opus-5', label: 'gen:1' }),
+  () => agent('draft a name', { model: 'opus', label: 'gen:0' }),
+  () => agent('draft another name', { model: 'opus', label: 'gen:1' }),
 ])
 const names = r.map(x => x.name)
 return { names }

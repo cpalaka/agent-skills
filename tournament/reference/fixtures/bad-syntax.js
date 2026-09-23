@@ -5,6 +5,6 @@
 // swallowed. Measured 2026-09-05. Expected: exit 1, one `syntax error:` ERROR.
 export const meta = { name: 'syntax', description: 'unparseable tail', phases: [{ title: 'A' }] }
 phase('A')
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 const OOPS = ((((
 return r

@@ -49,8 +49,7 @@ for a coordinator — is the only Planner seat inside an implementation run.
   definition fits, pin the role on the dispatch itself.
 - **Effort is `high` on every seat** — in the definition's frontmatter, or on the dispatch where
   none fits. The Agent tool pins only `model`. No higher path. A seat dispatch never passes
-  `model`: the parameter takes family aliases only, and overrides the definition's probe-resolved
-  ID (the alias lag below).
+  `model`: it overrides the definition's pin.
 - **Drive `agent-browser` yourself, in the parent session — never a subagent.** A subagent's
   screenshot is never returned to the parent, so a visually-AC'd task comes back reporting success
   with nobody having seen the page, and the acceptance passes unverified. Visual and feel work is
@@ -69,13 +68,15 @@ for a coordinator — is the only Planner seat inside an implementation run.
 ## Model names: rules never, run artifacts always
 
 No durable rule — this Skill, a Chunk, a project contract, an ADR, either host's global file —
-names a model. A **run artifact** does: a seat definition and a workflow script each carry one
-concrete model ID, probe-resolved at authoring time, never an alias, which lagged a release and
-kept serving the prior generation (2026-07-24).
+names a model. A **run artifact** does: a seat definition and a workflow script each pin a
+family alias (`opus`, `fable`), which follows that family's latest release, never a versioned ID,
+which stays behind until someone re-probes it
+([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)). The Codex role files keep a concrete ID:
+whether Codex resolves an alias there is unmeasured.
 
-**Re-audit trigger.** On a model-family change, `context-hygiene`'s reverse pass walks the seat
-definitions' model fields beside the global-file rules it covers. A stale pin kept a retired seat
-dispatchable for weeks (2026-08-25); nothing else reads those fields.
+**Re-audit trigger.** A new version needs no edit. When the meter moves a role to a different
+family, `context-hygiene`'s reverse pass walks the seat definitions' model fields beside the
+global-file rules it covers; nothing else reads those fields.
 
 ## The run itself
 

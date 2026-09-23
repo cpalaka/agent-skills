@@ -13,7 +13,7 @@ phase('Filter')
 const candidates = [{ name: 'alpha' }, { name: 'beta' }, { name: 'gamma' }]
 const kept = candidates.map((_, i) => i)
 const AXES = [{ key: 'axis-a' }, { key: 'axis-b' }]
-const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'claude-opus-5', label: `screen:${a.key}`, schema: SCORES })))
+const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'opus', label: `screen:${a.key}`, schema: SCORES })))
 const totals = new Map(kept.map(i => [i, 0]))
 for (const res of screeningResults.filter(Boolean)) for (const s of (res.scores || [])) {
   // axesSent vs axesReturned is reconciled below and any shortfall sets filterNeedsAdjudication

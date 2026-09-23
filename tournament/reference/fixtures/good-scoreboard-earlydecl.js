@@ -32,11 +32,11 @@ const voteFault = (v, judge, cand) => {
 }
 const rawJudged = await pipeline(
   shortlist,
-  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
+  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
   (generated, idx) => {
     const c = candidates[idx]
     if (!generated) return { index: idx, name: c.name, score: null, votesSent: 0, votesReturned: 0, dropped: 0, errored: [], generationFailed: true }
-    return parallel(JUDGES.map(j => () => agent(`judge ${c.name} as ${j.persona}: ${j.rubric}`, { model: 'claude-opus-5', schema: JUDGE_SCHEMA })))
+    return parallel(JUDGES.map(j => () => agent(`judge ${c.name} as ${j.persona}: ${j.rubric}`, { model: 'opus', schema: JUDGE_SCHEMA })))
       .then(js => {
         const valid = [], errored = []
         let dropped = 0

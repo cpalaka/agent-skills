@@ -18,10 +18,10 @@ phase('Filter')
 // Filter stage — bracket mode
 const candidates = [{ name: 'alpha' }, { name: 'beta' }, { name: 'gamma' }]
 const allIdx = candidates.map((_, i) => i)
-const dedup = await agent('kill and merge', { model: 'claude-opus-5', label: 'filter:dedup', schema: KEEP })
+const dedup = await agent('kill and merge', { model: 'opus', label: 'filter:dedup', schema: KEEP })
 const kept = (dedup && dedup.keep ? dedup.keep : allIdx).filter(i => i >= 0 && i < candidates.length)
 const AXES = [{ key: 'axis-a' }, { key: 'axis-b' }]
-const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'claude-opus-5', label: `screen:${a.key}`, schema: SCORES })))
+const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'opus', label: `screen:${a.key}`, schema: SCORES })))
 const totals = new Map(kept.map(i => [i, 0]))
 for (const res of screeningResults.filter(Boolean)) for (const s of (res.scores || [])) {
   if (totals.has(s.index)) totals.set(s.index, totals.get(s.index) + s.score)
@@ -34,8 +34,8 @@ phase('Tournament')
 const JUDGES = [{ key: 'j1' }, { key: 'j2' }]
 const judged = await pipeline(
   shortlist,
-  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
-  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'claude-opus-5', schema: JUDGE })))
+  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
+  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'opus', schema: JUDGE })))
     .then(js => {
       const valid = js.filter(Boolean)
       const dropped = js.length - valid.length

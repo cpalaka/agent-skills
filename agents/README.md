@@ -46,12 +46,12 @@ done
 Check: `ls -l ~/.claude/agents ~/.codex/agents` — every entry should be a symlink into this
 clone, and no entry should name a seat that no longer exists.
 
-## When these model IDs were last true
+## Model fields
 
-`claude-opus-5`, `claude-fable-5-1` and `gpt-6-astra` were each resolved by probe on 2026-09-17 —
-the Claude two from the host's own model list, `gpt-6-astra` from `codex doctor`'s resolved model
-and the CLI's built-in catalog. A model-family change expires all three at once; re-probe them
-together rather than one at a time, and update this date with them.
+The Claude seats pin a family alias — `opus` for the Builder seats, `fable` for the advisor — so a
+new release reaches them with no edit ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)).
+The Codex seats still pin `gpt-6-astra`, resolved by probe on 2026-09-17 from `codex doctor`'s
+resolved model and the CLI's built-in catalog; re-probe it on a Codex model release.
 
 ## Editing here is live
 
@@ -65,7 +65,9 @@ served the old roster — the retired name answered and the new one was reported
 wrongly. An **edited** body, once the refresh lands, is served fresh (measured 2026-09-17 by
 having the seat quote its own changed line back). So a dispatch that contradicts what is on disk
 means the refresh has not happened yet, not that the file is wrong; the cost of assuming
-otherwise is re-editing a file that was already correct. The Codex side is a session input:
+otherwise is re-editing a file that was already correct. A changed `model:` line is verified from a
+fresh session (`claude -p`): the editing session kept serving the old pin for three dispatches over
+about ten minutes (2026-09-22). The Codex side is a session input:
 after touching a `.toml`, check discovery in a newly started task.
 
 Codex validates the role file's *shape* but not its *values*, measured on 0.153.3 by planting each

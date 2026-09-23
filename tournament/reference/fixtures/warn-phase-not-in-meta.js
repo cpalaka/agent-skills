@@ -5,5 +5,5 @@ phase('B')
 // run still completes. Filed `warn-` so the class contract (exit 0, WARN present) is what makes this
 // rule falsifiable: the file must stay at exactly ONE warning, or removing this rule leaves another
 // behind and the coverage check reports the rule uncovered.
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 return r

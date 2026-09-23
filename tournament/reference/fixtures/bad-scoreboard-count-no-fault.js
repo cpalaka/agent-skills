@@ -24,8 +24,8 @@ const shortlist = [0, 1]
 const JUDGES = [{ key: 'j1', persona: 'A' }, { key: 'j2', persona: 'B' }]
 const judged = (await pipeline(
   shortlist,
-  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
-  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'claude-opus-5', schema: JUDGE })))
+  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
+  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'opus', schema: JUDGE })))
     .then(js => {
       const jj = js.filter(Boolean)
       const votesReturned = jj.length

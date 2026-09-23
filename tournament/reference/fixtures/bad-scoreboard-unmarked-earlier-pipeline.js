@@ -18,7 +18,7 @@ const candidates = [{ name: 'alpha' }, { name: 'beta' }, { name: 'gamma' }]
 phase('Screen')
 const screened = (await pipeline(
   candidates.map((c, i) => i),
-  (i) => agent(`screen ${candidates[i].name}`, { model: 'claude-opus-5', label: `screen:${i}`, schema: KEEP })
+  (i) => agent(`screen ${candidates[i].name}`, { model: 'opus', label: `screen:${i}`, schema: KEEP })
 )).filter(Boolean)
 const dropped = candidates.length - screened.length
 const votesSent = candidates.length
@@ -29,8 +29,8 @@ phase('Tournament')
 const JUDGES = [{ key: 'j1' }, { key: 'j2' }]
 const judged = (await pipeline(
   shortlist,
-  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
-  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'claude-opus-5', schema: JUDGE })))
+  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
+  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'opus', schema: JUDGE })))
     .then(js => {
       const jj = js.filter(Boolean)
       return { index: idx, name: candidates[idx].name, score: jj.length ? jj.reduce((s, x) => s + (x.score || 0), 0) / jj.length : 0 }

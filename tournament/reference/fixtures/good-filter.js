@@ -15,7 +15,7 @@ const kept = candidates.map((_, i) => i)
 const keptSet = new Set(kept)
 const AXES = [{ key: 'axis-a' }, { key: 'axis-b' }]
 const SCREEN_SCALE = { min: 0, max: 10, integer: false }
-const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'claude-opus-5', label: `screen:${a.key}`, schema: SCORES })))
+const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'opus', label: `screen:${a.key}`, schema: SCORES })))
 const axesAnswered = screeningResults.filter(Boolean).length // run-level: how many axes came back at all
 const rows = new Map(kept.map(i => [i, { index: i, axesSent: AXES.length, axesReturned: 0, dropped: 0, errored: [], missing: 0, total: null }]))
 screeningResults.forEach((res) => {
@@ -45,7 +45,7 @@ const bracket = ranked.slice(0, 8)
 // Filter stage — scoreboard mode (dedup + screening identical to bracket mode)
 const keptSB = candidates.map((_, i) => i)
 const AXES_SB = [{ key: 'axis-a' }, { key: 'axis-b' }]
-const screeningResultsSB = await parallel(AXES_SB.map(a => () => agent(`screen ${a.key}`, { model: 'claude-opus-5', label: `screen2:${a.key}`, schema: SCORES })))
+const screeningResultsSB = await parallel(AXES_SB.map(a => () => agent(`screen ${a.key}`, { model: 'opus', label: `screen2:${a.key}`, schema: SCORES })))
 const rowsSB = new Map(keptSB.map(i => [i, { index: i, axesSent: AXES_SB.length, axesReturned: 0, dropped: 0, errored: [], missing: 0, total: null }]))
 screeningResultsSB.forEach((res) => {
   if (!res) { for (const r of rowsSB.values()) r.dropped += 1; return }

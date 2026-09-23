@@ -21,7 +21,7 @@ const JUDGE = { type: 'object', properties: { score: { type: 'number' } }, requi
 
 phase('Verify')
 const claims = ['a', 'b']
-const checks = (await parallel(claims.map(c => () => agent(`check ${c}`, { model: 'claude-opus-5', schema: VERDICT })))).filter(Boolean)
+const checks = (await parallel(claims.map(c => () => agent(`check ${c}`, { model: 'opus', schema: VERDICT })))).filter(Boolean)
 const claimsDropped = claims.length - checks.length
 log(`claim-verify: ${claimsDropped} dropped`)
 
@@ -34,8 +34,8 @@ const shortlist = [0, 1]
 const JUDGES = [{ key: 'j1', persona: 'A' }, { key: 'j2', persona: 'B' }]
 const judged = (await pipeline(
   shortlist,
-  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
-  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'claude-opus-5', schema: JUDGE })))
+  (idx) => agent(`generate ${candidates[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
+  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'opus', schema: JUDGE })))
     .then(js => {
       const jj = js.filter(Boolean)
       return { index: idx, name: candidates[idx].name, score: jj.length ? jj.reduce((s, x) => s + (x.score || 0), 0) / jj.length : 0 }

@@ -19,8 +19,9 @@ that always outranked it and the measurement that explains where the Planner rol
 
 - **`stages: {<stage>: {model, effort}}` is the pin, per stage.** It is how a deliberate placement
   is expressed, and it is why no posture argument is needed: a stage either names a role or runs on
-  the script's default. **Model IDs are concrete and probe-resolved**, never short aliases;
-  `tournament/reference/lint.mjs` ERRORs on a bare alias in any script.
+  the script's default. **The pin is a family alias**
+  (`opus`, `fable`), which follows that family's latest release
+  ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)).
 - **Planner belongs only on a stage whose agent count is fixed**, never on one that scales with the
   bracket. The completeness critic and its counter-critic are fixed at one or two agents regardless
   of diff size; a tournament's final synthesis is fixed at exactly one. Finders scale with the lens

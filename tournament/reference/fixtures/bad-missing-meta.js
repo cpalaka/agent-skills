@@ -5,5 +5,5 @@
 // Single-reason — no stage is announced either, so the phase/meta cross-check WARN stays out of
 // the way. Do not add one: a second diagnostic here would stop this fixture from establishing that
 // removing the meta rule, and only that, flips it.
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 return r

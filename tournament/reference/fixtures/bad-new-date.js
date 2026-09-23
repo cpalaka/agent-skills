@@ -4,5 +4,5 @@ phase('A')
 // generator reaches for when it wants a timestamp. A constructor WITH an argument is legal and is not
 // what this rule catches. Single-reason: nothing else in this file reds.
 const t = new Date()
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 return r

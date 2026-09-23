@@ -193,7 +193,7 @@ async function runFilter(body, fx) {
     'candidates', 'seedIndices', 'briefs', 'renderIndexed',
     'agent', 'parallel', 'log', 'BUILDER_MODEL', 'KEEP_SCHEMA', body + TAIL_FILTER)
   const out = await fn(fx.candidates, fx.seedIndices || [], {}, renderIndexed,
-    agent, fakeParallel, log, 'claude-opus-5', KEEP_SCHEMA)
+    agent, fakeParallel, log, 'opus', KEEP_SCHEMA)
   return { ...out, logs }
 }
 
@@ -207,7 +207,7 @@ async function runTourney(body, fx) {
     'candidates', 'bracket', 'briefs', 'renderConcept', 'MATCH_SCHEMA',
     'agent', 'parallel', 'log', 'BUILDER_MODEL', body + TAIL_TOURNEY)
   const out = await fn(fx.candidates, fx.bracket, {}, renderConcept, MATCH_SCHEMA,
-    agent, fakeParallel, log, 'claude-opus-5')
+    agent, fakeParallel, log, 'opus')
   return { ...out, logs }
 }
 

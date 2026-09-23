@@ -14,8 +14,8 @@ const CANDIDATES = [{ name: 'alpha' }, { name: 'beta' }]
 const JUDGES = [{ key: 'j1' }, { key: 'j2' }]
 const judged = (await pipeline(
   CANDIDATES.map((c, i) => i),
-  (idx) => agent(`generate ${CANDIDATES[idx].name}`, { model: 'claude-opus-5', label: `gen:${idx}` }),
-  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'claude-opus-5', schema: JUDGE })))
+  (idx) => agent(`generate ${CANDIDATES[idx].name}`, { model: 'opus', label: `gen:${idx}` }),
+  (generated, idx) => parallel(JUDGES.map(j => () => agent(`judge ${j.key}`, { model: 'opus', schema: JUDGE })))
     .then(js => {
       const jj = js.filter(Boolean)
       const judgesDropped = js.length - jj.length

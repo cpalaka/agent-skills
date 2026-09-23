@@ -143,7 +143,7 @@ async function runStage(body, fx) {
     'candidates', 'shortlist', 'renderConcept',
     'agent', 'parallel', 'pipeline', 'log', 'BUILDER_MODEL', body + TAIL)
   const out = await fn(fx.candidates, fx.shortlist, renderConcept,
-    agent, parallel, pipeline, log, 'claude-opus-5')
+    agent, parallel, pipeline, log, 'opus')
   return { ...out, logs }
 }
 

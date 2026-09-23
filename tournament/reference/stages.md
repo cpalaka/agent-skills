@@ -57,14 +57,10 @@ export const meta = {
   ],
 }
 
-// MODEL PINS, ONE PER CAPABILITY ROLE — every stage below references one of these consts, never
-// a bare alias.
-// Resolve each ID by PROBE at assembly time, not from memory: a CLI short alias (`opus`, `fable`)
-// can lag a release and keep serving the prior generation while every rule still reads correct
-// (measured 2026-07-24). Probe with `claude -p --output-format json` and read `canonicalModel`.
-// `lint.mjs` ERRORs on a bare alias anywhere in the emitted script.
-const BUILDER_MODEL = 'claude-opus-5' // FILL: re-probe at assembly time
-const PLANNER_MODEL = 'claude-fable-5'   // FILL: re-probe; used only by SYNTH_MODEL, see Synthesize Stage
+// MODEL PINS, ONE PER CAPABILITY ROLE — every stage below references one of these consts. Each is a
+// family alias, which follows that family's latest release (ADR 0017); set the family, not a version.
+const BUILDER_MODEL = 'opus'
+const PLANNER_MODEL = 'fable'   // used only by SYNTH_MODEL, see Synthesize Stage
 ```
 
 ---

@@ -48,9 +48,8 @@ if (!file) { console.error('usage: lint.mjs <script.js> | lint.mjs --selftest | 
 // WHAT IT PROVES IS NON-DELETION, NOT CLAUSE INTEGRITY, and the difference matters because ticket 13
 // was a NARROWING. A rule stays "covered" as long as SOMETHING still reds it, so shrinking a rule's
 // reach while leaving one fixture's case intact passes this gate silently. Measured 2026-09-18:
-// narrowing `forbid-node-api` from `(fs|child_process|path|os)` to `child_process` alone, and
-// `model-alias` from five aliases to `opus` alone, each leave --selftest GREEN with the rule
-// reported covered. Closing that needs coverage per ALTERNATION BRANCH rather than per rule — one
+// narrowing `forbid-node-api` from `(fs|child_process|path|os)` to `child_process` alone leaves
+// --selftest GREEN with the rule reported covered. Closing that needs coverage per ALTERNATION BRANCH rather than per rule — one
 // fixture per branch, and a per-branch removal test — which is a bigger instrument than this ticket
 // built. Recorded here rather than implied to be handled.
 const RULES = [
@@ -58,7 +57,7 @@ const RULES = [
   'forbid-date-now', 'forbid-math-random', 'forbid-new-date',
   'forbid-import', 'forbid-require', 'forbid-node-api',
   'missing-meta',
-  'agent-explicit-pin', 'model-alias',
+  'agent-explicit-pin',
   'scoreboard-reconciliation', 'filter-reconciliation',
   'warn-phase-not-in-meta', 'warn-parallel-null-guard', 'warn-vote-reconciliation',
 ]
@@ -384,10 +383,9 @@ for (const name of new Set([...parallelCode.matchAll(PARALLEL_BIND)].map(m => m[
 
 // Every agent() call must pin an explicit model: — no silent session-model inheritance (measured 2026-07-01).
 // Heuristic: scan each agent() call's span (up to the next agent() call) for a model: key.
-// CODE ONLY, unlike the alias rule below. A span runs from one `agent(` to the NEXT one, so a comment
+// CODE ONLY. A span runs from one `agent(` to the NEXT one, so a comment
 // merely NAMING the call opened a span that closed at the real call and reported that call unpinned —
-// hit for real while writing `fixtures/bad-model-alias-const.js`, whose comment had to be written around
-// both spellings to stay a single-reason fixture. `fixtures/good-pin-scan-skips-comments.js` is the
+// hit for real while writing a single-reason fixture. `fixtures/good-pin-scan-skips-comments.js` is the
 // control; `fixtures/bad-agent-no-pin.js` is the RED one, which this rule had none of until 2026-09-18 —
 // narrowing its input could have switched it off in silence and --selftest would have stayed green.
 // The line is counted in the STRIPPED source, which is sound because codeOnly adds and removes no LINE:
@@ -395,7 +393,7 @@ for (const name of new Set([...parallelCode.matchAll(PARALLEL_BIND)].map(m => m[
 // Three branches did NOT until 2026-09-18 — a multi-line `/* … */`, a `/…` codeOnly reads as a regex while
 // the parser reads it as division, and a `\`-continued string literal — so every line reported after one
 // read that many lines low. THIS IS THE ONLY RULE THAT SHOWS IT — the
-// alias, scoreboard and filter rules all count their line in the RAW src — which is part of why it went
+// scoreboard and filter rules all count their line in the RAW src — which is part of why it went
 // unseen; the other part is that this harness could not see it either, since the fixture reds on the exit
 // code either way. `fixtures/bad-pin-line-after-block-comment.js` said line 5 for a call on line 11, and
 // `fixtures/bad-pin-line-after-regex-and-string.js` said line 15 for a call on line 17, and --selftest
@@ -407,31 +405,8 @@ for (let i = 0; i < agentStarts.length; i++) {
   const span = pinCode.slice(agentStarts[i], agentStarts[i + 1] ?? pinCode.length)
   if (!/\bmodel\s*:/.test(span)) {
     const line = pinCode.slice(0, agentStarts[i]).split('\n').length
-    err('agent-explicit-pin', `agent() call at line ${line} has no explicit model: — pin it to a concrete ID (model: BUILDER_MODEL, or SYNTH_MODEL for the single synthesis agent)`)
+    err('agent-explicit-pin', `agent() call at line ${line} has no explicit model: — pin it (model: BUILDER_MODEL, or SYNTH_MODEL for the single synthesis agent)`)
   }
-}
-
-// Model IDs must be CONCRETE, never a short CLI alias (measured 2026-07-24): an alias can lag
-// a release and keep serving the prior generation while every rule still reads correct. Catches the
-// literal at any model: site — agent() opts, meta.phases display annotations, and const decls alike.
-// The left side matches the literal `model` key or ANY SCREAMING_CASE name, rather than a list of the
-// catalog's own constants, so renaming them cannot silently disable this check; it also catches a
-// script's own `JUDGE_MODEL = 'opus'`, which a name-keyed alternation missed.
-// AND IT IS NOT SUFFIX-ANCHORED — do not re-narrow it to names ending in MODEL. That was tried and
-// measured on 2026-09-17: `[A-Z][A-Z0-9_]*MODEL` caught a suffixed const such as `BUILDER_MODEL`, but
-// MISSED every screaming-case const WITHOUT that suffix, and missed a bare `MODEL` as well — so it was
-// NARROWER than the name-keyed alternation it replaced while reading like a widening.
-// `fixtures/bad-model-alias-const.js` is the control that reds if anyone tries it again. This linter
-// runs over workflow scripts in consuming projects, which name their consts whatever they like and
-// carry pins this repo's renames do not sweep (ADR 0006 § Consequences, scope note — that ADR is
-// superseded by 0011, that record is not). The name is the thing this rule may not depend on.
-// RECORDED GAP: a camelCase or PascalCase binding (`judgeModel = 'opus'`, `Model = 'opus'`) still
-// escapes — screaming case is the convention every script in this corpus uses for a pin, and widening
-// to any identifier would fire on an ordinary `const label = 'opus'`.
-const ALIASES = /\b(?:model|[A-Z][A-Z0-9_]*)\s*(?::|=)\s*['"`](opus|fable|sonnet|haiku|mythos)['"`]/g
-for (const m of src.matchAll(ALIASES)) {
-  const line = src.slice(0, m.index).split('\n').length
-  err('model-alias', `line ${line}: model pinned to the short alias '${m[1]}' — resolve the concrete ID by probe (\`claude -p --output-format json\` reports canonicalModel) and write it out, e.g. 'claude-opus-5'`)
 }
 
 // Vote-tallying stages must reconcile SENT vs RETURNED (measured 2026-06-28): a dropped vote can silently flip a winner/consensus/fatalCount.

@@ -9,8 +9,8 @@ phase('A')
 // also fire; and no stage marker and no `board` binding appear, so the scoreboard ERROR rule finds no
 // region. The reconciliation tokens this rule looks for are, necessarily, absent from the prose too.
 const ballots = (await parallel([
-  () => agent('vote', { model: 'claude-opus-5' }),
-  () => agent('vote', { model: 'claude-opus-5' }),
+  () => agent('vote', { model: 'opus' }),
+  () => agent('vote', { model: 'opus' }),
 ])).filter(Boolean)
 const winner = ballots.sort((a, b) => b.score - a.score)[0]
 return winner

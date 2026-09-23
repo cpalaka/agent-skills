@@ -170,8 +170,9 @@ Which capability role fills which seat in a multi-agent run. Two roles — **Pla
 **Builder** — each defined by a property (does it draw on its own weekly meter?) rather than a
 model name, so a model release does not silently invalidate the routing. Carries the pin rule
 (every seat is a definition; a bare spawn inherits the parent), the meter check, effort pinned
-`high`, and the rule that model IDs live in run artifacts and never in durable prose
-([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). The procedure an implementation run follows
+`high`, and the rule that model names live in run artifacts, as family aliases, and never in
+durable prose ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
+[ADR 0017](docs/adr/0017-seats-pin-family-aliases.md)). The procedure an implementation run follows
 is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.
 
 **When to use:** before a delegated implementation, a review with sub-agents, or any fan-out from

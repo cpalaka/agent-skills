@@ -23,10 +23,10 @@ const SCORES = { type: 'object', properties: { scores: { type: 'array', items: {
 phase('Filter')
 const candidates = [{ name: 'alpha' }, { name: 'beta' }, { name: 'gamma' }]
 const allIdx = candidates.map((_, i) => i)
-const dedup = await agent('kill and merge', { model: 'claude-opus-5', label: 'filter:dedup', schema: KEEP })
+const dedup = await agent('kill and merge', { model: 'opus', label: 'filter:dedup', schema: KEEP })
 const kept = (dedup && dedup.keep ? dedup.keep : allIdx).filter(i => i >= 0 && i < candidates.length)
 const AXES = [{ key: 'axis-a' }, { key: 'axis-b' }]
-const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'claude-opus-5', label: `screen:${a.key}`, schema: SCORES })))
+const screeningResults = await parallel(AXES.map(a => () => agent(`screen ${a.key}`, { model: 'opus', label: `screen:${a.key}`, schema: SCORES })))
 const totals = new Map(kept.map(i => [i, 0]))
 for (const res of screeningResults.filter(Boolean)) for (const s of (res.scores || [])) {
   if (totals.has(s.index)) totals.set(s.index, totals.get(s.index) + s.score)

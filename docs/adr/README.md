@@ -21,6 +21,7 @@ entry, not a quiet edit.
 | [0014](0014-floor-is-a-location.md) | The floor is a location: `chunks/` holds always-on rules only, and a situational body is a Skill (amends 0001, 0009) |
 | [0015](0015-chunk-cap-250-ceiling-2900.md) | The condensed-Chunk cap is 250 words and the floor ceiling is 2,900 (amends 0014) |
 | [0016](0016-floor-ceiling-is-acceptance-time.md) | The floor ceiling is acceptance-time, and every standing number names its reader (amends 0014 § 7, 0015 § 2) |
+| [0017](0017-seats-pin-family-aliases.md) | Seats and workflow scripts pin a family alias, not a versioned model ID (amends 0011) |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

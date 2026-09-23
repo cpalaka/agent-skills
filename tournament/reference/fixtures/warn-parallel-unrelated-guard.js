@@ -14,8 +14,8 @@ const DOMAIN = 'a domain'
 phase('Generate')
 if (!DOMAIN) throw new Error('no domain')
 const r = await parallel([
-  () => agent(`draft a name for ${DOMAIN}`, { model: 'claude-opus-5', label: 'gen:0' }),
-  () => agent(`draft another name for ${DOMAIN}`, { model: 'claude-opus-5', label: 'gen:1' }),
+  () => agent(`draft a name for ${DOMAIN}`, { model: 'opus', label: 'gen:0' }),
+  () => agent(`draft another name for ${DOMAIN}`, { model: 'opus', label: 'gen:1' }),
 ])
 const names = r.map(x => x.name)
 return { names }

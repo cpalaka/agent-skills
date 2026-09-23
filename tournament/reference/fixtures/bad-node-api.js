@@ -6,5 +6,5 @@ phase('A')
 // lint.mjs rather than a fixture. A dynamic import is not caught by the ESM-keyword rule (that one
 // needs the keyword at the start of a line) and compiles cleanly, so nothing else in this file reds.
 const fs = await import('node:child_process')
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 return r

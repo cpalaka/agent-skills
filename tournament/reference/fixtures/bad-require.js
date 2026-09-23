@@ -4,5 +4,5 @@ phase('A')
 // the function body the parse gate compiles, so its own rule can never red a legal script alone (see
 // COVERAGE_GAPS in lint.mjs) — this one parses fine and reds on its own rule only.
 const fs = require('fs')
-const r = (await parallel([() => agent('hi', { model: 'claude-opus-5' })])).filter(Boolean)
+const r = (await parallel([() => agent('hi', { model: 'opus' })])).filter(Boolean)
 return r

@@ -19,5 +19,5 @@ totals.set(0, 8)
 
 // Tournament stage — bracket mode
 Do not copy it verbatim; fill the slots from the spec.`
-const note = await agent(`Write the assembly note.\n\n${EXAMPLE}`, { model: 'claude-opus-5', label: 'assembly-note', phase: 'Synthesize' })
+const note = await agent(`Write the assembly note.\n\n${EXAMPLE}`, { model: 'opus', label: 'assembly-note', phase: 'Synthesize' })
 return { note }
