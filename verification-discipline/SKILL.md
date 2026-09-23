@@ -327,3 +327,6 @@ review cannot see a deliverable the source never named. Run a source pass and an
 authoring a taxonomy, catalog or checklist, sweep the real corpus; a from-memory seed undercounts.
 
 The incident behind each rule is in this file's git history (`git log -- verification-discipline`).
+
+**Budget: 3,921 words by `wc -w`, until #67 resets it.** A new rule lands here only with cuts that
+keep the file within it; a promotion that cannot name its cut is withdrawn.
