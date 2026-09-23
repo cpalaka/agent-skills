@@ -1,6 +1,6 @@
 ---
 name: multi-agent-policy
-description: Which capability role fills which seat in a multi-agent run. Use before a delegated implementation (even a single implementer), a review with sub-agents, or any fan-out. Not for a single read-only sub-agent.
+description: Which capability role fills which seat in a multi-agent run. Use when a planning session (grill, spec, tickets) is handed implementation, before a delegated implementation (even a single implementer), a review with sub-agents, or any fan-out. Not for a single read-only sub-agent.
 ---
 
 # Multi-agent policy
