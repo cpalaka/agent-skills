@@ -16,8 +16,8 @@ silently.
 | Seat | Claude Code | Codex |
 |---|---|---|
 | Implementer | `claude/implementer.md` | `codex/implementer.toml` |
-| Advisor (Planner role, one spawn per ticket, continued by `SendMessage`) | `claude/advisor.md` | — none, by design |
-| Reviewer, dispatched twice — one Standards axis, one Spec axis | `claude/code-reviewer.md` | `codex/code-reviewer.toml` |
+| Advisor (Planner role, slots 1 and 3; slot 3 continues slot 1 by `SendMessage` or spawns fresh) | `claude/advisor.md` | — none, by design |
+| Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md` | `codex/code-reviewer.toml` |
 | Gate-runner | the project's own `.claude/agents/gate-runner.md`, once a project stamps one | — none |
 
 The gate-runner stays in its project: it carries that project's gate commands, so a shared copy

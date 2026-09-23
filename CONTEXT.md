@@ -213,9 +213,11 @@ role exists), Opus (a model name), executor.
 
 **Seat**:
 A named position in a run filled by one pinned agent definition — implementer, advisor,
-reviewer (Standards or Spec), gate-runner. The definition carries the model and effort; the seat
+gate-runner, and reviewer: the Standards and Spec axes, the Correctness fallback and the **critic
+seat**, each a `code-reviewer` dispatch. The definition carries the model and effort; the seat
 name says what the position does. A seat is never a bare spawn, because a bare spawn inherits the
-parent's model.
+parent's model. The plan-stop roster's `codex` is a lens struck like a seat, not a seat: no agent
+definition fills it.
 _Avoid_: delegate (acceptable shorthand for the implementer seat only), subagent (the host
 mechanism that fills a seat, not the seat), agent type (the host's field name).
 
@@ -237,20 +239,27 @@ _Avoid_: orchestrator (the older name; "orchestrate" survives only as the toggle
 with "solo"), main session (true but says nothing about the role), driver.
 
 **Slot**:
-One budgeted position for the advisor's judgment within a ticket, filled by consulting the seat or,
-where it cannot be spawned, by holding the judgment yourself. Three are named — the pre-dispatch
-pass over the execution spec, the pre-merge critic, and one floating for whatever the coordinator
-would otherwise put to the owner or decide silently. A tight meter can fund only the first, which
-then also carries the capped form. A fourth need goes to the owner.
+One of three numbered positions for judgment within a ticket, numbered as the `implement-run`
+Skill numbers them. Slot 1, the pre-dispatch pass over the execution spec, and slot 3, floating for
+whatever the coordinator would otherwise put to the owner or decide silently, are the advisor's,
+filled by consulting the seat or, where it cannot be spawned, by holding the judgment yourself.
+Slot 2, pre-merge, is filled by the **critic seat**, not the advisor. The `implement-run` Skill's
+§ Advisor slots Fallback paragraph says what a tight meter funds. A fourth need goes to the owner.
 _Avoid_: trigger (the condition that may spend a slot, not the slot), consult (the act of
 spending one), call.
 
+**critic seat**:
+The fresh `code-reviewer` dispatch after every lens and before the merge on every full-tier
+ticket, charged as completeness critic and counter-critic; the `implement-run` Skill's § Review
+carries the charter. A Builder seat, so it spends no Planner meter.
+_Avoid_: slot 2 (the numbered position it fills, not its name), pre-merge consult, advisor critic
+(the retired arrangement).
+
 **capped form**:
-What a run record calls the advisor's pre-merge reading when a tight meter leaves one affordable
-slot, given before the diff exists rather than after it. The `implement-run` Skill's Fallback
-paragraph carries the conditions.
-_Avoid_: slot 2 (the reading it stands in for; calling it that claims evidence from a diff that
-did not yet exist), second consult, pre-merge slot.
+Historical: what a run record called the advisor's pre-merge reading when a tight meter left one
+affordable slot, given before the diff existed. Retired by cpalaka/agent-skills#68, which moved the
+pre-merge critic off the advisor onto the **critic seat**, so no reading stands in for a diff that
+did not exist.
 
 ### Issue tracking
 

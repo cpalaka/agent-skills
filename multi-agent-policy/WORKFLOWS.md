@@ -40,8 +40,8 @@ Why rationing became pricing: ADR 0006, superseded by
 - **Severity-tier the verification.** 3-vote panels for HIGH only; MEDIUM gets one verifier that
   escalates on uncertainty; LOW is main-loop judgment. Panels on vague findings amplify noise.
 - **Always run a completeness critic** in a diff review ("what did the finders miss"), distinct from
-  the finders. Inside an implementation run it is not an extra agent: the advisor's second slot is
-  one consult covering this critic and the counter-critic below.
+  the finders. Inside an implementation run it is the critic seat, a fresh Builder `code-reviewer`
+  dispatch covering this critic and the counter-critic below (`implement-run` § Review).
 - **Pair it with a counter-critic aimed at the review, not the subject**, hunting method error:
   category errors, speculative-generality remedies, stage-inappropriate standards, absence claims
   whose refuting evidence sat outside the finders' scope. A scoped verifier is blind to a scope

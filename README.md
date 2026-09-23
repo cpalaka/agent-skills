@@ -130,10 +130,10 @@ or you want to set up the review loop.
 
 ### implement-run
 
-How one ticket is actually run: the five seats and what each one may not do (the coordinator writes
-no diff, the gate-runner never wrote the diff it re-runs), the advisor's three budgeted slots and
-the fallback when only one is affordable, the review pair, and the closing run record under four
-fixed headings. The seat boundaries are the point — a run where the writer also grades its own
+How one ticket is actually run: the seats and what each one may not do (the coordinator writes no
+diff, the gate-runner never wrote the diff it re-runs), the advisor's two slots, the review (native
+axes, the Codex lens or its fallback, the critic seat), and the closing run record under four fixed
+headings. The seat boundaries are the point — a run where the writer also grades its own
 output has no measurement in it, only a claim. It reads the project contract's
 `knobs:implement-run` block by marker, so `shape`, `layout`, `gate_runner` and `advisor` vary per
 project without the body changing. Named `implement-run` rather than `implement` so it sits beside

@@ -32,7 +32,8 @@ Each from a pinned definition.
   disjoint, `serial` never. Worktrees are `parallel-work`'s decision: one phase in flight is its
   single-task case and takes none; a second is its explicit signal, each implementer in its own
   tree.
-- **Advisor** — spawned once per ticket (ticket, spec, first question), continued by message.
+- **Advisor** — slot 1, one consult (ticket, spec, first question); slot 3 continues it by message
+  or spawns fresh.
 - **Reviewer** — `code-reviewer`, dispatched twice with its axis (Standards, Spec) named;
   `/code-review`'s sub-agents are this seat. The same seat fills the Correctness fallback and the
   critic (§ Review), each a fresh dispatch.
