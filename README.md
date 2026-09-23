@@ -175,8 +175,8 @@ durable prose ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
 [ADR 0017](docs/adr/0017-seats-pin-family-aliases.md)). The procedure an implementation run follows
 is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.
 
-**When to use:** before a delegated implementation, a review with sub-agents, or any fan-out from
-a planning session. Not for a single read-only sub-agent.
+**When to use:** before a delegated implementation (even a single implementer), a review with
+sub-agents, or any fan-out. Not for a single read-only sub-agent.
 
 Three sibling files nothing loads by default: `WORKFLOWS.md` (Workflow-tool scripts, vendor
 lenses, fan-out → verify discipline), `COORDINATOR-PANE.md` (run shapes, interactive child

@@ -192,7 +192,7 @@ lived in `CLAUDE.md` beside its imports).
 
 ### Multi-agent runs
 
-The `multi-agent-policy` Skill and the implementation Chunk share these terms. A run is any
+The `multi-agent-policy` and `implement-run` Skills share these terms. A run is any
 session that dispatches more than itself: a delegated implementation ticket, a review with
 sub-agents, a fan-out from a planning session.
 
