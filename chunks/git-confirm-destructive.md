@@ -12,7 +12,8 @@ confirm case: **never force-push it at all**, confirmed or not.
 (`git push origin --delete`). Deleting a merged *local* branch needs no confirmation.
 
 **Every `gh` WRITE — confirm**: `gh pr create`/`merge`, `gh issue` writes, `gh api` writes; money
-or rate limits too. The `gh` reads run without prompting; only the writes gate.
+or rate limits too. The `gh` reads run without prompting; only the writes gate. A tracker Chunk
+the project imports **may narrow this** for its own writes — read it there.
 
 **Allowlist hygiene.** A glob like `Bash(gh pr *)` on `permissions.allow` overrides the classifier
 and runs these silently in every session and subagent — keep such globs off; allow read-shaped

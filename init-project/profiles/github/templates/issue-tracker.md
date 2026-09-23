@@ -50,10 +50,10 @@ the issue.
 
 Native flags, verified on gh 2.101.0, replacing the older `gh api` recipe:
 
-- `gh issue create --parent <n> --blocked-by <n>` · `gh issue edit <n> --add-blocked-by <n>`
+- `gh issue create --parent <n> --blocked-by <n or URL>` · `gh issue edit <n> --add-blocked-by <n or URL>`
 - `gh issue view <n> --json blockedBy` (nested under `.blockedBy.nodes`) · `--json subIssues`
 
-What may block what is the chunk's § Parents.
+What may block what is the chunk's § Parents and § Unplanned tickets.
 
 ## Wayfinding operations
 

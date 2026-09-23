@@ -53,9 +53,10 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   is trusted because you answered the directory-trust prompt on first launch here.
 - **The `codex-sandbox-and-approvals` Skill is the shape** — read it rather than expecting the
   other host's settings file to exist. The profile that binds you is the one above.
-- **The human git gates bind whatever the approval policy allows.** Force-push, remote deletion and
-  every `gh` write stop and ask a human — see `git-confirm-destructive`. What the approval mode or
-  the sandbox would let through is not permission to run it, and never a sign-off.
+- **The human git gates bind whatever the approval policy allows.** `git-confirm-destructive`
+  names what stops and asks a human; a tracker Chunk in the read list above may narrow its `gh`
+  writes. What the approval mode or the sandbox would let through is not permission to run it, and
+  never a sign-off.
 
 ## Child agents
 

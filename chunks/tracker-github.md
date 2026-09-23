@@ -21,7 +21,7 @@ lags a fresh creation and truncates silently; confirm with `gh issue view <n>`.
 - **gate**, one per workable issue: `gate:agent` (a session starts and closes it alone),
   `gate:accept` (a session works it; the owner accepts before it closes), `gate:decide` (a
   decision or grill first; no session starts the work, though one may relabel it on the owner's
-  say-so).
+  say-so — see § Acceptance and re-gating).
 - **origin**, one per non-wayfinder workable issue: `origin:spec` (child of a `Spec:` parent),
   `origin:review` (out of a code review), `origin:spec-review` (out of a spec review, off-chain),
   `origin:found` (a defect met during other work), `origin:chore` (maintenance).
@@ -30,7 +30,8 @@ lags a fresh creation and truncates silently; confirm with `gh issue view <n>`.
   **instead of** an origin.
 
 All thirteen must exist before the first ticket or map; the stamping Profile mints them, skipping
-any present, and `gh label create <name>` is the manual fallback.
+any present. **A missing one is a stop**: tell the owner; `gh label create <name>` runs on their
+go.
 
 ### Parents
 
@@ -38,8 +39,7 @@ A `Spec:` or `Map:` title prefix marks a parent, which carries **no gate and no 
 Create each spec child in one `gh issue create` with `--parent`, and `--blocked-by` naming only
 prerequisite **siblings** — never the parent, and omitted when there are none.
 
-A parent closes with its last child, in the same approval; this says whether it was the last, and
-reads false for a childless parent:
+A parent closes with its last child, in the same approval; this says whether it was the last:
 `gh issue view <parent> --json subIssues --jq '[.subIssues.nodes[].state] | length > 0 and all(. == "CLOSED")'`.
 A completed chain's parent closes plain (`gh issue close <n>`); one whose chain was never filed
 closes `--reason "not planned"`; one closed any other way is reopened (`gh issue reopen <n>`).
@@ -58,12 +58,15 @@ gh issue list --label gate:agent --search "no:assignee" -L 200 --json number,blo
   --jq '[.[]|select([.blockedBy.nodes[].state]|all(.=="CLOSED"))]|min_by(.number)'
 ```
 
-Keep `-L 200`; the default 30 drops the oldest. An empty result is an empty frontier **or** an
-unminted label, which lists zero at exit 0 — `gh label list -L 200` tells them apart.
+Keep `-L 200`; the default 30 drops the oldest. `all` over an empty list is true: the frontier
+wants that (no blockers means free), and § Parents' test guards it with `length > 0` (no children
+means not done). An empty result is an empty frontier **or** an unminted label, which lists zero at
+exit 0 — `gh label list -L 200` tells them apart; for the second, see § Two label axes.
 
 **Read the live issue before the session's first write**; a summary, dispatch or handoff is not
 the issue. Claim with `gh issue edit <n> --add-assignee @me`, which adds rather than sets: re-read
-the assignees, and if there is more than one, `--remove-assignee @me` and stand down.
+the assignees (`gh issue view <n> --json assignees --jq '[.assignees[].login]'`), and if there is
+more than one, `--remove-assignee @me`, report the collision to the owner and wait.
 
 ### Footer by gate, and the closing record
 
@@ -78,30 +81,44 @@ posted record): re-read `git rev-parse --short HEAD` before the first tracker wr
 record is the tick.
 
 **The body is the spec**; `gh issue edit --body` replaces it wholesale, so state never goes into
-it. Two body writes are allowed: supersede-in-place —
-`SUPERSEDED by #<n>. Was: "<original text>". <why it can no longer be observed>` — and adding an
+it. Three body writes are allowed, each a body rewrite (§ Commit forms): supersede-in-place
+(`SUPERSEDED by #<n>. Was: "<original text>". <why it can no longer be observed>`); adding an
 acceptance criterion to a ticket not yet started, which is how the rule below lands a hard
-requirement.
+requirement; and the re-gate write (§ Acceptance and re-gating).
 
-**A finding never goes homeless.** Before the producing ticket closes, a hard requirement becomes
-an acceptance criterion on the ticket it constrains, and a pointer a comment there naming the
-source; one constraining no ticket gets an owner — a new ticket, an ADR or a named note.
+**A finding never goes homeless.** Before the producing ticket closes (under a `Closes` footer,
+before the merge), a hard requirement becomes an acceptance criterion on the ticket it constrains,
+and a comment there names the source; one constraining no ticket gets an owner — a new
+ticket, an ADR or a named note. The closing record points at each home.
 
 ### Acceptance and re-gating
 
 Closing a `gate:accept` ticket quotes the owner's accepting reply and the SHA they saw, in the same
 approval as the close — transcribed, never inferred. A rejection is quoted in a comment; the ticket
-stays open, gate unchanged. A `gate:decide` ticket is re-gated by the owner relabelling it, or by a
-session quoting their reply and applying the gate they named. A decline closes **not planned**
-with the reply quoted; abandoned work takes that exit too, never `completed`.
+stays open, gate unchanged. A decline closes **not planned** with the reply quoted; abandoned work
+takes that exit too, never `completed`.
+
+A `gate:decide` ticket is re-gated by the owner relabelling it, or by a session working in order:
+quote their reply in a comment; where the decision kills an acceptance branch or fixes a seat
+tier, make the **re-gate write**, a body rewrite (§ Commit forms) whose approval shows the new
+text, cutting the body to the decided branch and adding the seat tier
+the diff takes under the `implement-run` Skill's § Seat tier; give each prerequisite the body now
+names an edge it lacks (§ Unplanned tickets), and remove (`--remove-blocked-by`) an edge that only
+the cut branch named; and last, apply the gate they named, since a ticket
+relabelled before its edges can reach the frontier with a blocker open. Where a body carries a
+`Seats: light` or `Seats: full` line, it sits on its own line above the acceptance heading.
 
 ### Unplanned tickets
 
 A session may file `origin:found`, `origin:review`, `origin:spec-review` and `origin:chore`
-tickets alone, always as `gate:decide`; one the owner approves at creation carries the gate they
-name. **Search first** — `gh issue list --state open -L 200 --search '<a noun from the finding>'`,
-plus any frontier output you have — and where a match exists, comment the new evidence on it
-instead of filing a duplicate.
+tickets alone — scoping them itself, not skipping approval (§ Commit forms) — always as
+`gate:decide`; one the owner approves at creation carries the gate they name. **Search first** —
+`gh issue list --state open -L 200 --search '<a noun from the finding>'`, plus any frontier output
+you have — and comment new evidence on a match rather than filing a duplicate.
+
+A prerequisite the body names becomes a `--blocked-by` edge, by URL when it lives in another
+repository: at filing, or with `gh issue edit <n> --add-blocked-by` once one filed later exists,
+at the re-gate at the latest.
 
 Four sections, verbatim: `## Found while`, `## Evidence`, `## What a fix has to weigh` (or
 `## What to build`), `## Acceptance`. On `origin:review` and `origin:spec-review`, `## Evidence`
@@ -129,10 +146,14 @@ the closing record. No tracker files live in the tree, so there is nothing to gr
 
 The `implement-run` Skill's Done gate resolves here to the closing record. Under `parallel-work`
 the coordinator alone writes issues, except an attended worktree session on the issue it owns.
-`git-confirm-destructive`'s gate resolves here to a **gated set**, not a list of exemptions:
-creating, closing and reopening an issue, and rewriting a body. Every other write here —
-assigning and releasing, labelling and re-gating, minting a label, commenting — and every read
-needs no approval.
+For issue and label writes, `git-confirm-destructive`'s gate resolves here to a **gated set**:
+creating, closing, reopening, deleting or transferring an issue; rewriting a body, the re-gate
+write included; editing or deleting a comment; editing a label (`gh label create --force` over
+an existing one included) or deleting one. Every other issue or label write — assigning and
+releasing, labelling and relabelling the gate, adding or removing an edge, minting a label,
+posting a comment — and every read needs no approval. Needing no approval is not deciding: a
+ticket's gate and whether to mint stay the owner's (§ Two label axes). Any other `gh` write keeps
+that Chunk's gate.
 
 ### Knobs
 

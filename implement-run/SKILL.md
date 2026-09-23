@@ -47,8 +47,9 @@ install gate.
 
 ## Seat tier
 
-`Seats: light` or `Seats: full` sits on its own line in the ticket body, placed by the project
-contract's convention. Absent, malformed, or contradicted by the ticket's named files (checked
+`Seats: light` or `Seats: full` sits on its own line in the ticket body, where the project's
+tracker Chunk names a place (`tracker-github` § Acceptance and re-gating), and the line reads
+wherever it sits. Absent, malformed, or contradicted by the ticket's named files (checked
 before dispatch) or by the implementer's diff (checked at the certifying round) reads full; every
 upgrade goes under `Deviations`. A light line the named files contradict takes the plan stop after
 all: the run is full.
@@ -242,9 +243,9 @@ its `agent-<id>.jsonl` — counted from the project's run records.
    query, no grill, no wrap: the run record is the tracker write, the kickoff the handoff.
 
 **The run record** is one closing comment on the ticket (in the file, for a file ticket) under
-`Slots`, `Gates`, `Review`, `Deviations`. The body is the spec: append, never rewrite —
-`gh issue edit --body` and its equivalents replace it wholesale, so ticking one checkbox can take
-the spec with it. Checkboxes are the owner's; every observation, verdict and piece of evidence
+`Slots`, `Gates`, `Review`, `Deviations`. The body is the spec, and a run never rewrites its own
+ticket's body — `gh issue edit --body` and its equivalents replace it wholesale, so ticking one
+checkbox can take the spec with it. Checkboxes are the owner's; every observation, verdict and piece of evidence
 goes in a comment.
 
 **A criterion your run missed is the owner's to re-cost; the ask must not make your reading the
