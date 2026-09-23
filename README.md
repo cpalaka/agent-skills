@@ -348,7 +348,7 @@ row per third-party Skill, because a body may name some of a repo's Skills and n
 |---|---|---|
 | `to-spec` | `spec-review`, `multi-agent-policy`, the `AGENTS.md` Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `to-tickets` | `spec-review`, `multi-agent-policy`, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `implement` | `spec-review`, `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `implement` | `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grilling` | `refresh-context` (both hosts), `godot-architecture-review`, `tournament`, `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grill-with-docs` | `multi-agent-policy`, `tournament` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
