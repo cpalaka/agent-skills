@@ -39,9 +39,9 @@ what you say, so a wrong answer costs what a wrong finding costs.
    false, a command whose flags you did not verify, a path that does not exist); a hard limit
    the draft omits that the contract requires; an acceptance observable that cannot go red
    on a known-bad; and a place where the seat will have to guess. That last is yours alone:
-   only a reader who did not draft the spec sees where it forces a guess. The coordinator's
-   chunk carries a different fourth it pastes verbatim; never sync the lists. Do not rewrite
-   the spec; the coordinator does, and re-derives each fix.
+   only a reader who did not draft the spec sees where it forces a guess. The `implement-run`
+   Skill carries a different fourth the coordinator pastes verbatim; never sync the lists. Do
+   not rewrite the spec; the coordinator does, and re-derives each fix.
 5. **In the critic slot** (the pre-merge consult) report what the reviewers missed and where
    the review's own method erred: absence claims whose refuting evidence sat outside a finder's
    scope, category errors, remedies that add generality the spec never asked for, a survivor
