@@ -5,201 +5,325 @@ description: How to trust a reading and how to file a negative claim. Use before
 
 # Verification discipline
 
-One question sits under every rule here: **could more than one true state of the world produce this same reading?** A check that cannot go red discriminates nothing, and it reports success. The cure is a **control**: a known-bad the instrument must catch, a known-present needle the search must find. Until the detector has shown it can disagree with you, its agreement is evidence for nothing. **The mirror costs more and hides better: a criterion that cannot go green.** It reads red against a correct deliverable, so it presents as a finding rather than as a broken instrument and the cure never lands — ask what a pass would look like and whether the sources can produce it. And a before/after comparison changes the subject, never the instrument: re-run the control under the same prompt and rubric as the live arm, or the difference you read is your own edit to the instrument.
+One question sits under every rule here: **could more than one true state of the world produce this
+same reading?** A check that cannot go red reports success and discriminates nothing. The cure is a
+**control**: a known-bad the instrument must catch, a known-present needle the search must find.
+Until the detector has shown it can disagree with you, its agreement is evidence for nothing. **The
+mirror hides better: a criterion that cannot go green** reads red against a correct deliverable and
+presents as a finding, not a broken instrument — ask what a pass would look like and whether the
+sources can produce one. A before/after comparison changes the subject, never the instrument: re-run
+the control under the same prompt and rubric as the live arm.
 
 ## Red it first
 
-**Reproduce the known-bad before believing the post-fix number.** Reproduce it exactly, to the figure on record, as its own plan stage. An instrument that cannot reproduce the defect cannot certify its absence. Then feed the instrument its own reference as a candidate. A grader once scored the source document it was grading against 9/10. The control must fail on the predicate the acceptance criterion names, not merely on some known-bad: a fixture that pre-solved the hard half (its task text announced the peer) could not make a "does not stash" check red, and three more fixtures were needed before one did (2026-09-05).
+**Reproduce the known-bad, to the figure on record, before believing the post-fix number** — as its
+own plan stage. Then feed the instrument its own reference as a candidate (a grader once scored its
+own source document 9/10). The control must fail on the predicate the acceptance criterion names,
+not merely on some known-bad.
 
-**A "before" the sibling ticket already changed is not a before — rebuild the instrument, and calibrate the rebuild on a figure that ticket published.** When a criterion asks for a before-and-after and a sibling ticket has since moved the same instrument, today's "before" reading is the sibling's *after*, and the honest-looking move — reporting that the half belongs to the other ticket — leaves the criterion permanently half-satisfied. The old instrument is in git: check it out at the commit *before* the sibling's and run it against the same subject. What makes that number worth quoting is not the checkout but the control on it — run the rebuild against whichever subject the sibling *published* a figure for, and match it. A criterion named two subject trees and the sibling had published a figure for only one; rebuilding the scanner at the commit before the sibling's reproduced that published figure exactly, and *that* match is what licensed quoting the other tree's `12 → 3` beside it, which no ticket had ever measured (2026-09-20, skills #8). Without the match a reconstruction is one more unvalidated reading, dressed as history.
+**A "before" that a sibling ticket already moved is the sibling's *after*.** Reporting that half as
+the other ticket's leaves the criterion permanently half-satisfied. Check the instrument out of git
+at the commit before the sibling's, and license the rebuild by matching a figure the sibling
+published; unmatched, a reconstruction is one more unvalidated reading.
 
-**A control that trips every arm of a composite predicate proves no arm.** Where a verdict is an AND over several independent checks, each arm needs a control that fires on it **and on no other**, or an arm can be deleted with the suite still green. A three-arm gate — exit status, diagnostics, frame budget — took a nonexistent scene path as the exit arm's control; that input reds all three, so removing the exit branch entirely still produced `selftest: 4/4 verdicts correct` (2026-09-18). The tell is a control whose failure output names more than one reason: read the reasons, not the verdict. An end-to-end input that trips everything is still worth keeping, but it is evidence about the whole, never about an arm. Distinct from the fixture rule above in direction: there the control missed the named predicate, here it hits it and everything else too, so it can attribute to nothing.
+**For every predicate, name the mutation that reds it and run it.** A control can run and still
+prove nothing:
 
-**A control the system silently absorbs is not a control, and it fails green.** Confirm the injected fault changed observable behaviour before reading the control's verdict — clamps, validators, defaults, retries and fallbacks all eat an injected fault and leave the run passing. Zeroing a movement model's `maximum_speed` to prove a capture gate could still go red did not turn it red: the setter clamped to `[1.0, 8.0]`, the figure still travelled, and the gate's travel predicate still held at 1 m/s where the run had asked for 8 (2026-09-14). A passing control has two opposite readings — the gate is blind, or the system ate the fault — and it cannot tell you which; the injected fault's own effect can, and only before the verdict is read. Distinct from the fixture rule above: there the control never targeted the named predicate, here it did and the system neutralised it.
+- **Composite verdict.** Over an AND of checks, each arm needs a control that fires on it *and on
+  no other*, or an arm can be deleted with the suite green. Read the failure reasons, not the
+  verdict: a control naming several is evidence about the whole, never an arm.
+- **Absorbed fault.** Clamps, validators, defaults, retries and fallbacks eat an injected fault
+  and the control fails green. Confirm the fault changed observable behaviour before reading the
+  verdict.
+- **Moving oracle.** An expected value read from the source under test moves with any mutation of
+  that source. Assert the property the predicate names (a sign, a bound), which the mutation
+  cannot follow.
+- **Generated fixture.** A fixture derived from the table it checks validates the matcher, never
+  the data; no mutation can red it. Ask: if this row were simply wrong, what in this repository
+  would ever say so? Use an external oracle (a real log, a live run) and say in the artifact that
+  the suite cannot catch a wrong row.
+- **Wrong axis.** The assertion must vary along the axis the criterion names, and the fixture must
+  make it vary: assert every state the sentence enumerates, assert containment by the window
+  between two markers rather than a whole-output grep, build fixtures where the rival references
+  (index vs HEAD) disagree.
+- **Wrong form.** A check whose form cannot express the question returns the zero an honest
+  all-clear returns: line-oriented search over a cross-line question (join the file and search a
+  window instead), `\b` in `git grep -E` (matched nothing on this machine, exiting 1), a
+  hand-rolled stand-in for a real tool. The known-bad must share the question's shape, and only a
+  different instrument repairs the form; calibrate a stand-in against the real tool.
+- **By construction.** `git diff $M HEAD` is empty for every input when `M` was built from
+  `HEAD^{tree}`. Name the input that makes a derived verdict false; if none exists, it is a paste
+  guard, not a verdict — and check the precondition that carries the safety instead (for a merge,
+  linear descent: `git merge-base --is-ancestor`).
+- **Put out of reach by a sibling fix.** One criterion's fix can pre-empt another's defect,
+  leaving the second with no arm that can red; a deleted implementation then satisfies it. Only
+  running each criterion's mutation finds this.
 
-**A predicate whose expected value is read from the source under test cannot be redded by a control that mutates that source.** The fault lands, the subject moves — and the oracle moves with it, so the assertion holds and the control passes green. A capture predicate compared a scene node's height against the scene constant that height is written from, and the spec's own named control for it zeroed that constant: both sides went to zero, `is_equal_approx(0.0, -0.0)` was true, and the predicate could not fail for the property it named (2026-09-19). Repair by asserting the *thing the predicate names* rather than the source — there, the node's own sign (`position.y < 0.0`), which the mutation cannot follow. It ships easily because reading the expected value from one owner is the correct fix for a stale copied constant. Ask of every predicate: what mutation reds this, and does that mutation move the reference too? Distinct from the absorption rule above: the fault is fully observable and the *instrument* tracks it.
-**A predicate over a tool's OUTPUT must key on the identity of the thing, never on how the tool phrases it — and when it gets that wrong it fails toward a false red, which teaches the reader to skim.** Unlike the two rules above, this predicate goes red when it should not, and that is worse than a missed check: the instruction it replaced was already "read past this line", so a rule that cries wolf sends the reader straight back there. It ships because the predicate reads correct against the one example its author had in view. Tightening a blanket non-block instruction, I wrote "only unimported `.blend` files" over a route line's reason list — the tool emits **two clause shapes per file**, so an entirely benign list read as mixed and would have escalated on the next run (2026-09-20, 3d-anim-lab #65). The reviewer who caught it counted the clauses; I had run the command and not counted. So before shipping a predicate over tool output, run the command and **count the distinct output shapes the predicate must survive** rather than confirming the happy case matches, then ask what happens when the tool adds a shape. Keying on the path each clause named — the thing's identity — survives both.
+**A predicate over a tool's output keys on the thing's identity, never on the tool's phrasing.** Run
+the command and count the distinct output shapes the predicate must survive, rather than confirming
+the happy case; ask what happens when the tool adds a shape. A false red is not the safe side — it
+teaches the reader to skim.
 
-**A fixture GENERATED from the data under test can only validate the matcher, never the data.** Where a check's expected value is *derived* from the same table, config or catalog the check reads, no mutation exists that would red it — change the data and the fixture changes with it, so the suite stays green on a table full of dead entries. Not the mutating-control case above: there a control exists and the oracle follows it; here no control can exist at all, and the suite's thoroughness is exactly what makes it convincing. A signature table's selftest planted every literal mid-line and required the exact row set, over four mutation-proven cases; a literal that had never matched anything and never would passed every one, because the plant was built from the literal (2026-09-20, skills #9). The repair is not a better control but an **external oracle** — a real log, a live run, production input — plus a sentence in the artifact naming the limit, so the next reader re-runs the external check and not the suite. Ask of any table-driven check: if this row were simply wrong, what in this repository would ever say so?
+**Calibrating the instrument and falsifying the claim are different acts. Do both.** Write the
+one-line corruption of the central claim that breaks exactly one branch, confirm the suite reds,
+keep whatever check reds. Commit first so the revert lands on the state under test
+(`git checkout -- <file>` restores HEAD and deletes an uncommitted diff), then re-run the gate on
+the tree that ships. On an untracked file git cannot prove the revert: take its `sha256` before
+corrupting, require equality after, and make the green run the last entry in the record.
 
+**Something must consume the check's result.** Derive the verdict line from the check rather than
+echoing it beside it. An action after a check runs unless the exit status gates it (`&&`, `if`, or a
+separate invocation after you read the output): a `mv` behind a `;` ran past a printed `PRESENT` and
+truncated a transcript.
 
-**An assertion must vary along the axis the criterion names, and the fixture must make that axis
-vary.** A suite can be sensitive, calibrated and still blind on exactly the property the
-acceptance criterion is about, because the assertion reads a different axis than the sentence
-does. Three instances in one ticket, in a 35-assertion suite that already ran a known-bad for
-every check (2026-09-20, skills #5): the criterion enumerated three verdict states and two were
-anchored, so dropping the suffix from the third passed; the criterion said a finding prints
-*inside* a block and the assertions grepped whole output for the finding plus a separate grep for
-the block's header, so printing the finding inline and leaving the block empty passed — the
-buffering mechanism, the ticket's actual subject, could be deleted entirely; and the criterion
-said `--staged` scopes against the *index*, but the fixture's tree equalled its index, so the
-scanner could have been written against HEAD and passed. The repair is mechanical once named:
-enumerate what the sentence enumerates (assert all three states, not a sample), assert containment
-by pulling the window between two markers rather than searching the whole output, and build the
-fixture so the two candidate references actually disagree. All three were found by mutation, none
-by reading. Distinct from the absorption and moving-oracle rules above, where the instrument
-tracks the fault: here the instrument is looking somewhere else entirely, and the giveaway is that
-you cannot name the mutation that reds it.
+## Gates and numbers
 
-**An instrument whose *form* cannot represent the question returns clean, and clean is exactly
-what a real absence returns.** Line orientation, regex dialect and ad-hoc reimplementation each
-bound what a check can express; when the question falls outside that bound the check does not
-error, it reports the same zero an honest all-clear reports. Three of these in one day
-(2026-09-20, #48). A *line-oriented* `git grep`, asked whether any file still called a moved body
-a "chunk", read clean over a real defect both before and after the fix, because the body's name
-sat on the previous line from the word `chunk`; the check that works joins the file and searches a
-window. A `\b` inside `git grep -E` matches nothing on this machine and exits 1, so a
-word-boundary sweep across three adapters returned a clean zero where the same alternation
-without `\b` returned 4 on a file already known to contain them. And a hand-rolled `grep -f` over a pattern file mis-parsed 3 of its 10
-input lines and disagreed with the real tool it was standing in for, all the while printing what a
-clean run prints. So the control has to exercise the instrument's *shape*, not just its subject:
-for a cross-line question the known-bad must itself be cross-line, and a hand-rolled stand-in for
-a real tool is calibrated against that tool, never against expectation. Narrower than the axis
-rule above: there the repair is to aim the instrument at the axis, here its form cannot express
-the axis at all, so only a different instrument repairs it.
+**A guard fires on a CAUSE, or it is noise.** Ask what it does on a known-good input and what it
+does once the cause is fixed: a trigger correlated with the failure cries wolf on healthy runs, one
+that assumes the failure cries wolf forever. Test the precondition at runtime so the guard retires
+itself. A fail-closed false alarm is not the safe side; it trains the same ignore-it reflex.
 
-**A verdict computed from the thing it checks holds by construction and checks nothing.** `git diff $M HEAD` is empty for every input when `M` was built from `HEAD^{tree}`; `${M}^1 == origin/main` holds for every input when `M` was built with `-p origin/main`. Two recipes shipped both as "derive the verdict before pushing" while the one precondition that carried the safety (linear descent, `git merge-base --is-ancestor`) went unchecked, and a skipped rebase reverted a peer's landed file with both green (2026-09-05). Before trusting a derived verdict, name the input that makes it false; if there is none, it is a paste guard, not a verdict.
+**A permanently non-zero verdict carries no information.** Remove the findings or accept them — per
+check, never per line — and print the accepted count and sites on every run, CLEAN included, so
+acceptance leaves a trace. Calibrate the marker both ways: an over-accepting one (wrong id, prefix
+match, whole-line blanket) passes a positives-only test. A human override needed every run is a
+standing red.
 
-**Calibrating the instrument and falsifying the claim are different acts. Do both.** Write the one-line corruption of the deliverable's central claim, confirm the suite reds, keep whatever check reds. The corruption breaks exactly *one* branch of the rule under test; a coarse one reds the suite for the wrong reason. Commit before you corrupt, so the revert lands on the state under test: `git checkout -- <file>` restores HEAD and deletes an uncommitted diff. Then re-run the gate against the tree that ships. **On a file git is not yet tracking, that escape is gone and every git-shaped proof of the revert with it**: `git status` prints `?? <file>` before the corruption and after the revert alike, so a botched revert leaves no signal anywhere and the deliberately-broken version ships behind a green run. Take the file's `sha256` before you corrupt, re-take it after reverting, require equality, and make the green run the last one in the record so nothing follows it that could have moved the file (2026-09-18).
+**A criterion quotes the predicate, never a gate's printed count.** The number belongs to one run of
+one tree and expires when the instrument changes (`27 of 28` became a correct `26 of 27`); the
+predicate (`M - N <= 1`) survives. Whoever inherits a dead number satisfies the form and inverts the
+substance rather than ticking it. A count written into prose as illustration drifts the same way:
+name the shape, leave the measurement in the record that owns it.
 
-**Something must consume the check's result.** Derive the verdict line from the check rather than echoing it beside the check; an unconditional pass line suppresses the violations printed above it. An action chained after a check runs whatever the check printed unless the exit status gates it (`&&`, an `if`, or a separate invocation after you have read the output). Measured: a `mv` behind a `;` ran past a printed `PRESENT` and truncated a session transcript. A check nothing consumes is decoration.
+**Derive tolerances from the measured noise floor.** Measure the residual on a known-good run, set
+the bound just above it, state the ratio.
 
-**A guard fires on a CAUSE or it is noise.** A trigger merely *correlated* with the failure cries wolf on healthy runs; one that *assumes* the failure cries wolf forever after the bug is fixed. Ask both questions before shipping a guard: what does it do on a known-good input, and what does it do once the cause is gone. A scan that failed open under the sandbox reported `1 of 28 checks executed` / `VERDICT: CLEAN`, and the obvious guard — fail when fewer than all checks execute — reads the symptom: a healthy `--all` on that project legitimately executed 27 of 28, so it would have fired on every honest run. The guard that shipped probed the cause instead (can this shell create a heredoc temp file). Within the hour the cause was fixed upstream and the install was a symlinked store, so it went live immediately — and the now-unconditional probe refused a scan that measured 27 of 28 correctly in the very cell it was written for. The repair was to test the precondition at runtime (probe only when the resolved script still contains a heredoc), which also retires the guard once every install carries the fix (2026-09-14). **A fail-closed false alarm is not the safe side**: it trains the same "this gate cries wolf, ignore it" reflex a fail-open one does, just more slowly. Distinct from the consume-the-result rule above, which is about a verdict nothing acts on; this is about a verdict that fires at the wrong times.
+**A ceiling derived from a documented cap has a side.** Too slack never fires; too tight reds on
+legal input and reads as a finding, and live readings sitting far from the bound cannot tell you
+which. State the worst case, put the constant beside it, say which side it lands on. Here the
+arithmetic *is* the claim, unlike a reuse premise, where the anchor is what to re-verify.
 
-**A verdict that is permanently non-zero has stopped carrying information. Either the findings go away, or the gate learns to accept them.** Where a gate reports the same true findings every run, a *new* one can only be seen by diffing the standing set by eye — which is how the extra one gets waved through — and every reader re-derives the same dispositions, so the cost recurs per ticket instead of being paid once. Four correct `basis.z` sites held a Godot scan at `FINDINGS 4` across two tickets that each re-adjudicated them, and the same repo's secret-scan knob had already spent four benign matches the same way until its pattern was tightened (2026-09-18). The same applies to a gate that must be *overridden* every run: a standing human exception is a standing red by another name. **The acceptance mechanism is itself a fail-open unless it is accounted for.** It must name the specific check, so it cannot blanket a line or drift onto a neighbouring finding; and it must print the count *and* the accepted sites in the verdict block on every run, CLEAN included — an acceptance that leaves no trace on stdout reads exactly like a check that never ran, and a bare CLEAN then carries less than the red it replaced. Calibrate it in both directions, because a marker that over-accepts (wrong id, a prefix match, a whole-line blanket) passes a positives-only test silently. Distinct from the cause-versus-symptom rule above, where the guard fires at the wrong times: here it fires at exactly the right ones and is still noise.
+**Sweep identity claims; sampling cannot establish bitwise or float equality.** A counter reporting
+100% failure is as suspect as one reporting 0%.
 
-**A gate's printed count is a live reading; a criterion that quotes the number instead of the predicate expires without anyone touching it.** The number describes one run of one tree under one version of the instrument; the predicate describes the relationship that makes a run healthy, and only the predicate survives an upstream change. A ticket's acceptance criterion demanded `gotcha --all` report `27 of 28 checks executed`; the scanner retired one check the night before the certifying round, the true reading became `26 of 27`, and no correct diff could satisfy the criterion — while the contract's own predicate (`M - N <= 1`, with a fail-open floor at `N <= 2`) passed that same run correctly (2026-09-20). The tell at authoring time is that the exact number makes the criterion look *more* rigorous, so it survives review; the failure is silent, deferred, and lands on whoever runs the gate next, who must then satisfy the form and invert the substance rather than tick it. The project had already fixed this defect in its own contract prose three weeks earlier — the repair never reached the skill that wrote the next ticket, because a project-local fix does not travel. The same expiry reaches a count written into prose as mere illustration: it drifts with its subject while the sentence around it stays put, so name the shape and leave the measurement in the record that owns it. Distinct from the permanently-non-zero rule above: there a live gate goes mute from unchanging findings, here a frozen number goes false from a changing instrument.
+**A path is not an identity, and a count is not a set.** Hash bytes at write time rather than
+re-stat the name, and run the diff before asserting two files identical. Ask **"N what?"** of every
+count and answer from the instrument. A field reproducible from its siblings is derived: compute it,
+never store it.
 
-**Derive tolerances from the measured noise floor.** Measure the residual on a known-good run, set the bound just above it, state the ratio.
+**A count keyed by position is not a count of things.** File:line pairs from a log or transcript
+re-count one site as several once files shift. Before sizing an eval set, a fixture set or a
+"distinct sites" claim, count in the live tree (`command grep -rn`, exclusions named) and treat the
+log figure as an upper bound.
 
-**A derived bound has a SIDE, and the arithmetic decides which side it lands on.** Deriving a ceiling from a documented cap, rather than quoting a reading, is the right move — it survives the subject growing, where a frozen number expires. But the derivation now carries the claim, and an error in it is silent in both directions: too slack and the gate never fires, too tight and it reds on legal input while presenting as a *finding* rather than as a broken instrument. The live reading cannot tell you which, because it sits nowhere near the bound: a ceiling of 700 with every run measuring 507 reads healthy until the input that was always permitted arrives. Measured 2026-09-20 (skills #6): a byte ceiling derived from a 140-char row cap dropped two fixed affixes and overstated a slug length, so the constant sat *under* the worst case it was written to express. The check is one line and nobody runs it: state the worst case the derivation claims, put the constant beside it, and say which side it is on. Distinct from the noise floor above, which sets a *floor* from a measurement; this sets a *ceiling* from a rule, and the two fail oppositely. Note the scope, because the usual advice inverts here: "re-verify the anchor, never the arithmetic" is right for a reuse premise, where the arithmetic is bookkeeping over a fact that might be wrong. For a threshold the anchor is a published cap that is rarely wrong, and the arithmetic IS the claim.
+**A probe plants a token that can only be present if the layer under test ran.** A probe that names
+the strings you then count reads its own words back: name each string once, so a count of 1 is the
+probe alone and 2 is probe plus real content — a bare 1 read as presence is your own question. A
+*shipped* document telling a reader to search their context cannot quote the string, since it is
+loaded into that context — make the observable structural (does the body arrive as its own block?)
+and say why no phrase is named.
 
-**Sweep for identity claims. Sampling cannot establish bitwise or float equality.** A counter reporting 100% failure is as suspect as one reporting 0%.
+**A null reading is evidence only once the subject is inside the measurement window.** Show the
+thing the change moves is observable at all, then exclude rival causes by the *form* of the failure:
+"port unreachable" from a firewall DROP and from nothing listening differ only as timeout vs RST.
 
-**A path is not an identity, and a count is not a set.** Hash bytes at write time, never re-stat the name later, and never assert two files identical without running the diff. Ask **"N what?"** of every count and answer it from the instrument, not the prose beside it; a field wholly reproducible from its siblings is derived — compute it, never store it. For probes, plant a token that can *only* be present if the layer under test was exercised. Where the probe text itself names the strings you then count — a quote-back probe asking whether a context contains heading X — the instrument contaminates its own reading, and every hit is your own words until proven otherwise. Establish the probe-only baseline and count against it: a probe naming each heading once makes the count self-calibrating, one meaning the probe alone and two the probe plus real content. Read a bare 1 as presence and you have read your own question back (measured 2026-09-19, agent-skills #45).
+**A probe answers only the question it exercised.** A green precondition (the adapter exists) says
+nothing about the capability (the device survives rendering). Probe the operation, over the duration
+the claim covers.
 
-**A document telling a reader to inspect their own context cannot name the string it asks about.** The probe case above is per-run and recoverable; a *shipped* artifact is worse, because it is loaded into the very context it interrogates and the contamination is permanent. Measured 2026-09-20: a contract paragraph instructing a seat to search its injected context for a sentinel phrase quoted that phrase, and the contract is itself injected — after merge the check would have read present in every state. A line-based `git grep` corroborated the uniqueness claim because the quoted copy had wrapped. Make the observable **structural** — does the body arrive as its own block? — rather than lexical, and say in the text why no phrase is named, or the next editor reinstates one as a clarification.
+**A call site shows that a call happens, never what it does.** Read the callee to its return
+statements and name the conditions it exits on beside the claim.
 
-**A null reading is evidence only once the subject is inside the measurement window.** Calibrating on one subject does not validate the instrument for another. Before believing "no effect", show that the thing the change moves is observable at all. Then exclude the rival causes. The *form* of the failure discriminates, not the fact of it: "port unreachable" comes identically from a firewall DROP and from nothing listening, and only timeout-vs-RST separates them.
+**A reading from inside a trust boundary cannot establish a property of it.** Public-ness,
+reachability and permission belong to the least-privileged caller: re-run unauthenticated, and
+assert that what must stay closed fails the same probe.
 
-**A probe answers only the question it exercised.** A green precondition (the adapter is present) says nothing about the capability the claim needs (the device survives rendering). Probe the operation the claim is about, over the duration the claim covers: an exposure probe that only requested adapters read green while a render probe found the device dying 270 ms after init (2026-09-12).
+**When a spec names the metric, also measure what it cannot see.** `scrollWidth === clientWidth`
+counts start-side padding only.
 
-**A call site tells you that a call happens, never what it does. Read the callee to its return statements before stating its effect.** The condition that empties a call lives in the callee's body, not beside the call, so a claim built from call sites reads clean at every site and is refuted only by the body. Three call sites in Godot 4.7.2 release pressed events on focus loss, and a spec stated that a polled InputMap action reads false after a Cmd-Tab; the callee returns early while the application is still focused and releases action states only under a joypad setting that is off by default, so the action stays stuck. A spec reviewer caught it by marking the claim unverifiable, not wrong (2026-09-19). Name the conditions the callee exits on beside the claim, or the claim is about the call and not the effect.
+**Saved instruments go stale silently.** A review or eval harness pins positions and golden answers
+in files it does not own; re-read its embedded context against the target before each re-run. A gate
+command loaded into context is a copy: re-read it from disk after any pull or checkout.
 
-**A reading from inside the trust boundary cannot establish a property of that boundary.** Public-ness, reachability and permission are properties of the *least*-privileged caller. `gh repo view --json visibility`, or a `curl` carrying your session, answers a different question and answers it green. Re-run unauthenticated or as the least-privileged principal, and assert the complement: the thing that must stay closed fails the same probe.
+**The installed artifact and the repo file are two files.** Diff them by digest and check which way
+they differ. Where the checkout is the install (a symlinked store), a `git checkout` downgrades
+every installed skill; test a ref by extraction (`git archive <ref> <dir> | tar -x -C <scratch>`)
+and digest-match against the branch blob.
 
-**When a spec names the metric, also measure what the metric cannot see.** `scrollWidth === clientWidth` counts start-side padding only.
-
-**A saved review or eval harness rots with no error signal.** Its pinned positions and golden answers describe files it does not own. Once those files are corrected it flags the fix as a regression and runs clean. Re-read its embedded context against the target before every re-run.
-
-**A gate command loaded into context is a copy, and the file it came from moves.** After any mid-session pull or checkout, re-read each verify-gate knob line from disk before running it; a stale pattern reports a plausible count with no error (measured 2026-09-14: four secret-scan matches from a day-old pattern, zero from the current one).
-
-**The installed artifact and the repo file are two files. Diff them by digest, and check *which way* they differ.** A symlinked store inverts the usual drift: the checkout *is* the install, so a `git checkout` to test a branch silently downgrades every other skill. Test by extraction (`git archive <ref> <dir> | tar -x -C <scratch>`) and digest-match against the branch blob.
-
-**A skill's trigger reliability is a measurement, not an assumption.** "The loader fires from context now" is an absence claim about every session it did not fire in. Before retiring an explicit-invocation rule on it, count `"skill":"<name>"` Skill-tool calls against the session count in that project's transcripts (`~/.claude/projects/<cwd-slug>/*.jsonl`, with `/usr/bin/grep`). Measured 2026-09-20: `godot-gotchas` invoked in 1 of 105 sessions of a Godot project, after its explicit-invocation preference had been retired on exactly that premise.
+**A skill's trigger reliability is a measurement.** Before retiring an explicit-invocation rule on
+"it fires from context now", count `"skill":"<name>"` calls against sessions in that project's
+transcripts (`~/.claude/projects/<cwd-slug>/*.jsonl`, via `/usr/bin/grep`).
 
 ### Read the artifact, not the oracle
 
-A status field, health endpoint, summary line, or your own report is computed from state that outlives the failure, so it stays green while the work does not happen. None of these emitted an error:
+A status field, health endpoint, summary line or your own report is computed from state that
+outlives the failure. None of these emitted an error:
 
 | oracle | reported | while |
 |---|---|---|
 | `systemctl show -p Result` | `success` | a dependency refused the unit and it never ran |
-| `tailscale ping` | `pong … 3ms` | **all** IP traffic on the host was blocked. Disco runs in userspace over any path and never touches routing or the firewall |
-| `git rev-parse HEAD` during a paused rebase | the upstream commit, matching `origin/<branch>` | your commit sat unapplied in the rebase; the rejection was three lines up |
-| the harness's "user rejected" on a tool call | rejected, not run | an interrupt arrived mid-flight and the write had already landed — a retried append duplicates silently |
-| `ffmpeg -v error -i X -f null -` (and `ffprobe` duration) | exit 0, empty stderr, full duration | zero audio frames decoded — the header claims the length. Gate on the `time=` ffmpeg reaches |
+| `tailscale ping` | `pong … 3ms` | all IP traffic was blocked; disco runs in userspace, off routing and firewall |
+| `git rev-parse HEAD` in a paused rebase | the upstream commit | your commit sat unapplied; the rejection was three lines up |
+| the harness's "user rejected" | rejected, not run | the write had landed mid-flight; a retried append duplicates |
+| `ffmpeg -v error -i X -f null -`, `ffprobe` | exit 0, full duration | zero frames decoded; gate on the `time=` reached |
 
-- **A figure recovered from a summary of your own earlier work is a claim, not a measurement.** Context compaction keeps conclusions and drops the derivations that produced them, so a number that was wrong when written reads identical to one that was measured — and it sits in your own context rather than in a source you would think to re-check. Re-derive any figure before it enters a durable artifact: a ticket, a record, a commit message. Measured 2026-09-20 (#48): a summary carried an acceptance criterion's correction as "four should be two"; re-running the grep at both revisions gave three, and the wrong number was one edit from a published closing comment on a ticket whose whole subject is durable text naming things that no longer exist.
-
-- **A generator is an oracle for the artifact it once produced.** A script, migration or exporter that built a file reads as source and carries no signal when the file was edited afterwards; the form the runtime consumes, at the revision in use, is the only anchor for a reuse premise about it. Before writing "X has three surfaces" or "the schema has column Y", open the imported, compiled or loaded form, and grep the project's prior review dispositions for the same premise: a rejected inference recurs because its refutation lives in a record nobody reads at spec time. Measured 2026-09-15: a spec planned a per-surface tint from a bootstrap generator's palette; the accepted figure is one uniform-grey primitive, and a review three days earlier had rejected the same inference.
-
-- **A path-mediated check reads a payload byte.** Assert content-type and a byte count against the file on disk. A status code, a ping endpoint or a metadata query cannot stand in for that byte. HTTP 200 is not success; Subsonic puts the error in the body. An absent `nofail` mount resolves every path-shaped check against an empty directory on the root filesystem, so *all* observables pass and nothing works.
-- **A capability manifest is not a run record.** A log lists what the binary *could* do beside what it did, and a substring match cannot tell them apart. Ask: *is this string here because of what happened, or because of what is installed?* Measured: grepping `h264_nvenc` in an ffmpeg log passes whatever ran, because the banner lists it too. The discriminating artifact is the output-stream metadata plus absence of the rival codec on the invocation line.
-- **A race fix is not proven by the outcome it produces.** A lucky run with the bug still present produces the same outcome. Measured: a bind-order fix was read as working on a boot with no guard installed at all. Three arms, ascending: (1) the fix's own log line ordered *before* the thing it guards, which is necessary and never sufficient; (2) a non-zero wait, because a guard that returned in ~0 s never exercised the race, which is why restarting a service cannot close a boot-race criterion; (3) an independent process that hit the same failure inside the window, since a witness you did not construct cannot have been built to agree with you. Then state the counterfactual, labelled, never as the criterion.
-- **Read the diff back, not the exit code.** An all-or-nothing multi-edit script drops every edit on one drifted anchor, and the commit message still describes them. Write per edit; read `git show --stat` and the diff against what you intended. A failed `git add` on a bad pathspec stages nothing and does not stop the `git commit` chained after it. Confirm HEAD is attached (`git status`) before comparing it with anything.
-- **A cross-reference that "resolves" is a claim about scope, not existence.** A delegate reported a pointer verified because the target sentence existed; that sentence was scoped "to fix it", so the general rule the pointer asserted existed nowhere (2026-09-05). Read the sentence a pointer lands on.
-- **A consult returns evidence and a recommendation; checking the evidence is what stops you checking the recommendation.** The premise check is what makes the conclusion feel settled, and nothing has tested it. Measured 2026-09-17: an advisor's load-bearing premise — that nothing in the repo parsed a retired argument, and that the file told to point at it named no such argument — was re-derived by grep and held, while the recommendation it carried contradicted the spec's own routing table and left two references to a term the directory no longer defined. Adjudicate the recommendation against the source it claims to follow, as its own claim, or hand it to a lens that did not read the consult.
-- **A criterion that predicts behaviour is checked against the measurement, never against the fact that a measurement was recorded.** When the record refutes the prediction, supersede the criterion in place with what was proven and carry the refutation into the parent's criteria; a sibling "recorded in the notes" criterion is not evidence for the behavioural one (2026-09-03: a "stops at the git gate" criterion stayed checked across two tickets after the pilot record said the child had pushed; only the counter-critic caught it).
-- **A deliverable that is prose for an agent to follow is verified by a fresh agent following it, never by reviewing its diff.** Skills, engine documents, runbooks, contracts: a review reads the text, and the text is the oracle. Two review agents passed a document whose knob-block shape was specified nowhere, whose key set contradicted itself across three files, and whose idempotence claim contradicted its own refusal step — all three surfaced within minutes of a no-context agent trying to execute the prose (2026-09-04). Budget one playthrough per instruction artifact against a throwaway target, and ask it "where did you guess, where did the text contradict itself, what did it name that does not exist" rather than for an opinion on the design. The host's global instruction file is a confound on every arm, since a control that stops for the right reason from the wrong text reads green: run under a scratch host config where the host allows it, otherwise name the confound and make file attribution the discriminator (2026-09-05).
-
-- **A generalization written into prose an agent will follow is an untested claim, and the instance that tests it is usually one command away.** The bullet above covers the *deliverable*; this covers the instruction that produced it, which no playthrough ever reaches. Counts, path patterns and "the N places where X" cost nothing to write and are checked by running one: three of four faults a single fix round introduced shared this shape — a glob hint `#NN → gotchas/NN-*.md` where the emitter produces unpadded ids and the files are zero-padded, so `ls gotchas/1-*.md` finds nothing while `01-*` exists; "the two routers" where `ls */INDEX.md` returns one; and "filing is a two-file edit" contradicted by the enumerated list four lines above it. **Two of the three were the coordinator's dispatch instructions, not the implementer's execution** (2026-09-20, skills #3). The direction of the error is what makes it expensive: an *under*count reads as a tidy simplification and licenses skipping the steps it omitted — that one would have shipped a catalog entry with no body and no fixture. Prefer a worked instance to a rule wherever one exists, since it shows the shape by demonstration and lands on something real; where the generalization is genuinely needed, run the one command before writing the sentence, and write no count you did not just derive.
-
-**A count from a log or transcript keyed by position is not a count of things.** File:line
-pairs drift as files change, so a standing site recurs under new numbers and reads as several.
-Before sizing an eval set, a fixture set, or a "distinct sites" claim, count in the live tree
-(`command grep -rn` over the projects, exclusions named) and treat the transcript figure as an
-upper bound. Measured 2026-09-19: 21 "distinct" `basis.z` sites in one project's transcripts
-were 4 live sites; the fleet held 12.
+- **A figure recovered from a summary of your own work is a claim.** Compaction keeps conclusions
+  and drops derivations; re-derive any figure before it enters a ticket, record or commit.
+- **A generator is an oracle for what it once produced.** Open the form the runtime consumes, at
+  the revision in use, and grep prior review dispositions for the same premise.
+- **A path-mediated check reads a payload byte:** content-type and a byte count against the file.
+  HTTP 200 is not success (Subsonic errors arrive in the body); an absent `nofail` mount makes
+  every path check pass against an empty root-filesystem directory.
+- **A capability manifest is not a run record.** Ask whether a string is there because of what
+  happened or what is installed: `h264_nvenc` is in the banner of any ffmpeg build that has it.
+  Read the output-stream metadata, and the rival codec's absence from the invocation line.
+- **A race fix is not proven by its outcome.** Three arms: the fix's log line precedes what it
+  guards (necessary, never sufficient); a non-zero wait (a restart cannot close a boot race); an
+  independent process hitting the failure inside the window. State the counterfactual, labelled,
+  never as the criterion.
+- **Read the diff back, not the exit code.** An all-or-nothing multi-edit drops every edit on one
+  drifted anchor; a failed `git add` does not stop the chained `git commit`. Write per edit, read
+  `git show --stat` and the diff against what you intended, and confirm HEAD is attached
+  (`git status`) before comparing it with anything.
+- **A cross-reference that resolves is a claim about scope.** Read the sentence it lands on; one
+  scoped "to fix it" does not carry a general rule.
+- **Checking a consult's evidence is not checking its recommendation.** Adjudicate the
+  recommendation against the source it claims to follow, or hand it to a lens that did not read
+  the consult.
+- **A criterion predicting behaviour is checked against the measurement,** never against a record
+  of one being taken. When the record refutes it, supersede it in place and carry the refutation
+  to the parent.
+- **Prose an agent will follow is verified by a fresh agent following it,** never by reviewing its
+  diff. Run it against a throwaway target, and ask "where did you guess, where did the text
+  contradict itself, what did it name that does not exist". The host's instruction files are a
+  confound on every arm: use a scratch config, or name the confound and make file attribution the
+  discriminator.
+- **A count, glob or "the N places" written into instructions is an untested claim** that one
+  command checks — including a coordinator's dispatch text, which no playthrough reaches. Run it
+  first; an undercount reads as simplification and licenses skipping steps. Prefer a worked
+  instance to a rule.
 
 ### Assert the complement
 
-For any "X must never happen" rule, also assert the nearby behaviour that must still work, pinned with its measured margin. A one-sided check is satisfied best of all by a deleted feature. What the complement still misses:
+For any "X must never happen" rule, also assert the nearby behaviour that must still work, pinned
+with its measured margin. A one-sided check is satisfied best of all by a deleted feature. What the
+complement still misses:
 
-- **A value nothing reads passes never-X and must-work together.** Grep for the production consumer and assert at that boundary; producer plus test is inert.
-- **A probe that samples before the system settles measures timing, not the property**, and it fails in the direction that looks like a real bug. Assert steady state first; keep probe code byte-identical across compared runs.
-- **One artifact answering a class of inputs is checked per sub-class**, partitioned by what the system does *differently*. The host is part of the domain: a skip branch "passed" on macOS only because it lacked the `/mnt` that broke it on Linux.
-- **Partition by reachable state as well as input.** A snapshot gate over a stateful artifact tests only the state it captured and passes every rule that needs an interaction to apply.
+- **A value nothing reads passes both.** Grep for the production consumer and assert there;
+  producer plus test is inert.
+- **A probe that samples before the system settles measures timing**, and fails like a real bug.
+  Assert steady state first; keep probe code byte-identical across compared runs.
+- **Check per sub-class**, partitioned by what the system does differently — the host included: a
+  skip branch "passed" on macOS only because it lacked the `/mnt` that broke it on Linux.
+- **Partition by reachable state as well as input.** A snapshot gate passes every rule that needs
+  an interaction to apply.
 
 ### Count agreeing readings once
 
-**Two passes agreeing through the same instrument is one reading** — and two docs agreeing is none when one copied the other. Seats agree the same way, and the thing they share is rarely visible in either report.
+**Two passes agreeing through the same instrument are one reading**, and two docs agreeing are none
+when one copied the other. Seats agree the same way — ask what single artifact they both read:
 
-- **Seats that cannot execute the system converge on the same confident inference about runtime behaviour.** Shared blindness is indistinguishable from independent confirmation: the second seat is not a second source when both reason from the same unexecutable artifact. Two pinned review seats independently refuted a dating claim from the same two files, in the same direction, each saying it could not run the engine, and the coordinator rewrote the claim their way; one throwaway worktree at the old commit and one run contradicted all three — a `Window.size` write applies immediately where the later `Window.mode` change does not (2026-09-14). Where a finding turns on runtime ordering and the coordinator is the only seat that can execute, spend the run before the adjudication round, and read converging read-only seats as one lens, not two.
-- **Seats also converge on a shared undocumented convention, and there the durable fix is the artifact, not the refutation.** This survives giving every seat full read access: what is missing is not a run but a stated convention. Two pinned review seats independently filed the same finding — that a widget's `L`/`R` labels contradicted the landmark data — because the repo nowhere said that a `DEF_*.L` bone sits on the figure's RIGHT under the Blender-to-Godot axis conversion. The identifiers were the trap, both seats read them correctly, and the cheap move was to "fix" labels that were already right; an independent re-derivation from the source data settled it, not a third opinion (2026-09-14, 3d-anim-lab #20). Ask what single artifact two agreeing seats both read, and when the answer is an unstated convention, spend the fix on writing it where both look — one glossary entry closed this one. Sign, unit and handedness are the recurring shapes.
-- **A classification you wrote is an instrument, and seats agreeing on the aggregate it produces are agreeing about your instrument, not the subject.** The other shapes here converge on a wrong *finding*; this one converges on a *number*, which is worse, because a number reads as a property of the material and a disappointing one is the easiest kind to accept. A rule ledger flagged 218 of 254 rows `keep`, written to mean *the rule survives, the text is yours*; every seat read it as *the paragraph survives*, so 86% of the corpus was frozen by flag before anyone opened a file, and three seats independently reported ~6% as the honest compression ceiling. That read as timidity about the prose. Redefining the flag and re-running one seat returned −40.8% on the next file, and −24.2% over the corpus (2026-09-19, agent-skills #24). Before aggregating anything seats produced under a scheme you defined, have one quote back what it took a key term to mean; and when their numbers agree *and* disappoint, mutate the definition and re-run one seat before believing the number.
-- **Every seat asked to verify a claim checks it inside the scope the claim states; the scope itself is what goes unchecked. Vary the question, not the seat.** Here the shared blind spot is the question *you* wrote, which is worse, because it looks like the one thing under your control. A modifier's comment justified its axis conversion with "a rotation leaves its own axis invariant". The advisor seat derived that independently when consulted, the coordinator had derived it before dispatching, and the Standards seat endorsed it with correct algebra (`B·R(a,θ)·B⁻¹ = R(Ba,θ)`) — three derivations, every one valid **for the two offsets the claim mentions**, and all three blind to a second modifier that ran earlier in the same pass about a horizontal axis, which broke the invariance and made the stated reason false. Nothing behavioural was wrong, but the false rationale licensed exactly the caching that would have broken it (2026-09-14, 3d-anim-lab #21). What caught it was a seat given a different brief — "trace each consumed value back to its producer and check the convention at each hop" — which pulled the whole pass into scope precisely because it never mentioned the claim. A seat asked "is this right?" audits your sentence; a seat asked "trace this" audits your world.
-- **Two findings can each be right and jointly destructive, and neither report can show it.** The shapes above are about readings that agree; this is about *fixes* that interact. A finding justified by "X already covers this" depends on X staying where it is, and any other accepted fix that moves, rewords or displaces X silently removes what the first traded away. One consult said to drop a sentence's reason clause because the adjacent sentence carried the reason, and the same consult said to move that sentence within the paragraph; both were correct, both were adopted, and the merged result stated a constraint with no reasoning attached, breaking a rule the same file states (2026-09-19, agent-skills #32). Adjudication checks each finding against the source, which is the wrong axis: the defect lives between findings, so no per-finding check has a reader for it. Write down what each fix *depends on* before applying, and re-read the whole edited region afterwards rather than the individual hunks.
-
-- **A criterion can pass because a *different* criterion's fix put its defect out of reach.** Narrower than the rule above and worse to catch: there the two fixes damage each other and the deliverable is wrong; here both fixes are right, the deliverable is correct, and what breaks is the second criterion's *observability*. It now has no arm that can red, and it reports as satisfied. A ticket asked for a recogniser to read decommented lines because a comment had misled it at one site, and separately for the recogniser's new branch to run first in a precedence ladder; running it first caught that same site before any comment could reach it, so reverting the decomment changed nothing and the criterion was unobserved end to end (2026-09-20, skills #18). A mutation battery found it; no review could, because every artifact matched. For each criterion, name the mutation that should red it and run that mutation — a criterion whose defect a sibling fix already covers is satisfied by a deleted implementation.
-
-- **Correcting a fact at its cited source leaves the derived copy stale, and a per-file reader cannot see the contradiction.** The correction round goes to the authority — the definition, the constant, the comment the others were written from — and the paraphrase two files away keeps the old number while reading as independent confirmation. A spec asserted "four of the six" sites had a shape; it was true of none of them, and the figure reached a code comment, a commit body and a test comment. Two review axes and a dedicated correction round each fixed the copy they were looking at, and the last one died on the third pass sitting two lines above the corrected figure, contradicting it inside one comment block (2026-09-20, skills #18). A fact repeated in two files with different wording is one fact with one maintainer and one silent stale copy. When a number is wrong, grep the number and every phrasing of it across the tree before declaring the correction done — and prefer deriving the second mention to restating it.
+- **Seats that cannot execute converge on the same runtime inference.** Where a finding turns on
+  runtime behaviour, spend the run before adjudicating, and count read-only seats as one lens.
+- **Seats converge on an unstated convention** (sign, unit, handedness). Re-derive from the source
+  data, then write the convention where both seats read.
+- **A classification you defined is an instrument.** Have one seat quote back what a key term
+  meant; when seats' numbers agree *and* disappoint, change the definition and re-run one seat.
+- **A verifying seat checks inside the scope the claim states.** Vary the question, not the seat:
+  "trace each value to its producer" audits the world; "is this right?" audits your sentence.
+- **Two findings can each be right and jointly destructive.** Write down what each fix depends on,
+  and re-read the whole edited region, not the hunks.
+- **A fact corrected at its source leaves derived copies stale.** Grep the number and each
+  phrasing of it across the tree; prefer deriving the second mention to restating it.
 
 ## An absence claim carries the scope of the instrument
 
-"Nothing owns X", "dead code", "not in the repo", "these are all the branches" assert over the *whole* project. Your review scope and your instrument's reach become part of the claim, and they vanish from the sentence unless you write them in. A positive claim survives anything outside the file you read; a negative one does not.
+"Nothing owns X", "dead code", "not in the repo" assert over the whole project, so your review scope
+and your instrument's reach are part of the claim and must be written into it.
 
-- **Name the instrument's reach inside the claim**, and prefer the authoritative query over the cached one. `git ls-remote` asks the remote; `git branch -r` reads a local cache of a past fetch, and once certified three branches safe to delete while a fourth, local to another machine, held 11 commits that existed nowhere else.
-- **Put the intent layer in scope first.** Read the board or tracker. A review scoped to code and architecture docs converts *planned* into *broken*, most confidently on active work. This binds solo review as much as fan-out.
-- **The filesystem is a second invisible layer.** Read `.gitignore` and run `git check-ignore -v` before filing "not in the repo". *Not tracked* and *not present* are different claims.
-- **Settle runtime-state questions with a live probe**, never a repo read.
-- **Whether an `@import` actually loaded is a runtime-state question, and your own injected context answers it for free.** An unexpanded import is byte-identical to an expanded one in the file, so reading the file proves nothing, and there is no error either way. Read the context you were given instead: the imported body's text is in it or it is not. Measured 2026-09-19 in agent-skills, where every home-chunk import had been inert since the project existed — external includes were never approved, so `@~/.claude/chunks/tracker-github.md` had silently delivered nothing to any session that ever ran a ticket there, while the relative import that carried the file it sits in expanded normally. It was approved on 2026-09-20 and measured expanding; the inertness is history, the check is not. Two seats reached for a headless `claude -p` quote-back probe, which needs its own known-absent control and can return 429 while exiting 0; the interactive session had the answer in its context window already. Where you must probe from outside, the control is a sentence from a chunk that is *not* imported. The headless probe does earn its place for a question about what a *settings change* would do: `claude -p --settings '<json>'` layers the change over the live config without editing it. Flip one key both ways, and keep a known-present entry as the control (2026-09-22, `skillOverrides`).
-- **What a sub-agent received is the harness's answer, not the seat's.** The bullet above answers for your own context only. A seat's report about its own context is a claim, and a self-poisoning one: its payload may itself assert the answer, so *absent* can be deference and *present* compliance. The measurement is the transcript line with `.type=="attachment"` **and** `.attachment.type=="instructions"` — written before the seat's first token, listing every delivered file with its content. Select it by type, never by index: position varied 3-against-5 within one session, and a positional miss returns null, whose counts print as a clean zero. A control string planted in the dispatch prompt and reading 0 in the payload separates delivery from echo. What a seat gets is its parent's *memoized* walk, so a present block can still be stale — measured on a seat handed a paragraph that was no longer on disk, and on seats reading a nested import absent because their parent's walk predated its approval, never because of the seat boundary (2026-09-20, agent-skills #35, seven seats across four `subagent_type`s).
-
-- **A peer's claim about a per-machine artifact** (`~/.claude`, `~/.config`, service units, mounts) carries its machine as unstated scope in either polarity; re-run it on yours. Re-verify any peer all-clear before a destructive act. A correction is itself an upstream fact.
-- **A "fixed" note is a claim at the site it names.** Re-verify at every sibling site, and read the replacement against the record: a correction accepted is not thereby applied.
-- **In a test, an absence claim enumerates every writer of the resource and drives the assertion through each.** Exercised only through its owner, the check guards the one door that was never the threat.
-- **A dead reader keeps nothing alive: test liveness transitively, starting from the live set.**
-  "It is cited, so it is live" is a claim about readers that may be dead themselves. In one repo,
-  four design docs (6,256 words) each had two or three inbound citations, and every citation came
-  from another member of the same dead set (2026-09-20). Name what is live first, then follow what
-  it reads, outward. A cluster that no live file reaches is dead, however densely it cites itself.
-- **A bulk deletion lasts only once its premise is retired in writing.** When a group of files
-  exists because of a goal or phase that has lapsed, record the lapse in a file that outlives the
-  deletion and cite that record from the change. Otherwise the next session restores the group
-  from the still-live instruction that produced it.
-- **Verify a large deletion by set-difference, not read-through.** "Nothing load-bearing was lost" is an absence claim over everything removed. Diff the token sets, old file against new file plus wherever content moved, and read the residue. The failure a read-through cannot see is a surviving clause that now points at nothing.
-- **A source's claim about its own evidentiary status is a claim, not evidence.** A comment or note asserting *"this is the only record of X"* — or, in the other direction, *"X is recorded in `<doc>`"* — is the artifact grading its own irreplaceability, and both directions fail silently. Measured 2026-09-20 in 3d-anim-lab, both inside one comment cull: one comment asserted *"This comment is the only thing carrying the derivation — it is load-bearing, not commentary"* while a `docs/results/` record held that derivation in strictly more detail, which left unchallenged would have made every future reader protect it permanently; a second comment's derivation genuinely **was** the only copy, and was cut because the record had been grepped for the claim's *topic* — which found the conclusion sitting there while the evidence inside it was absent. A conclusion and its evidence are two facts and only one may be recorded, so grep the most specific token in the sentence, never its subject: the topic word returns the paragraph that cites it, the rare token returns the thing you are about to destroy. Sibling of set-difference above, one level up — that bullet asks whether the content survived somewhere, this one asks whether the *sentence telling you so* was ever checked.
-- **Coverage proves non-deletion, not integrity.** An instrument asking whether a rule is still *there* passes one that survived and stopped binding, and reports success. Twice in two days here: a lint rule narrowed from four namespaces to one stayed `covered` and the suite stayed green (#22); a nine-word compression kept every rule in an instruction paragraph and dropped four — an imperative recast as a possessive, twice; the word *silently*, which was the rule's whole tell; a term tying the rule to its sibling elsewhere — with `wc -w` green on all four (#33). Each was caught by a different instrument, none by the writer re-reading, whose ledger asserted "same prohibition" of the possessive in the same row as a checked word count. Set-difference above answers presence; for force, give an independent reader the pre-edit rules as rows, without your mapping table, and ask which the new text still *binds* (2026-09-19, agent-skills).
-- **A verification command restored or relocated to back an absence claim must be re-run, and its output read against the claim's exact words.** Re-adding the instrument re-couples it to the claim only if you do that: *present* and *still supporting the sentence* are different facts, and no diff tells them apart. Where the output holds an apparent counterexample, the text must name it and dispose of it — a reader who runs the command lands on that hit first, and a claim that cannot survive its own evidence is worse than one offering none. Measured 2026-09-20 in 3d-anim-lab (#60): a `git grep` cut as "re-derivable in one command" was restored to the absence claim it was the sole evidence for, and its seven hits contradicted the sentence verbatim, one of them naming the very file the claim says nothing loads. The edit sat under an unchanged bold lead, so the span diff, both token sets and `wc -w` were green; a fresh reader following the text caught it. Third sibling of the two above — set-difference asks whether the content survived, coverage asks whether the surviving rule still binds, this asks whether the surviving *instrument* still proves the sentence.
-- **A per-item verdict carries its denominator, and zero items reads exactly like zero failures.** `0 failures over 0 checked` prints the line a passing gate prints; so does `jq`'s `all()`, which returns **true** on an empty array, so an "are all the children closed?" guard passes vacuously on a parent that has none. The instrument is sound in both cases — the *input set* is empty, which no control over the instrument can reveal. Report the count of items the check found beside its verdict, and read a zero denominator as **not run**, never as a pass. Measured 2026-09-20 (#48): a read-list gate reported `0 failures` on four of nine projects that had no adapter file at all.
+- **Name the instrument's reach, and prefer the authoritative query.** `git ls-remote` asks the
+  remote; `git branch -r` reads a past fetch, and once certified branches safe to delete while a
+  machine-local one held commits that existed nowhere else.
+- **Put the intent layer in scope first:** the board or tracker. Otherwise *planned* reads as
+  *broken*, most confidently on active work. This binds solo review as much as fan-out.
+- **The filesystem is a second layer.** Before filing "not in the repo", read `.gitignore` and run
+  `git check-ignore -v`; *not tracked* is not *not present*.
+- **Settle runtime state with a live probe**, never a repo read. Whether an `@import` expanded is
+  runtime state that your own injected context answers: the body is there or it is not. A headless
+  `claude -p` probe needs a known-absent control and can return 429 while exiting 0; it earns its
+  place for a settings question (`claude -p --settings '<json>'`: flip one key both ways, keep a
+  known-present entry as control).
+- **What a sub-agent received is the harness's answer, not the seat's.** Read the transcript line
+  with `.type=="attachment"` and `.attachment.type=="instructions"`, selected by type — a
+  positional miss returns null, whose counts print as a clean zero. A control string planted in
+  the dispatch prompt and reading 0 in the payload separates delivery from echo. A seat gets its
+  parent's *memoized* walk, so a present block can be stale.
+- **A peer's claim about a per-machine artifact** carries its machine as unstated scope; re-run it
+  on yours, and re-verify any peer all-clear before a destructive act. A correction is itself an
+  upstream fact.
+- **A "fixed" note is a claim at the site it names.** Re-verify every sibling site; a correction
+  accepted is not thereby applied.
+- **In a test, enumerate every writer of the resource** and drive the assertion through each.
+- **A dead reader keeps nothing alive.** Name the live set, follow what it reads outward; a
+  cluster no live file reaches is dead however densely it cites itself.
+- **A bulk deletion lasts only once its premise is retired in writing** — in a file that outlives
+  the deletion, cited from the change — or the next session restores it from the instruction that
+  produced it.
+- **"Nothing load-bearing was lost" needs three instruments.** *Presence*: diff token sets, old
+  against new plus wherever content moved, and read the residue. *Force*: give an independent
+  reader the old rules as rows, without your mapping, and ask which the new text still binds — a
+  word count cannot see a rule that survived and stopped binding: an imperative recast as a
+  possessive or a description, a dropped tell word (*silently*), a lost term tying it to a
+  sibling. *Evidence*: re-run any command kept as proof and read its output against the claim's
+  exact words, disposing of every apparent counterexample.
+- **A source's claim about its own evidentiary status is a claim.** "This is the only record" and
+  "X is recorded in `<doc>`" both fail silently. Grep the rarest token in the sentence, never its
+  topic: the topic finds the conclusion, not the evidence.
+- **A per-item verdict carries its denominator.** `0 failures over 0 checked` prints a pass, and
+  `jq`'s `all()` is true on an empty array. Print the item count beside the verdict, and read a
+  zero denominator as *not run*.
 
 ### Prove the needle first
 
-A control finds a known-present needle through the *same pipeline* before the absence is believed. A flag guesses one cause of blindness; the control detects blindness whatever the cause. The flag list is unbounded, the control is one line. Measured:
+A known-present needle must come back through the *same pipeline* before an absence is believed. A
+flag guesses one cause of blindness; the control detects any. Measured:
 
-- **Compression defeats every text reader, and `-a` does not help.** `strings <cache> | command grep -c <subject>` returned 0, the expected answer, and 0 again for a subject known to be present. The file was zlib behind an 8-byte header; `-a` answers NUL bytes only.
-- **`cmd | grep X || echo "no X"` reports clean when `cmd` fails.** A teardown check printed *no blackhole routes* because `ip netns exec` needed root and `2>/dev/null` removed the only evidence. Print the table and read it, or check `cmd`'s own exit status. The absence of output is never the evidence.
-- **A path beginning with `-` is parsed as an option, and the count comes back EMPTY, not zero.** `grep -c pat ./-Users-…` never runs: grep prints usage to stderr, the command substitution yields the empty string, and a formatted row prints a blank where the number goes — which reads as a clean zero, or as a zero someone later types in. Every Claude Code project transcript directory is named `-Users-…`, so this fires on any transcript mining. Measured 2026-09-19 in agent-skills: a per-seat marker table printed blank counts for both arms of a probe and would have been read as "the instruction block is absent from both". Prefix the path with `./`, pass it after `--`, and use `-e` for a pattern that could also look like a flag. Sibling of the rule above: there the pipeline fails, here the argument was never a path at all.
-- **`grep -c` answers a narrower question than the count suggests, three ways, and each reads like a result.** A **multi-line** pattern is split into independent needles and the count is of lines matching *any* of them, so a two-line quote "found once" may have neither line adjacent to the other — a silent false green that `-ge 1` passes and `-eq 1` catches; assert the pattern holds no newline before grepping. A phrase spanning a **line wrap in the file** returns 0 — a phantom red indistinguishable from deletion when you are checking presence, and a phantom *green* when you are checking absence, which is the direction that ships rather than getting investigated (2026-09-20: a contamination check over a doc read clean because the very phrase it forbade had wrapped) — normalise both sides (`tr -s ' \n' '  '`) before comparing. And `grep -c` **exits 1 on zero matches**, so the reflexive `c=$(grep -c ... || echo 0)` appends a second `0` and every numeric comparison downstream misreads the result; use `c=$(grep -c ... 2>/dev/null); c=${c:-0}`. All three surfaced in one run of a 348-row quote gate over a rewritten prose library: the wrap defect alone accounted for 8 of an apparent 25 failures, and the exit-status defect made every negative control report as a failure, which is the direction that gets a control deleted rather than fixed (2026-09-19).
-- **A recursive grep does not descend a symlinked directory, and the flag that fixes it depends on the binary.** Where the target is an install of symlinks — `~/.claude/skills/<name>` pointing into a checkout is the standard shape — the search prints nothing and exits 1, indistinguishable from the term being absent and exactly the answer a displacement search wants to hear; a wrap's admission test got seven clean negatives across a skill that way, and only the mandated known-present needle exposed the search as dead (2026-09-20). **`-R` is not the portable fix.** Under the harness's ugrep it traverses; under `command grep` — BSD grep 2.6.0-FreeBSD — `-r` and `-R` are equivalent and neither follows a link, only `-RS` does (measured 2026-09-21 against a planted needle). So a bare `-R` and this section's closing rule — switch binaries when a negative is load-bearing — compose into exactly this silent zero. `rg` misses the same way without `-L`; `awk` does not recurse at all, so there the trap is the glob that feeds it (both measured 2026-09-21 against the same needle). Use `-RS`, resolve each root with `readlink -f` first, or glob the files (`$DIR/*.md`) so the shell resolves the link before grep sees it. The same shape bites any recursive tool pointed at a symlinked store, so confirm traversal before reading a zero as evidence.
-- **A pattern list's own text is not a needle for the screen that consumes it.** The bullets above break the pipeline; this one breaks the needle, which is harder to see because the control looks like it ran. Screening a file against a regex list before publishing it, the obvious control is to paste one of the patterns into the file and re-run — and it usually returns zero, because a regex rarely matches its own source text — 43 of the 48 entries in one live list did not (measured 2026-09-18). The screen then certifies a file it has never been shown able to fail. Two seats built that control independently in one session and both got the clean zero (2026-09-17). The few patterns that do match themselves are worse than the rest: the control fires, and vindicates a method that fails for every other entry. Build the needle from what the pattern *matches* — strip `\b`, take an alternation's first branch, and confirm the candidate with `grep -iqE -e <pattern>` before planting it — or calibrate the tool that owns the list and screen with that instead.
-- **A control licenses only the stage it runs at; a later stage can fail for its own reasons and its silence still reads as a finding.** Two per-rule controls passed — the specimen tripped the rule unmutated, the mutation provably silenced it — and the verdict was still wrong, because a third stage, the full suite run, exited 2 on a fixture directory that was no longer there. The parser saw no failure lines and reported *not covered* for 14 of 15 rules under a clean summary line (2026-09-18). A control at one stage is not evidence about the next. Branch on the harness's own exit status before parsing its output: a harness-failure code is the absence of an answer, never a negative one.
+- **Compression defeats every text reader**, and `-a` answers only NUL bytes.
+- **`cmd | grep X || echo "no X"` reports clean when `cmd` fails**, and `2>/dev/null` hides why.
+  Print the table and read it, or check `cmd`'s exit status; absence of output is never evidence.
+- **A path starting with `-` is parsed as an option** and the count comes back empty, not zero —
+  every Claude Code transcript directory is named `-Users-…`. Use `./`, `--`, and `-e`.
+- **`grep -c` answers narrower questions than it looks.** A multi-line pattern becomes independent
+  needles, which `-ge 1` passes and `-eq 1` catches (assert no newline in it); a phrase wrapped
+  across lines returns 0, a phantom *green* on an absence check (normalise with
+  `tr -s ' \n' '  '`); and it exits 1 on zero, so `$(grep -c … || echo 0)` yields two zeros — use
+  `c=$(grep -c … 2>/dev/null); c=${c:-0}`.
+- **Recursive search can skip a symlinked directory and exit 1.** The harness's ugrep follows one
+  under `-R`; BSD `grep` follows only with `-RS` (`-r` and `-R` alike skip it), so a bare `-R`
+  plus the switch-binary rule below yields exactly this silent zero. `rg` needs `-L`; `awk` does
+  not recurse. Resolve roots with `readlink -f` or glob the files so the shell resolves the link,
+  and confirm traversal before reading a zero.
+- **A regex list's own text is not a needle for it**: most patterns do not match their own source.
+  Build the needle from what the pattern matches (strip `\b`, take an alternation's first branch),
+  confirm with `grep -iqE -e <pattern>`, or calibrate the tool that owns the list.
+- **A control licenses only the stage it ran at.** Branch on the harness's exit status before
+  parsing its output; a harness failure is the absence of an answer, never a negative one.
 
-In Claude Code, `grep` is a shell function that execs the harness binary as `ugrep … -I --ignore-files`, so its negative is unreliable in several ways that all read as a miss. One NUL byte makes the whole file silently unsearchable (no output, exit 1, identical to a miss; `file` saying `data` is the tell). `--ignore-files` skips ignored paths. Over raw HTML a tag-bounded pattern misses tag-split phrases, so strip to text first (`textutil -convert txt -stdout` on macOS). And `-r` does not traverse a symlinked root under it either. It never false-positives. Use `command grep`, `awk` or `rg` whenever a negative is load-bearing — but switching binary does not by itself fix symlink traversal, so carry the flag from the symlink bullet above (`-RS` for BSD grep, `-L` for `rg`; `awk` does not recurse, so feed it a resolved glob). That is necessary, not sufficient, per the compression case above.
+In Claude Code, `grep` is a shell function running ugrep with `-I --ignore-files`: one NUL byte
+makes a file silently unsearchable (`file` says `data`), ignored paths are skipped, and a
+tag-bounded pattern misses tag-split HTML (strip to text first: `textutil -convert txt -stdout`). It
+never false-positives. Where a negative is load-bearing use `command grep`, `awk` or `rg`, carrying
+the symlink flag above.
 
-**Right by accident is worse than wrong.** A wrong answer eventually collides with something. A correct-sounding answer from a dead instrument never prompts a re-check and hardens into the record. **Close-out checks are where this bites.** Teardown sweeps and "confirm it's clean before we finish" expect the answer *clean*, so a broken check and a passing one are indistinguishable. Put the control on the *last* check, not just the first, and re-derive the cleanup list from what the run produced. A criterion written before the run cannot know which artifacts carry its proof.
+**Right by accident is worse than wrong.** A correct-sounding answer from a dead instrument never
+prompts a re-check. Close-out checks — teardown sweeps, "confirm it's clean" — expect *clean*, so
+put the control on the *last* check too, and re-derive the cleanup list from what the run produced;
+a criterion written before the run cannot know which artifacts carry its proof.
 
 ## Blindspot the source before a 1:1 fan-out
 
-Spec→tasks, schema→migrations: a hole in the source replicates into all N outputs, and an output review is structurally blind to a deliverable the source never named. Source-pass and output-pass catch different failures; run both. The discovery-side sibling: sweep the real corpus before authoring a taxonomy, catalog or checklist from intuition. A from-memory seed systematically undercounts.
+Spec→tasks, schema→migrations: a hole in the source replicates into all N outputs, and an output
+review cannot see a deliverable the source never named. Run a source pass and an output pass. Before
+authoring a taxonomy, catalog or checklist, sweep the real corpus; a from-memory seed undercounts.
+
+The incident behind each rule is in this file's git history (`git log -- verification-discipline`).
