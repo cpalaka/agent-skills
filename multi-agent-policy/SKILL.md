@@ -24,7 +24,10 @@ states the pin.
 unbroken context window. Each ticket then runs `/implement-run` in a fresh Builder session (that
 Skill asks the owner to switch if it is not). Outside a run, a Planner main loop handed
 implementation delegates it to the `implementer` seat. Inside a run the **advisor** — the seat
-holding unscoped judgment for the coordinator — is the only Planner seat.
+holding unscoped judgment for the coordinator — is the only Planner seat. A frontier worked
+hands-off runs `/implement-batch`, where installed (§ Elsewhere), which the owner invokes, from a
+Builder main session — the **delegate** — which dispatches one `coordinator` per ticket to run
+`implement-run`.
 
 ## Spawning
 
@@ -64,9 +67,11 @@ the seats' model fields; nothing else reads them.
 
 ## Elsewhere
 
-- **The run procedure** — roster, the advisor's slots, the unresolved-seat fallback, the run record
-  — is the slash-only `implement-run` Skill.
+- **The run procedure** — the run profile, the advisor's slots, the unresolved-seat fallback, the
+  run record — is the slash-only `implement-run` Skill.
 - **[`WORKFLOWS.md`](WORKFLOWS.md)** — saved Workflow scripts, fan-out → verify, vendor lenses.
 - **[`COORDINATOR-PANE.md`](COORDINATOR-PANE.md)** — choosing a run's shape, heartbeats, child
   sessions in a multiplexer, peers on a shared system.
-- **[`GRANTS.md`](GRANTS.md)** — hands-off execution of a ticket.
+- **Hands-off execution** of one or more tickets by the owner's delegate is the slash-only
+  `implement-batch` Skill, where its directory exists under `~/.claude/skills` or
+  `~/.agents/skills`: suggest `/implement-batch` to the owner, who invokes it.

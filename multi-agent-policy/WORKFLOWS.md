@@ -77,7 +77,7 @@ Why rationing became pricing: ADR 0006, superseded by
 
 On any reasonably sized diff, after the internal pass, run Grok and Codex reviews framed for
 refutation; vendor diversity catches what same-family redundancy cannot (2026-07-17). The
-implementing delegate reviewing its own diff is a conflict of interest. Hold fix commits until every
+implementer reviewing its own diff is a conflict of interest. Hold fix commits until every
 lens returns, or a lens re-reports fixed defects as live.
 
 Direct CLIs measured July 2026 (grok-build 0.2.0), Codex companion 1.0.6 on 2026-09-23; a

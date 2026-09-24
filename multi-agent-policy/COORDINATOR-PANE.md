@@ -32,7 +32,7 @@ grepping the wrong field reports `completed=0` forever while agents finish.
   heartbeat is for liveness, not completion. Arm a Monitor that emits one status line per ~10
   minutes (implementers: elapsed + `git log -1 --oneline` + `git status --porcelain | wc -l`;
   workflows: elapsed + `agent-*.jsonl` count), relay each tick as one line, stop it when the
-  delegate reports; one Monitor per delegate, timeout 3600 s. A sub-agent transcript
+  seat reports; one Monitor per seat, timeout 3600 s. A sub-agent transcript
   (`~/.claude/projects/<proj>/<session>/subagents/agent-<id>.jsonl`) static for 40 minutes after a
   multi-line `echo`/heredoc Bash call was a hang (2026-09-05): `TaskStop`, then re-dispatch with a
   heredoc ban and a time budget in the brief.
@@ -45,8 +45,10 @@ A coordinator session drives interactive child sessions in sibling panes, one ti
 each child writing its own closing note. Measured on **herdr** (2026-09-01/02, three runs), which
 recognises coding agents in panes and exposes `idle` / `working` / `blocked` / `done` over a CLI;
 the procedure transfers to any multiplexer that does both. **`herdr --skill` is the syntax
-authority; nothing below restates a flag.** `GRANTS.md` governs the execution grant the children
-read.
+authority; nothing below restates a flag.** Inside a batch the children read the batch grant
+(`implement-batch` § Kickoff, where that Skill's directory exists under `~/.claude/skills` or
+`~/.agents/skills`); outside a batch, or without that Skill, the owner states the grant when the
+run starts.
 
 **Partition and start.**
 
@@ -70,16 +72,28 @@ read.
   tools. The clauses shrink the class; only anchoring the rules to the head of the command closes
   it.
 
-**Ticks and `blocked`.**
+**Ticks and `blocked`.** Measured on cpalaka/agent-skills#83; the nested-dialog reading is #93's.
 
-- **Ten-minute bounded waits**, each returning on a settled state or on its timeout, which is the
-  heartbeat tick. Every block across three runs surfaced inside a tick. Keep the tick cheap: a full
-  verifier inside one overran the coordinator's output limit.
-- **`blocked` is the only interruption, and it can be stale** — read the dialog before escalating.
-- **Never answer a permission dialog on the user's behalf.** Post its text, focus the child, wait.
-  Answer only a *question* whose answer the ticket or grant states literally, recording the line
-  you answered from. Confirm the notification surface reaches the user; with notifications off,
-  focusing the child was the only signal anyone saw.
+- **Submit the prompt and wait on it**, then watch the event stream or poll the agent state every
+  5 s. **Each wait lasts at most 30 s and returns on any of `idle`, `done` or `blocked`** — never
+  on `idle` alone: a finished turn reads `done` until someone views the pane, so a wait on `idle`
+  alone never returns on it.
+- **`idle` or `done` is no stop while the pane shows background work.**
+- **A `blocked` pane is the owner's: send it nothing**, an AskUserQuestion stop included, until a
+  `PermissionRequest` hook publishes a structural signal (none is built yet). herdr cannot tell
+  a permission dialog from an AskUserQuestion form or the folder-trust dialog, and keystrokes sent
+  to a `blocked` pane land in the open dialog. Post the dialog's text, confirm the notification
+  surface reaches the owner — with notifications off, focusing the child was the only signal anyone
+  saw — and wait.
+- **A dialog raised by a nested seat reads `blocked` too, and `blocked` can mask a session still
+  working** (#93): read the pane before escalating, and never take `blocked` for a stopped session.
+- **Only a question asked in plain chat is answerable, and it never reads `blocked`.** Inside a
+  batch, the delegate answers what `implement-batch` § The stops gives it (where that Skill's
+  directory exists under `~/.claude/skills` or `~/.agents/skills`) and parks the rest. Outside
+  one, answer only a question whose answer the ticket or grant states literally, re-checking the
+  pane after 2 s first, and record the line you answered from.
+- **The heartbeat (§ Heartbeat recipes) is a separate tick from these waits.** Keep it cheap: a
+  full verifier inside one overran the coordinator's output limit.
 - **A child stopping at a grant boundary with a question is the shape to want.**
 
 **The handoff is the ticket file.**
@@ -98,7 +112,7 @@ read.
 - **Check "that section printed nothing" against unfiltered output** — a tidy-up filter once
   dropped the very lines being checked for.
 - **A criterion no instrument can verify from the child's position is reported *not run*, never
-  passed.** Human criteria batch at the run's end rather than blocking each child.
+  passed.** Human criteria are collected for the run's end rather than blocking each child.
 - **A red the child predicts in its note before a destructive step is the right shape.**
 
 **Close and run end.**

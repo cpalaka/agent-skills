@@ -18,18 +18,28 @@ default `docs/**`, `CONTEXT.md`, `README.md`). `subagents` is described here in 
 `multi-agent-policy`'s `COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's
 directory exists under `~/.claude/skills` or `~/.agents/skills`.
 
-**Inside a batch.** Until cpalaka/agent-skills#96 lands the `implement-batch` Skill and the
-`coordinator` definition, no run is inside one. A brief that states the owner's delegation means
-this run is one ticket of a delegated batch, dispatched by the delegate, the main session standing
-in for the owner. There the shape is `subagents` whatever the knob says — the Workflow tool is
-absent at depth 1, and a pane driven from a subagent is unmeasured — and every stop this Skill
-gives the owner goes to the delegate, handed back in the form the brief names. The delegate answers
-the plan stop, the Close approval, the two cap stops, and a slot-3 need only after the advisor and
-only for what the advisor cannot settle; every other stop parks the ticket for the owner, such as
-a re-cost, a judgment the project's contract reserves, a `gate:decide`-shaped question or a gated
-write outside the batch grant. Load this file by path: the Skill tool's refusal
-of a slash-only Skill, with its text against replicating the workflow by other means, addresses a
-session replicating it for itself, not a coordinator the owner delegated.
+**Inside a batch.** A brief that states the owner's delegation means this run is one ticket of a
+delegated batch, dispatched by the delegate, the main session standing in for the owner. There the
+shape is `subagents` whatever the knob says — the Workflow tool is absent at depth 1, and a pane
+driven from a subagent is unmeasured — and every stop this Skill gives the owner goes to the
+delegate, handed back in the form the brief names: `STOP <kind>`, nothing pending (`implement-batch`
+§ Hand-back and resume, read only where that Skill's directory exists under `~/.claude/skills` or
+`~/.agents/skills`). In a `coordinator` dispatch the role is that definition's pin and the meter is
+the delegate's read, so neither is asked. A herdr pane child whose prompt states the delegation, the
+fallback transport, is a main session instead: it reads its own role and meter as § Start and
+§ Advisor slots say, and a Planner pane asks the delegate, which parks it, since a role switch is
+not among the delegate's stops. The delegate answers the plan stop; the Close approval; the two cap
+stops, each handed back as `STOP plan`, since a cap raise is a plan pin, which fires the plan stop
+(§ Run profile); a slot-3 need, where an advisor runs, only after the advisor and only for what the
+advisor cannot settle; and a false premise met mid-run whose disposition leaves every acceptance
+criterion satisfied in form with the failed premise named — after the advisor where one runs,
+handed back as `STOP slot-3` where none runs (the dial off, or the advisor unavailable, as Fallback
+lists). Every other stop parks the ticket for the owner, such as a re-cost, a judgment the project's
+contract reserves, a `gate:decide`-shaped question or a gated write outside the batch grant. A gated
+write the grant names is no stop: the grant is its approval, and the run record names that write
+under `Slots` beside the grant. Load this file by path: the Skill tool's refusal of a slash-only
+Skill, with its text against replicating the workflow by other means, addresses a session
+replicating it for itself, not a coordinator the owner delegated.
 
 ## Seats
 
@@ -174,8 +184,8 @@ plan mode. Verify is the `verify-gate` Chunk; sign-off is the Done gate the proj
 sets, or its own inline rule.
 
 State the knob values in force, asking only where the ticket cannot fit them, and this session's
-role; if it is not Builder, ask the owner to switch, and stay on Planner (the metered role) only on
-their say-so.
+role; if it is not Builder, ask the owner to switch (§ Inside a batch), and stay on Planner (the
+metered role) only on their say-so.
 
 **Close any stateful editor for the dispatch window**: it is a second writer whose in-memory flush
 lands after the gates read the tree, so stale state passes green. Commit nothing inside the
@@ -203,15 +213,16 @@ Announce each.
    `diagnosing-bugs` loop. A fourth need goes to the owner (§ Inside a batch).
 
 Never the advisor: gates, reading a diff for conformance, prose records, git mechanics, a task
-scoped to named files. Read the meter before spawning; the owner decides a tight one.
+scoped to named files. Read the meter before spawning; the owner decides a tight one
+(§ Inside a batch).
 
-**Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner (§ Inside a batch),
-and the critic, a Builder seat, spends no Planner meter. Advisor unavailable (no definition this
-host can dispatch, meter spent, knob `none`): hold the judgment yourself, ask the owner at the same
-triggers, say so. That is self-review unless slot 1's observable that cannot go red becomes a
-question the implementer's dispatch prompt asks before it writes code — a spec's author is the last
-reader to see that an observable does not mean what they intended. Gate-runner unavailable or knob
-`coordinator`: run the gates yourself, say so.
+**Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner
+(§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor unavailable
+(no definition this host can dispatch, meter spent, knob `none`): hold the judgment yourself, ask
+the owner at the same triggers (§ Inside a batch), say so. That is self-review unless slot 1's
+observable that cannot go red becomes a question the implementer's dispatch prompt asks before it
+writes code — a spec's author is the last reader to see that an observable does not mean what they
+intended. Gate-runner unavailable or knob `coordinator`: run the gates yourself, say so.
 
 ## Handoffs
 

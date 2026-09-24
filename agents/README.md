@@ -15,6 +15,7 @@ silently.
 
 | Seat | Claude Code | Codex |
 |---|---|---|
+| Coordinator (inside a delegated batch, one per ticket, depth 1; dispatched by `implement-batch`'s delegate) | `claude/coordinator.md` | — none |
 | Implementer | `claude/implementer.md`, `claude/implementer-medium.md` | `codex/implementer.toml` |
 | Advisor (Planner role, slots 1 and 3; slot 3 continues slot 1 by `SendMessage` or spawns fresh) | `claude/advisor.md` | — none, by design |
 | Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md`, `claude/code-reviewer-medium.md`, `claude/code-reviewer-xhigh.md` | `codex/code-reviewer.toml` |
@@ -32,10 +33,10 @@ assuming one, because nothing in this repository may assume where the clone live
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
-# Stand in the wrong clone and the loop would link eight names at nothing, silently.
+# Stand in the wrong clone and the loop would link nine names at nothing, silently.
 [ -f "$REPO/agents/claude/implementer.md" ] || { echo "not the agent-skills clone: $REPO" >&2; exit 1; }
 mkdir -p "$HOME/.claude/agents" "$HOME/.codex/agents"
-for n in implementer implementer-medium advisor code-reviewer code-reviewer-medium code-reviewer-xhigh; do
+for n in coordinator implementer implementer-medium advisor code-reviewer code-reviewer-medium code-reviewer-xhigh; do
   ln -sfn "$REPO/agents/claude/$n.md" "$HOME/.claude/agents/$n.md"
 done
 for n in implementer code-reviewer; do

@@ -213,12 +213,13 @@ _Avoid_: workhorse / workhorse tier (the retired name), budget tier (retired; no
 role exists), Opus (a model name), executor.
 
 **Seat**:
-A named position in a run filled by a pinned agent definition — implementer, advisor,
-gate-runner, and reviewer: the Standards and Spec axes, the Correctness charter and the **critic
-seat**, each a `code-reviewer` dispatch. A definition carries the model and effort, one definition
-per effort value the seat can reach, the bare seat name carrying the default; the seat name says
-what the position does. A seat is never a bare spawn, because a bare spawn inherits the
-parent's model. The `codex` bug-hunter value is a lens, not a seat: no agent definition fills it.
+A named position in a run filled by a pinned agent definition — implementer, advisor, gate-runner,
+the **Coordinator** inside a **batch** (a `coordinator` dispatch), and reviewer: the Standards and
+Spec axes, the Correctness charter and the **critic seat**, each a `code-reviewer` dispatch. A
+definition carries the model and effort, one definition per effort value the seat can reach, the
+bare seat name carrying the default; the seat name says what the position does. A seat is never a
+bare spawn, because a bare spawn inherits the parent's model. The `codex` bug-hunter value is a
+lens, not a seat: no agent definition fills it.
 _Avoid_: delegate (the session standing in for the owner across a **batch**, never a seat),
 subagent (the host mechanism that fills a seat, not the seat), agent type (the host's field name).
 
@@ -296,10 +297,11 @@ pre-merge critic off the advisor onto the **critic seat**, so no reading stands 
 did not exist.
 
 **delegate**:
-The main session that stands in for the owner across a **batch**: it answers the plan stop, the
-Close approval and a slot-3 need the advisor cannot settle, reads every diff from git, and
-**parks** a ticket at any stop the owner keeps. Attributed `owner's delegate` in every run record
-([ADR 0019](docs/adr/0019-delegated-batch-over-subagent-coordinators.md)).
+The main session that stands in for the owner across a **batch**: it answers the delegated stops —
+the plan stop, the Close approval, the two cap stops, a slot-3 need the advisor cannot settle, and a
+false premise whose disposition leaves every criterion satisfied in form — reads every diff from
+git, and **parks** a ticket at any stop the owner keeps. Attributed `owner's delegate` in every run
+record ([ADR 0019](docs/adr/0019-delegated-batch-over-subagent-coordinators.md)).
 _Avoid_: owner (the human it stands in for), outer coordinator / outer session (the test-run name),
 proxy, steward.
 
@@ -311,7 +313,8 @@ _Avoid_: chain (a blocked-by sequence, which a batch need not follow), run (one 
 
 **park**:
 The **batch** exit that leaves a ticket open for the owner: a comment naming the stop, the claim
-released, the delegate moving to the next ticket. Two consecutive parks end the batch.
+released, the delegate moving to the next ticket. Two consecutive parks end the batch, screening
+parks included.
 _Avoid_: skip (says nothing was recorded), defer, block.
 
 ### Issue tracking

@@ -61,11 +61,11 @@ on first launch, and the session must be restarted before they load.
 
 ### The seat definitions
 
-A third install surface, and the only one the verifier never sees. `agents/` holds one pinned
-agent definition per seat and effort value per host — `implementer`, `advisor` and `code-reviewer`
-for Claude Code, plus a `-medium` or `-xhigh` suffix where a seat reaches another value, and
-`implementer` and `code-reviewer` for Codex. They install as one symlink each, exactly like a
-Skill; [`agents/README.md`](agents/README.md) carries the seat table and the loop.
+A third install surface, and the only one the verifier never sees. `agents/` holds one pinned agent
+definition per seat and effort value per host — `implementer`, `advisor`, `code-reviewer` and
+`coordinator` for Claude Code, plus a `-medium` or `-xhigh` suffix where a seat reaches another
+value, and `implementer` and `code-reviewer` for Codex. They install as one symlink each, exactly
+like a Skill; [`agents/README.md`](agents/README.md) carries the seat table and the loop.
 
 They matter more than their size suggests: a seat whose definition the host cannot resolve does
 not fail, it dispatches on whoever spawned it. Check with `ls -l ~/.claude/agents ~/.codex/agents`.
@@ -129,6 +129,21 @@ or you want to set up the review loop.
 
 [`SKILL.md`](godot-architecture-review/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/godot-architecture-review/SKILL.md)
 
+### implement-batch
+
+How the owner's delegate works tickets hands-off: the main session stands in for the owner, takes a
+batch grant at kickoff, screens each ticket before it starts, and dispatches one `coordinator` seat
+per ticket to run `implement-run`. The delegate answers a closed set of stops — the plan, the
+Close approval, the caps, a slot-3 need, a false premise satisfied in form — and parks every other
+one for the owner; a permission dialog is never its to answer. A failed landing check, a changed
+instruction file, a dirty checkout and two consecutive parks are among the signals that end a batch.
+Claude Code only; a project where neither the contract nor a host adapter imports the
+`tracker-github` Chunk is out of scope. Slash-only.
+
+**When to use:** working a frontier, or one ticket, hands-off while the owner is away.
+
+[`SKILL.md`](implement-batch/SKILL.md)
+
 ### implement-run
 
 How one ticket is actually run: the seats and what each one may not do (the coordinator writes no
@@ -182,9 +197,9 @@ follows is not here — it is the `implement-run` Skill, which is slash-only: a 
 **When to use:** before a delegated implementation (even a single implementer), a review with
 sub-agents, or any fan-out. Not for a single read-only sub-agent.
 
-Three sibling files nothing loads by default: `WORKFLOWS.md` (Workflow-tool scripts, vendor
-lenses, fan-out → verify discipline), `COORDINATOR-PANE.md` (run shapes, interactive child
-sessions, heartbeats, peer coordination) and `GRANTS.md` (hands-off execution grants).
+Two sibling files nothing loads by default: `WORKFLOWS.md` (Workflow-tool scripts, vendor
+lenses, fan-out → verify discipline) and `COORDINATOR-PANE.md` (run shapes, interactive child
+sessions, heartbeats, peer coordination). Hands-off execution is the `implement-batch` Skill.
 
 [`SKILL.md`](multi-agent-policy/SKILL.md)
 

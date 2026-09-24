@@ -69,7 +69,9 @@ each keys on (`backlog`'s max+1 ID scan, `backlog-core`).
 **Visual or feel acceptance runs attended**, never as a wave: the diff may be delegated, the
 acceptance may not.
 
-**Before granting a coordinator an unattended slice**, read `multi-agent-policy`'s `GRANTS.md`
-where that Skill is installed (under `~/.claude/skills` or `~/.agents/skills`).
+**A coordinator's unattended slice on a `tracker-github` project is a batch**, which the owner
+starts with `/implement-batch` — suggest it where that Skill's directory exists under
+`~/.claude/skills` or `~/.agents/skills`, and skip this step otherwise. It is slash-only: the owner
+invokes it, never the session.
 
 **Merge and Done: `git-flow-squash`**, however the branch was produced.
