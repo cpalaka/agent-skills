@@ -213,10 +213,11 @@ _Avoid_: workhorse / workhorse tier (the retired name), budget tier (retired; no
 role exists), Opus (a model name), executor.
 
 **Seat**:
-A named position in a run filled by one pinned agent definition — implementer, advisor,
+A named position in a run filled by a pinned agent definition — implementer, advisor,
 gate-runner, and reviewer: the Standards and Spec axes, the Correctness fallback and the **critic
-seat**, each a `code-reviewer` dispatch. The definition carries the model and effort; the seat
-name says what the position does. A seat is never a bare spawn, because a bare spawn inherits the
+seat**, each a `code-reviewer` dispatch. A definition carries the model and effort, one definition
+per effort value the seat can reach, the bare seat name carrying the default; the seat name says
+what the position does. A seat is never a bare spawn, because a bare spawn inherits the
 parent's model. The plan-stop roster's `codex` is a lens struck like a seat, not a seat: no agent
 definition fills it.
 _Avoid_: delegate (the session standing in for the owner across a **batch**, never a seat),
@@ -233,7 +234,8 @@ _Avoid_: seat tier (the retired declared form), posture (the retired ADR 0006 la
 **dial**:
 One member of a **run profile**: a default, the plan fact that turns it, and a value. A ticket may
 **pin** a dial, a **lower bound** the coordinator never lowers, beside its acceptance criteria;
-mid-run evidence only ever raises one. An effort dial's value is a seat definition's name.
+mid-run evidence only ever raises one. An effort dial's value names a seat definition, or sets a
+workflow stage's effort where the stage fills a seat.
 _Avoid_: knob (per-project and engine-written, never per-run), lever, setting, strike (the retired
 act of removing a seat from the roster line); floor, for a pin (the glossary's **floor** is the
 always-on context text).

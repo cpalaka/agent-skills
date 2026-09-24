@@ -7,6 +7,8 @@ Decided on cpalaka/agent-skills#85, under map #82, from the measurements on #81,
 **Amended 2026-09-24 on #86**, the settings catalogue: § 1's Standards, bug-hunter and gate-tier
 rows and its floor paragraph, § 4, § 5, § 6 and § 8, each marked. The glossary names this ADR's
 floor a **light plan** and a pin a **lower bound**; this record keeps its own words.
+**Amended 2026-09-24 on #87**, the model-and-effort pin question: § 7, one Considered option and
+one Consequence, each marked.
 
 ## Context
 
@@ -81,18 +83,33 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    it: a higher tier's own trigger, in 3d-anim-lab a workload boundary or a milestone push, shows
    in no changed path. (Amended on #86.)
 
-7. **Effort is a dial; the model is not.** A seat's model stays pinned by role (ADR 0011, 0017).
-   Its effort is chosen per run among these values, `high` the default on every seat: a
-   Planner-role seat runs `medium` or `high`; a Builder-role seat `medium`, `high` or `xhigh`.
-   The heuristics as decided: `medium` where speed is preferred, so the implementer and Spec
-   axis at the floor; the gate-runner runs Builder `medium` always, since its minutes are
-   command time; `xhigh` where a review should go deeper, reserved to the critic and the
-   Correctness fallback until measured, on an instruction file in the diff or a red gate in the
-   run; slot 1 never `medium`. The host's Agent tool pins only `model`, so **an effort dial's value
-   is a definition name**, and each reachable seat-and-effort pair is its own pinned definition:
+7. **Effort is a dial; the model is not.** A seat's model stays pinned by role (ADR 0011, 0017),
+   and a run never overrides it, though the Agent tool's `model` parameter would let it: a model
+   choice is role routing, the role is the owner's rationing of the Planner meter, read at the
+   account and not re-derived from a plan, and a second model family on a diff is a distinct
+   seat, `bug hunter: codex`, never a rewritten pin. (Decided on #87.) Its effort is chosen per
+   run among `medium`, `high` and `xhigh`, `high` the default on every seat: a Planner-role seat
+   runs `high` only; a Builder-role seat `medium`, `high` or `xhigh`. (Amended on #87: `medium`
+   left the Planner range, since slot 3 continues slot 1 and nothing measured wants a fresh
+   advisor below `high`; the host's `max` stays out until `xhigh` has a measurement.) The
+   heuristics as decided: `medium` where speed is preferred, so the implementer and Spec axis at
+   the floor; the gate-runner runs Builder `medium` always, since its minutes are command time;
+   `xhigh` where a review should go deeper, reserved to the critic and the Correctness fallback
+   until measured, on an instruction file in the diff or a red gate in the run; slot 1 never
+   `medium`. **The dial has two carriers** (amended on #87). On the Agent tool, which pins only
+   `model`, **an effort dial's value is a definition name**: each reachable seat-and-effort pair is
+   its own pinned definition, the bare seat name carrying the default and every other value a
+   suffix (`implementer-medium`, `code-reviewer-medium`, `code-reviewer-xhigh`; `gate-runner`
+   bare, at its only value), so the run record naming the definition names the effort with it —
    one for the advisor, two for the implementer, three for `code-reviewer`, one for the
-   gate-runner. The definition's name carries the effort, so the run record naming the definition
-   names the effort with it.
+   gate-runner. Under `shape: workflow` the stage's `effort` field carries the same value for a
+   stage that fills a seat; a stage filling no seat is not a dial and keeps `WORKFLOWS.md`'s
+   rule. **Every seat definition carries `effort:` explicitly** — an omitted field inherits the
+   parent session's, the bare-spawn leak on a second field — and the field joins the
+   `context-hygiene` reverse pass beside `model:`. Two things sit outside the dial and are posted
+   `fixed by host`: the Codex lens, whose `adversarial-review` command takes no effort and runs at
+   Codex's global config, and the Codex role files, which keep `high` until a Codex-hosted
+   coordinator run exists to measure on.
 
 8. **Two caps are constants, not risk-derived.** Fix rounds: two material rounds, and a third is
    a stop to the reader. Wording-only findings ride the last material round, or form one closing
@@ -120,9 +137,14 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
 - **Nothing declarable on the ticket; the plan-stop reader is the only check.** Rejected: it
   discards the author's intent, and the stop does not fire at the floor.
 - **Effort passed on the dispatch, overriding the pin.** Not available: the Agent tool carries no
-  effort field. **Dropping effort from the profile and leaving it to #73** was the fallback; the
+  effort field (confirmed on #87 against the host's subagent reference: a definition's `effort`
+  is the only Agent-tool carrier, and a workflow stage's `effort` the only other, § 7).
+  **Dropping effort from the profile and leaving it to #73** was the fallback; the
   definition-per-pair mechanism makes the dial reachable now, and #73's effort question closes
   on it.
+- **A per-run model override.** Available on the Agent tool's `model` parameter; rejected on #87
+  for the ground § 7 names. A Planner-role critic, if #84's slot-1 yield ever argues for one, is a
+  new seat with its own definition and dial, filed on data, not a run rewriting a pin.
 
 ## Consequences
 
@@ -132,6 +154,9 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
   `seat tier` glossary entry, every project contract's `Seats:` sentence and light set, the seat
   definitions and the stamped gate-runner Template all change. None of that is done here: the
   map's `Spec:` parent files it as children.
+- The pair definitions' names reach `implement-run`'s dispatch lines and `agents/README.md`'s
+  seat table; the Spec child that adds the definitions re-points both, and the bare names stay
+  valid throughout since each carries the default (amended on #87).
 - #73's first acceptance criterion lands with this entry; its second lands with the child that
   edits the definitions. #79's B criterion is superseded by § 3 and § 9; its A criterion stands.
 - The bug-hunter default was provisional on a research ticket into the Codex lens's use.
