@@ -42,6 +42,7 @@ Bypass from the **first** attempt. Few of these errors mention the sandbox.
 | `agent-browser <any subcommand>` | `Socket directory '~/.agent-browser' is not writable` | every invocation |
 | any process that listens, even on 127.0.0.1 | Python `PermissionError: [Errno 1]`, Node `listen EPERM … ::1:5173` — reads as a bug in your server | the launch, and in practice requests to it; build/test/lint need none |
 | Blender, including Godot's `.blend` import spawning it | crash before Python runs: `MTLBackend::metal_is_supported`, `Writing: $TMPDIR/blender.crash.txt` | every launch. A sandboxed Godot import writes `valid=false` into the `.blend.import` sidecar and never retries: delete the sidecar, reimport unsandboxed |
+| Godot, headless included (`--headless`, `--import`, a test runner) | 4.7-stable: SIGSEGV at boot (MoltenVK, or `user://logs`). 4.7.2: exits 0 but prints `ERROR:` lines (log file, CA store, editor settings) that a runner treating `^ERROR:` as fatal reads as **FAIL** | every launch |
 | Playwright `browser.launch()` | **nothing** — no output, not even the script's own `catch`, for minutes; reads as a slow browser | every launch |
 | `gh <anything>`, reads included | `x509: OSStatus -26276` — macOS denying gh's TLS stack the keychain trust store, not host blocking | every invocation (reads measured failing 2026-07-28) |
 | write-side git **from a worktree** — `add`, `commit`, `fetch`, the `backlog` CLI's automatic fetch | `Unable to create '<main>/.git/worktrees/<name>/index.lock'` | every write-side op there |
@@ -63,6 +64,40 @@ the worktree's name. Read its `project=` / `logs:` line before believing the ver
 `--headless --screenshot` hangs on macOS regardless. Rasterize SVG with
 `qlmanage -t -s <size> -o <dir> file.svg` instead, which composites onto opaque white while
 reporting `hasAlpha: yes`.
+
+**A command that must always bypass: a hook, not `excludedCommands`.** `sandbox.excludedCommands`
+matches only a command that *starts* with the entry: `"touch *"` excluded `touch f`, not
+`cd /tmp && touch f` or `sh -c 'touch f'`, and the entry `"touch"` (no ` *`) excluded nothing. A
+`PreToolUse` hook on `Bash` does hold. On a launch it prints
+`{"hookSpecificOutput": {"hookEventName": "PreToolUse", "updatedInput": U}}`, where `U` is the
+call's whole `tool_input` plus `"dangerouslyDisableSandbox": true`, and no `permissionDecision`.
+The call then runs unsandboxed and takes the same permission evaluation as a bypass the model set
+(under `auto` the rewritten calls drew no denial, sandbox on or off; `allowUnsandboxedCommands:
+false` is unmeasured). The flag covers the whole call: `cd sub && mytool && …` runs unsandboxed end
+to end. Find the launch with a shell-aware parse, in command position and through prefixes such as
+`timeout`, `env`, `VAR=` and `bash`, plus a list of wrapper-script names the hook carries, so
+`cat run.sh` stays sandboxed and `timeout 60 mytool` does not. Wire it in `~/.claude/settings.json`
+as one more `Bash` group appended to `hooks.PreToolUse`, existing groups left in place: hooks from
+every scope run, a gitignored `settings.local.json` reaches no new worktree, and new sessions pick
+it up. Wired there it fires in **every** project, so gate on the input's `cwd` too (the project's
+marker file in it or an ancestor, which also covers a worktree under it). Under auto mode Claude
+cannot wire it: hand the owner an apply script that reads, unions and writes back
+(§ `settings.local.json` merge contract). What the hook, and any count of it, rests on:
+
+- The hook's input carries `tool_use_id`, `session_id` and `cwd`. In `tool_input` the flag is
+  `true` when the model set it and **absent** otherwise, never `false`: skip the rewrite on
+  `is True`.
+- Hooks run outside the sandbox, so a hook can write its own log anywhere.
+- Bash's `tool_response` has no exit code, and a non-zero exit fires `PostToolUseFailure`, not
+  `PostToolUse` (`error: "Exit code N\n<output>"`), so a `PostToolUse`-only hook never sees a
+  failed call.
+- The transcript's `tool_use.input` keeps the model's original input; the effective flag is
+  `toolUseResult.dangerouslyDisableSandbox`. On a failed call `toolUseResult` is a plain string
+  and the flag is gone, so the hook logs each rewrite with its `tool_use_id` and a count joins on
+  it. Count with a broader matcher than the hook's, or its misses are invisible and recall reads
+  perfect by construction.
+
+Measured on v2.1.281 (2026-09-24).
 
 ## Cosmetic denials — the op succeeded; don't retry
 
