@@ -29,7 +29,7 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    | Standards axis | off | any changed path outside the project's light set |
    | advisor slot 1; slot 3 available | off | anything above the floor |
    | critic | off | anything above the floor |
-   | bug hunter (`codex` \| `correctness` \| `off`) | off | runtime surface or an instruction file in the diff; `codex` above the floor until the research on the lens lands |
+   | bug hunter (`codex` \| `correctness` \| `off`) | off | runtime surface or an instruction file in the diff; `correctness` above the floor, `codex` by pin (resolved 2026-09-24 on #90, § Consequences) |
    | gate tier | derived | `verify-gate`'s skip rule over the project's trigger table |
    | plan stop | none | any dial above its default |
 
@@ -112,5 +112,9 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
   map's `Spec:` parent files it as children.
 - #73's first acceptance criterion lands with this entry; its second lands with the child that
   edits the definitions. #79's B criterion is superseded by § 3 and § 9; its A criterion stands.
-- The bug-hunter default is provisional on a research ticket into the Codex lens's use: focus,
-  mode and base against a planted known defect.
+- The bug-hunter default was provisional on a research ticket into the Codex lens's use.
+  **Resolved 2026-09-24 on #90:** against four planted defects the Skill's feed was not the weak
+  part, and a Correctness-charter `code-reviewer` dispatch matched or beat the lens on every plant
+  at about half the wall, so `correctness` is the default above the floor and `codex` a pinnable
+  value for a second model family on a diff; the lens focus gains the test-gap charter line, the
+  one plant every Codex variant missed. Recall on large real diffs stays unmeasured.
