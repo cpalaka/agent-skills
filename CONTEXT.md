@@ -179,7 +179,8 @@ tagged inline block (`<!-- knobs:<chunk> --> … <!-- /knobs:<chunk> -->`) in th
 `docs/agents/project-workflow.md` — never into a **Host adapter**, and never into the Chunk itself.
 Tagged so a re-run updates just that block idempotently. Pure-invariant Chunks have no knob block.
 _Avoid_: placeholder (`{{…}}` is the copied-Template substitution; a knob is an engine-written
-inline block beside a *referenced* Chunk), variable, config.
+inline block beside a *referenced* Chunk), variable, config, dial (a per-run value the coordinator
+derives from its plan; a knob is per-project and engine-written).
 
 **inline-leaf**:
 Free-form, hand-authored content in the project contract that is genuinely specific to that one
@@ -221,15 +222,28 @@ definition fills it.
 _Avoid_: delegate (acceptable shorthand for the implementer seat only), subagent (the host
 mechanism that fills a seat, not the seat), agent type (the host's field name).
 
+**run profile**:
+The set of per-run values the **Coordinator** derives from its own plan before dispatch — which
+seats run, the bug hunter, the gate tier, each seat's effort, the fix-round and scope caps, and
+whether a reader stops the run — one **dial** each, posted as a profile block in the run's first
+message and repeated in the run record ([ADR 0018](docs/adr/0018-run-profile-derived-from-plan.md)).
+_Avoid_: seat tier (the retired declared form), posture (the retired ADR 0006 ladder), run plan
+(collides with the execution spec), level / tier (a profile has no named levels).
+
+**dial**:
+One member of a **run profile**: a default, the plan fact that turns it, and a value. A ticket may
+**pin** a dial, a floor the coordinator never lowers, beside its acceptance criteria; mid-run
+evidence only ever raises one. An effort dial's value is a seat definition's name.
+_Avoid_: knob (per-project and engine-written, never per-run), lever, setting, strike (the retired
+act of removing a seat from the roster line).
+
 **seat tier**:
-Which seats a ticket's run dispatches, declared by a `Seats: light` or `Seats: full` line in the
-ticket body. **Light** is a documentation-and-records diff and keeps the implementer, the
-gate-runner and the Spec-axis reviewer; **full** is every seat, and the default when the line is
-absent, malformed, or contradicted by the ticket's named files or the implementer's diff. The
-`implement-run` Skill reads it.
-_Avoid_: gate tier (a project's own separate field for which gates a ticket runs; the two stay
-separate so neither drifts), gate label (the tracker label for what a session may do with the
-ticket), bare "tier" (ambiguous with both and with the retired cost tiers), docs mode / lite run.
+Historical: which seats a ticket's run dispatched, declared as `Seats: light` or `Seats: full` in
+the ticket body and readable only upward. Retired by cpalaka/agent-skills#85 for the **run
+profile**, which the coordinator derives and the ticket pins one dial of; an existing line reads
+as absent. A project's **gate tier** is now a dial of the profile rather than a separate field.
+_Avoid_: gate label (the tracker label for what a session may do with the ticket), bare "tier"
+(ambiguous with the gate tier and with the retired cost tiers), docs mode / lite run.
 
 **Coordinator**:
 The main-loop session running an implementation ticket: it writes the per-phase execution spec,
