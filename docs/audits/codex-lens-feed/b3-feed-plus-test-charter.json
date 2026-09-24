@@ -1,0 +1,73 @@
+{
+  "review": "Adversarial Review",
+  "target": {
+    "mode": "branch",
+    "label": "branch diff against main",
+    "baseRef": "main",
+    "explicit": true
+  },
+  "threadId": "01a0d20f-fda6-7282-9dc2-0dc250b66b08",
+  "context": {
+    "repoRoot": "<worktree-b>",
+    "branch": "research/codex-lens-b",
+    "summary": "Reviewing branch research/codex-lens-b against main from merge-base 4cd919925a0808b710d2d035e0415ef61bb700a4."
+  },
+  "codex": {
+    "status": 0,
+    "stderr": "",
+    "stdout": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, the quota boundary is bypassable, and the memory claim is false. All five tests pass despite these defects.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batches exceed the API's 256-record limit\",\n      \"body\": \"make_batches(range(1000)) produces lengths [265, 265, 265, 205]. The first three batches violate the API contract and will be rejected. Existing tests check batch count and total records, which cannot detect this error.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 7,\n      \"line_end\": 7,\n      \"confidence\": 1,\n      \"recommendation\": \"Set BATCH_SIZE to 256 and assert every batch respects the literal API cap, including inputs of 256 and 257 records.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Quota guard accepts the forbidden 10% boundary and NaN\",\n      \"body\": \"[0.3, 0.3, 0.3] allocates 90%, but floating-point summation produces a reserve of 0.10000000000000009, so the function accepts it. The test explicitly endorses this violation. [float('nan')] also returns NaN because the comparison is false, despite failing to establish a reserve strictly above 10%.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 19,\n      \"line_end\": 22,\n      \"confidence\": 1,\n      \"recommendation\": \"Define quota precision using decimal arithmetic or integer units, reject non-finite shares, and test exact 10%, values on both sides, and NaN.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Documented bounded memory contradicts eager allocation\",\n      \"body\": \"The function materializes all records and all batch lists simultaneously. A tracemalloc probe with ten million repeated None records peaked at 162,423,104 bytes, contradicting the docstring's under-4-MB claim even without allocating distinct records. Callers relying on that profile risk memory exhaustion on large uploads.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 13,\n      \"line_end\": 14,\n      \"confidence\": 1,\n      \"recommendation\": \"Either yield batches incrementally with itertools.islice and measure incremental consumption, or document the actual linear memory profile and remove the false measurement.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Quota tests never exercise rejection\",\n      \"body\": \"Both quota tests expect acceptance; neither asserts ValueError. Replacing check_quota_split in memory with an unconditional reserve calculation still passes all five tests, proving that deleting the guard is undetected.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/test_uploader.py\",\n      \"line_start\": 18,\n      \"line_end\": 23,\n      \"confidence\": 1,\n      \"recommendation\": \"Add assertRaises tests for exactly 10% reserve, less than 10%, and over-allocation, while retaining a valid accepting case.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix the cap and quota validation, correct the memory profile, and rerun tests with boundary and rejecting cases.\"\n  ]\n}",
+    "reasoning": []
+  },
+  "result": {
+    "verdict": "needs-attention",
+    "summary": "Do not ship: batches exceed the API cap, the quota boundary is bypassable, and the memory claim is false. All five tests pass despite these defects.",
+    "findings": [
+      {
+        "severity": "high",
+        "title": "Batches exceed the API's 256-record limit",
+        "body": "make_batches(range(1000)) produces lengths [265, 265, 265, 205]. The first three batches violate the API contract and will be rejected. Existing tests check batch count and total records, which cannot detect this error.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 7,
+        "line_end": 7,
+        "confidence": 1,
+        "recommendation": "Set BATCH_SIZE to 256 and assert every batch respects the literal API cap, including inputs of 256 and 257 records."
+      },
+      {
+        "severity": "high",
+        "title": "Quota guard accepts the forbidden 10% boundary and NaN",
+        "body": "[0.3, 0.3, 0.3] allocates 90%, but floating-point summation produces a reserve of 0.10000000000000009, so the function accepts it. The test explicitly endorses this violation. [float('nan')] also returns NaN because the comparison is false, despite failing to establish a reserve strictly above 10%.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 19,
+        "line_end": 22,
+        "confidence": 1,
+        "recommendation": "Define quota precision using decimal arithmetic or integer units, reject non-finite shares, and test exact 10%, values on both sides, and NaN."
+      },
+      {
+        "severity": "medium",
+        "title": "Documented bounded memory contradicts eager allocation",
+        "body": "The function materializes all records and all batch lists simultaneously. A tracemalloc probe with ten million repeated None records peaked at 162,423,104 bytes, contradicting the docstring's under-4-MB claim even without allocating distinct records. Callers relying on that profile risk memory exhaustion on large uploads.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 13,
+        "line_end": 14,
+        "confidence": 1,
+        "recommendation": "Either yield batches incrementally with itertools.islice and measure incremental consumption, or document the actual linear memory profile and remove the false measurement."
+      },
+      {
+        "severity": "medium",
+        "title": "Quota tests never exercise rejection",
+        "body": "Both quota tests expect acceptance; neither asserts ValueError. Replacing check_quota_split in memory with an unconditional reserve calculation still passes all five tests, proving that deleting the guard is undetected.",
+        "file": "docs/audits/fixtures/metrics-uploader/test_uploader.py",
+        "line_start": 18,
+        "line_end": 23,
+        "confidence": 1,
+        "recommendation": "Add assertRaises tests for exactly 10% reserve, less than 10%, and over-allocation, while retaining a valid accepting case."
+      }
+    ],
+    "next_steps": [
+      "Fix the cap and quota validation, correct the memory profile, and rerun tests with boundary and rejecting cases."
+    ]
+  },
+  "rawOutput": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, the quota boundary is bypassable, and the memory claim is false. All five tests pass despite these defects.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batches exceed the API's 256-record limit\",\n      \"body\": \"make_batches(range(1000)) produces lengths [265, 265, 265, 205]. The first three batches violate the API contract and will be rejected. Existing tests check batch count and total records, which cannot detect this error.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 7,\n      \"line_end\": 7,\n      \"confidence\": 1,\n      \"recommendation\": \"Set BATCH_SIZE to 256 and assert every batch respects the literal API cap, including inputs of 256 and 257 records.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Quota guard accepts the forbidden 10% boundary and NaN\",\n      \"body\": \"[0.3, 0.3, 0.3] allocates 90%, but floating-point summation produces a reserve of 0.10000000000000009, so the function accepts it. The test explicitly endorses this violation. [float('nan')] also returns NaN because the comparison is false, despite failing to establish a reserve strictly above 10%.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 19,\n      \"line_end\": 22,\n      \"confidence\": 1,\n      \"recommendation\": \"Define quota precision using decimal arithmetic or integer units, reject non-finite shares, and test exact 10%, values on both sides, and NaN.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Documented bounded memory contradicts eager allocation\",\n      \"body\": \"The function materializes all records and all batch lists simultaneously. A tracemalloc probe with ten million repeated None records peaked at 162,423,104 bytes, contradicting the docstring's under-4-MB claim even without allocating distinct records. Callers relying on that profile risk memory exhaustion on large uploads.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 13,\n      \"line_end\": 14,\n      \"confidence\": 1,\n      \"recommendation\": \"Either yield batches incrementally with itertools.islice and measure incremental consumption, or document the actual linear memory profile and remove the false measurement.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Quota tests never exercise rejection\",\n      \"body\": \"Both quota tests expect acceptance; neither asserts ValueError. Replacing check_quota_split in memory with an unconditional reserve calculation still passes all five tests, proving that deleting the guard is undetected.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/test_uploader.py\",\n      \"line_start\": 18,\n      \"line_end\": 23,\n      \"confidence\": 1,\n      \"recommendation\": \"Add assertRaises tests for exactly 10% reserve, less than 10%, and over-allocation, while retaining a valid accepting case.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix the cap and quota validation, correct the memory profile, and rerun tests with boundary and rejecting cases.\"\n  ]\n}",
+  "parseError": null,
+  "reasoningSummary": []
+}

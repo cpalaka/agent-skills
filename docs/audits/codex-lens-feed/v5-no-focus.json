@@ -1,0 +1,63 @@
+{
+  "review": "Adversarial Review",
+  "target": {
+    "mode": "branch",
+    "label": "branch diff against main",
+    "baseRef": "main",
+    "explicit": true
+  },
+  "threadId": "01a0d207-e5a5-73b0-a0fd-28bc57064780",
+  "context": {
+    "repoRoot": "<worktree>",
+    "branch": "research/codex-lens",
+    "summary": "Reviewing branch research/codex-lens against main from merge-base 4cd919925a0808b710d2d035e0415ef61bb700a4."
+  },
+  "codex": {
+    "status": 0,
+    "stderr": "",
+    "stdout": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batch sizes exceed the declared API cap, memory grows with the entire input, and floating-point rounding bypasses the strict reserve boundary. All five existing tests pass despite these failures.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch construction exceeds the API's 256-record limit\",\n      \"body\": \"Both the slice width and stride use 265. Reproduced: 257 records produce one 257-record batch; 1,000 produce lengths [265, 265, 265, 205]. These exceed the documented cap and would be rejected by the API.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 18,\n      \"line_end\": 18,\n      \"confidence\": 1.0,\n      \"recommendation\": \"Use API_BATCH_LIMIT for batch sizing and add tests asserting every batch respects the 256-record cap, including inputs of 256, 257, and 1,000 records.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Eager materialization violates the bounded-memory guarantee\",\n      \"body\": \"list(records) consumes the entire iterable, then the comprehension retains every batch simultaneously. A tracemalloc probe with only one million integer records peaked at 48,231,720 bytes, already exceeding the claimed 4 MB for ten million. Large inputs can exhaust memory before any batch reaches the caller.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 17,\n      \"line_end\": 18,\n      \"confidence\": 1.0,\n      \"recommendation\": \"Yield batches incrementally from the input iterator. Update callers/tests for lazy consumption and verify that requesting the first batch consumes only one batch of input.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Rounding admits allocations at the forbidden reserve boundary\",\n      \"body\": \"check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and passes, although three 30% shares leave exactly 10%, which the contract excludes. The equivalent [0.9] allocation raises. The existing equal-shares test enshrines this inconsistent boundary behavior.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 24,\n      \"line_end\": 25,\n      \"confidence\": 0.99,\n      \"recommendation\": \"Define quota precision and use exact decimal or integer units for the comparison. Require both 90% allocation representations to raise, and test reserves immediately above and below the boundary.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix batch sizing, introduce lazy batching, and enforce a consistent quota boundary; rerun tests covering these counterexamples.\"\n  ]\n}",
+    "reasoning": []
+  },
+  "result": {
+    "verdict": "needs-attention",
+    "summary": "Do not ship: batch sizes exceed the declared API cap, memory grows with the entire input, and floating-point rounding bypasses the strict reserve boundary. All five existing tests pass despite these failures.",
+    "findings": [
+      {
+        "severity": "high",
+        "title": "Batch construction exceeds the API's 256-record limit",
+        "body": "Both the slice width and stride use 265. Reproduced: 257 records produce one 257-record batch; 1,000 produce lengths [265, 265, 265, 205]. These exceed the documented cap and would be rejected by the API.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 18,
+        "line_end": 18,
+        "confidence": 1,
+        "recommendation": "Use API_BATCH_LIMIT for batch sizing and add tests asserting every batch respects the 256-record cap, including inputs of 256, 257, and 1,000 records."
+      },
+      {
+        "severity": "high",
+        "title": "Eager materialization violates the bounded-memory guarantee",
+        "body": "list(records) consumes the entire iterable, then the comprehension retains every batch simultaneously. A tracemalloc probe with only one million integer records peaked at 48,231,720 bytes, already exceeding the claimed 4 MB for ten million. Large inputs can exhaust memory before any batch reaches the caller.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 17,
+        "line_end": 18,
+        "confidence": 1,
+        "recommendation": "Yield batches incrementally from the input iterator. Update callers/tests for lazy consumption and verify that requesting the first batch consumes only one batch of input."
+      },
+      {
+        "severity": "medium",
+        "title": "Rounding admits allocations at the forbidden reserve boundary",
+        "body": "check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and passes, although three 30% shares leave exactly 10%, which the contract excludes. The equivalent [0.9] allocation raises. The existing equal-shares test enshrines this inconsistent boundary behavior.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 24,
+        "line_end": 25,
+        "confidence": 0.99,
+        "recommendation": "Define quota precision and use exact decimal or integer units for the comparison. Require both 90% allocation representations to raise, and test reserves immediately above and below the boundary."
+      }
+    ],
+    "next_steps": [
+      "Fix batch sizing, introduce lazy batching, and enforce a consistent quota boundary; rerun tests covering these counterexamples."
+    ]
+  },
+  "rawOutput": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batch sizes exceed the declared API cap, memory grows with the entire input, and floating-point rounding bypasses the strict reserve boundary. All five existing tests pass despite these failures.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch construction exceeds the API's 256-record limit\",\n      \"body\": \"Both the slice width and stride use 265. Reproduced: 257 records produce one 257-record batch; 1,000 produce lengths [265, 265, 265, 205]. These exceed the documented cap and would be rejected by the API.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 18,\n      \"line_end\": 18,\n      \"confidence\": 1.0,\n      \"recommendation\": \"Use API_BATCH_LIMIT for batch sizing and add tests asserting every batch respects the 256-record cap, including inputs of 256, 257, and 1,000 records.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Eager materialization violates the bounded-memory guarantee\",\n      \"body\": \"list(records) consumes the entire iterable, then the comprehension retains every batch simultaneously. A tracemalloc probe with only one million integer records peaked at 48,231,720 bytes, already exceeding the claimed 4 MB for ten million. Large inputs can exhaust memory before any batch reaches the caller.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 17,\n      \"line_end\": 18,\n      \"confidence\": 1.0,\n      \"recommendation\": \"Yield batches incrementally from the input iterator. Update callers/tests for lazy consumption and verify that requesting the first batch consumes only one batch of input.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Rounding admits allocations at the forbidden reserve boundary\",\n      \"body\": \"check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and passes, although three 30% shares leave exactly 10%, which the contract excludes. The equivalent [0.9] allocation raises. The existing equal-shares test enshrines this inconsistent boundary behavior.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 24,\n      \"line_end\": 25,\n      \"confidence\": 0.99,\n      \"recommendation\": \"Define quota precision and use exact decimal or integer units for the comparison. Require both 90% allocation representations to raise, and test reserves immediately above and below the boundary.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix batch sizing, introduce lazy batching, and enforce a consistent quota boundary; rerun tests covering these counterexamples.\"\n  ]\n}",
+  "parseError": null,
+  "reasoningSummary": []
+}

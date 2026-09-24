@@ -1,0 +1,10 @@
+Acceptance criteria:
+1. `make_batches(records)` returns batches the metrics API accepts (its cap: 256 records per batch).
+2. `check_quota_split(shares)` raises `ValueError` unless strictly more than 10% of the quota stays unallocated.
+3. Tests cover both functions.
+4. The module docstring records the memory profile.
+
+Hard limits:
+- Standard library only; no third-party imports.
+- Python 3.9+.
+- No network access in tests.

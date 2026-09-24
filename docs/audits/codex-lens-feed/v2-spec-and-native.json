@@ -1,0 +1,64 @@
+{
+  "review": "Adversarial Review",
+  "target": {
+    "mode": "branch",
+    "label": "branch diff against main",
+    "baseRef": "main",
+    "explicit": true
+  },
+  "threadId": "01a0d206-d240-7da0-aadb-a11d231abcd5",
+  "context": {
+    "repoRoot": "<worktree>",
+    "branch": "research/codex-lens",
+    "summary": "Reviewing branch research/codex-lens against main from merge-base 4cd919925a0808b710d2d035e0415ef61bb700a4."
+  },
+  "codex": {
+    "status": 0,
+    "stderr": "",
+    "stdout": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, quota validation accepts invalid reserves, and the memory claim is contradicted by measurement. All five existing tests still pass.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch size exceeds the 256-record API limit\",\n      \"body\": \"Both slicing and stepping use 265 instead of API_BATCH_LIMIT. make_batches(range(257)) returns one 257-record batch; 1,000 records produces lengths [265, 265, 265, 205]. These violate the supplied API contract and cause upload rejection. Existing tests check counts without enforcing batch sizes.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 18,\n      \"line_end\": 18,\n      \"confidence\": 1,\n      \"recommendation\": \"Use API_BATCH_LIMIT for both slice width and stride. Test 256, 257, and multiple-batch inputs, asserting every batch is at most 256 records and flattening reproduces the input.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Quota guard permits the forbidden boundary and NaN\",\n      \"body\": \"Three 30% shares leave exactly 10% by the quota contract, but floating-point arithmetic returns 0.10000000000000009 and accepts them. The existing test explicitly requires this incorrect acceptance. Also, [float('nan')] returns NaN because its <= comparison is false, despite failing the requirement that reserve be strictly above 10%.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 24,\n      \"line_end\": 27,\n      \"confidence\": 1,\n      \"recommendation\": \"Define quota precision and enforce the boundary using decimal or integer quota units; reject non-finite values explicitly. Replace the three-share acceptance test with rejection and add cases below, at, and above the threshold plus NaN.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Documented memory profile is false for the implementation\",\n      \"body\": \"The docstring claims less than 4 MB for 10 million records because only one batch is retained. In fact, make_batches materializes the entire input and all output batches simultaneously. A tracemalloc run on Python 3.14.6 using repeat(None, 10000000) measured 162,424,168 peak bytes, even without allocating distinct record objects. Callers relying on the documented bound could exhaust memory.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 7,\n      \"line_end\": 8,\n      \"confidence\": 1,\n      \"recommendation\": \"Replace the claim with a reproducible measurement and document linear memory usage. If bounded memory is intended, implement lazy batching and measure incremental consumption before documenting that guarantee.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix batching and quota validation, add boundary regression tests, and rerun unittest.\",\n    \"Correct the memory profile using a recorded benchmark workload and Python version.\"\n  ]\n}",
+    "reasoning": []
+  },
+  "result": {
+    "verdict": "needs-attention",
+    "summary": "Do not ship: batches exceed the API cap, quota validation accepts invalid reserves, and the memory claim is contradicted by measurement. All five existing tests still pass.",
+    "findings": [
+      {
+        "severity": "high",
+        "title": "Batch size exceeds the 256-record API limit",
+        "body": "Both slicing and stepping use 265 instead of API_BATCH_LIMIT. make_batches(range(257)) returns one 257-record batch; 1,000 records produces lengths [265, 265, 265, 205]. These violate the supplied API contract and cause upload rejection. Existing tests check counts without enforcing batch sizes.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 18,
+        "line_end": 18,
+        "confidence": 1,
+        "recommendation": "Use API_BATCH_LIMIT for both slice width and stride. Test 256, 257, and multiple-batch inputs, asserting every batch is at most 256 records and flattening reproduces the input."
+      },
+      {
+        "severity": "high",
+        "title": "Quota guard permits the forbidden boundary and NaN",
+        "body": "Three 30% shares leave exactly 10% by the quota contract, but floating-point arithmetic returns 0.10000000000000009 and accepts them. The existing test explicitly requires this incorrect acceptance. Also, [float('nan')] returns NaN because its <= comparison is false, despite failing the requirement that reserve be strictly above 10%.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 24,
+        "line_end": 27,
+        "confidence": 1,
+        "recommendation": "Define quota precision and enforce the boundary using decimal or integer quota units; reject non-finite values explicitly. Replace the three-share acceptance test with rejection and add cases below, at, and above the threshold plus NaN."
+      },
+      {
+        "severity": "medium",
+        "title": "Documented memory profile is false for the implementation",
+        "body": "The docstring claims less than 4 MB for 10 million records because only one batch is retained. In fact, make_batches materializes the entire input and all output batches simultaneously. A tracemalloc run on Python 3.14.6 using repeat(None, 10000000) measured 162,424,168 peak bytes, even without allocating distinct record objects. Callers relying on the documented bound could exhaust memory.",
+        "file": "docs/audits/fixtures/metrics-batcher/batcher.py",
+        "line_start": 7,
+        "line_end": 8,
+        "confidence": 1,
+        "recommendation": "Replace the claim with a reproducible measurement and document linear memory usage. If bounded memory is intended, implement lazy batching and measure incremental consumption before documenting that guarantee."
+      }
+    ],
+    "next_steps": [
+      "Fix batching and quota validation, add boundary regression tests, and rerun unittest.",
+      "Correct the memory profile using a recorded benchmark workload and Python version."
+    ]
+  },
+  "rawOutput": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, quota validation accepts invalid reserves, and the memory claim is contradicted by measurement. All five existing tests still pass.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch size exceeds the 256-record API limit\",\n      \"body\": \"Both slicing and stepping use 265 instead of API_BATCH_LIMIT. make_batches(range(257)) returns one 257-record batch; 1,000 records produces lengths [265, 265, 265, 205]. These violate the supplied API contract and cause upload rejection. Existing tests check counts without enforcing batch sizes.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 18,\n      \"line_end\": 18,\n      \"confidence\": 1,\n      \"recommendation\": \"Use API_BATCH_LIMIT for both slice width and stride. Test 256, 257, and multiple-batch inputs, asserting every batch is at most 256 records and flattening reproduces the input.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Quota guard permits the forbidden boundary and NaN\",\n      \"body\": \"Three 30% shares leave exactly 10% by the quota contract, but floating-point arithmetic returns 0.10000000000000009 and accepts them. The existing test explicitly requires this incorrect acceptance. Also, [float('nan')] returns NaN because its <= comparison is false, despite failing the requirement that reserve be strictly above 10%.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 24,\n      \"line_end\": 27,\n      \"confidence\": 1,\n      \"recommendation\": \"Define quota precision and enforce the boundary using decimal or integer quota units; reject non-finite values explicitly. Replace the three-share acceptance test with rejection and add cases below, at, and above the threshold plus NaN.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Documented memory profile is false for the implementation\",\n      \"body\": \"The docstring claims less than 4 MB for 10 million records because only one batch is retained. In fact, make_batches materializes the entire input and all output batches simultaneously. A tracemalloc run on Python 3.14.6 using repeat(None, 10000000) measured 162,424,168 peak bytes, even without allocating distinct record objects. Callers relying on the documented bound could exhaust memory.\",\n      \"file\": \"docs/audits/fixtures/metrics-batcher/batcher.py\",\n      \"line_start\": 7,\n      \"line_end\": 8,\n      \"confidence\": 1,\n      \"recommendation\": \"Replace the claim with a reproducible measurement and document linear memory usage. If bounded memory is intended, implement lazy batching and measure incremental consumption before documenting that guarantee.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Fix batching and quota validation, add boundary regression tests, and rerun unittest.\",\n    \"Correct the memory profile using a recorded benchmark workload and Python version.\"\n  ]\n}",
+  "parseError": null,
+  "reasoningSummary": []
+}

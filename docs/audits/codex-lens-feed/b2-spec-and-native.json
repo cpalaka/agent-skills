@@ -1,0 +1,63 @@
+{
+  "review": "Adversarial Review",
+  "target": {
+    "mode": "branch",
+    "label": "branch diff against main",
+    "baseRef": "main",
+    "explicit": true
+  },
+  "threadId": "01a0d20e-e823-79f3-b896-96340d0172c2",
+  "context": {
+    "repoRoot": "<worktree-b>",
+    "branch": "research/codex-lens-b",
+    "summary": "Reviewing branch research/codex-lens-b against main from merge-base 4cd919925a0808b710d2d035e0415ef61bb700a4."
+  },
+  "codex": {
+    "status": 0,
+    "stderr": "",
+    "stdout": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, the quota boundary is incorrectly accepted, and the memory claim is false. All five tests pass despite these defects.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch size exceeds the API's 256-record cap\",\n      \"body\": \"BATCH_SIZE is 265 instead of 256. make_batches(range(257)) returns one 257-record batch; 1,000 records produce lengths [265, 265, 265, 205]. These violate the supplied API contract. Existing tests check batch counts and total records without checking each batch's size.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 7,\n      \"line_end\": 7,\n      \"confidence\": 1,\n      \"recommendation\": \"Set BATCH_SIZE to 256. Add boundary tests at 256 and 257 records that independently assert every batch is at most 256 and flattened output equals input.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Floating-point rounding admits an exactly 10% reserve\",\n      \"body\": \"check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and accepts a nominal 90% allocation, violating the requirement that strictly more than 10% remain. The existing three-equal-shares test explicitly expects this incorrect acceptance. The guard also accepts NaN because its comparison is false.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 19,\n      \"line_end\": 22,\n      \"confidence\": 1,\n      \"recommendation\": \"Define decimal or fixed-unit quota semantics and enforce the threshold using that representation; reject non-finite inputs. Replace the equal-shares acceptance test with rejection and test reserves below, at, and above 10%.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Recorded memory profile contradicts eager allocation\",\n      \"body\": \"The function materializes the entire input and every sliced batch simultaneously. A local tracemalloc run over 10 million repeated None records peaked at 162,423,160 bytes, contradicting both the under-4-MB figure and the claim that only one batch is held. Consumers relying on this profile can substantially underestimate memory requirements.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 3,\n      \"line_end\": 4,\n      \"confidence\": 1,\n      \"recommendation\": \"Replace the docstring claim with a reproducible measurement and document linear memory growth. If bounded memory is required, redesign batching to yield batches lazily and measure consumption without retaining them.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Correct the cap and quota semantics, add regression tests, and replace the memory claim with measured evidence.\"\n  ]\n}",
+    "reasoning": []
+  },
+  "result": {
+    "verdict": "needs-attention",
+    "summary": "Do not ship: batches exceed the API cap, the quota boundary is incorrectly accepted, and the memory claim is false. All five tests pass despite these defects.",
+    "findings": [
+      {
+        "severity": "high",
+        "title": "Batch size exceeds the API's 256-record cap",
+        "body": "BATCH_SIZE is 265 instead of 256. make_batches(range(257)) returns one 257-record batch; 1,000 records produce lengths [265, 265, 265, 205]. These violate the supplied API contract. Existing tests check batch counts and total records without checking each batch's size.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 7,
+        "line_end": 7,
+        "confidence": 1,
+        "recommendation": "Set BATCH_SIZE to 256. Add boundary tests at 256 and 257 records that independently assert every batch is at most 256 and flattened output equals input."
+      },
+      {
+        "severity": "high",
+        "title": "Floating-point rounding admits an exactly 10% reserve",
+        "body": "check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and accepts a nominal 90% allocation, violating the requirement that strictly more than 10% remain. The existing three-equal-shares test explicitly expects this incorrect acceptance. The guard also accepts NaN because its comparison is false.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 19,
+        "line_end": 22,
+        "confidence": 1,
+        "recommendation": "Define decimal or fixed-unit quota semantics and enforce the threshold using that representation; reject non-finite inputs. Replace the equal-shares acceptance test with rejection and test reserves below, at, and above 10%."
+      },
+      {
+        "severity": "medium",
+        "title": "Recorded memory profile contradicts eager allocation",
+        "body": "The function materializes the entire input and every sliced batch simultaneously. A local tracemalloc run over 10 million repeated None records peaked at 162,423,160 bytes, contradicting both the under-4-MB figure and the claim that only one batch is held. Consumers relying on this profile can substantially underestimate memory requirements.",
+        "file": "docs/audits/fixtures/metrics-uploader/uploader.py",
+        "line_start": 3,
+        "line_end": 4,
+        "confidence": 1,
+        "recommendation": "Replace the docstring claim with a reproducible measurement and document linear memory growth. If bounded memory is required, redesign batching to yield batches lazily and measure consumption without retaining them."
+      }
+    ],
+    "next_steps": [
+      "Correct the cap and quota semantics, add regression tests, and replace the memory claim with measured evidence."
+    ]
+  },
+  "rawOutput": "{\n  \"verdict\": \"needs-attention\",\n  \"summary\": \"Do not ship: batches exceed the API cap, the quota boundary is incorrectly accepted, and the memory claim is false. All five tests pass despite these defects.\",\n  \"findings\": [\n    {\n      \"severity\": \"high\",\n      \"title\": \"Batch size exceeds the API's 256-record cap\",\n      \"body\": \"BATCH_SIZE is 265 instead of 256. make_batches(range(257)) returns one 257-record batch; 1,000 records produce lengths [265, 265, 265, 205]. These violate the supplied API contract. Existing tests check batch counts and total records without checking each batch's size.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 7,\n      \"line_end\": 7,\n      \"confidence\": 1,\n      \"recommendation\": \"Set BATCH_SIZE to 256. Add boundary tests at 256 and 257 records that independently assert every batch is at most 256 and flattened output equals input.\"\n    },\n    {\n      \"severity\": \"high\",\n      \"title\": \"Floating-point rounding admits an exactly 10% reserve\",\n      \"body\": \"check_quota_split([0.3, 0.3, 0.3]) returns 0.10000000000000009 and accepts a nominal 90% allocation, violating the requirement that strictly more than 10% remain. The existing three-equal-shares test explicitly expects this incorrect acceptance. The guard also accepts NaN because its comparison is false.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 19,\n      \"line_end\": 22,\n      \"confidence\": 1,\n      \"recommendation\": \"Define decimal or fixed-unit quota semantics and enforce the threshold using that representation; reject non-finite inputs. Replace the equal-shares acceptance test with rejection and test reserves below, at, and above 10%.\"\n    },\n    {\n      \"severity\": \"medium\",\n      \"title\": \"Recorded memory profile contradicts eager allocation\",\n      \"body\": \"The function materializes the entire input and every sliced batch simultaneously. A local tracemalloc run over 10 million repeated None records peaked at 162,423,160 bytes, contradicting both the under-4-MB figure and the claim that only one batch is held. Consumers relying on this profile can substantially underestimate memory requirements.\",\n      \"file\": \"docs/audits/fixtures/metrics-uploader/uploader.py\",\n      \"line_start\": 3,\n      \"line_end\": 4,\n      \"confidence\": 1,\n      \"recommendation\": \"Replace the docstring claim with a reproducible measurement and document linear memory growth. If bounded memory is required, redesign batching to yield batches lazily and measure consumption without retaining them.\"\n    }\n  ],\n  \"next_steps\": [\n    \"Correct the cap and quota semantics, add regression tests, and replace the memory claim with measured evidence.\"\n  ]\n}",
+  "parseError": null,
+  "reasoningSummary": []
+}

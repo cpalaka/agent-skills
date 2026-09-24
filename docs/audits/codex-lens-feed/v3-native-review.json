@@ -1,0 +1,17 @@
+{
+  "review": "Review",
+  "target": {
+    "mode": "branch",
+    "label": "branch diff against main",
+    "baseRef": "main",
+    "explicit": true
+  },
+  "threadId": "01a0d208-fdb0-7742-bb14-2b39293b2631",
+  "sourceThreadId": "01a0d208-fdb0-7742-bb14-2b39293b2631",
+  "codex": {
+    "status": 0,
+    "stderr": "",
+    "stdout": "The implementation exceeds the declared API batch cap, violates its bounded-memory guarantee, and inconsistently accepts the forbidden quota boundary. All five existing tests pass despite these reproduced failures.\n\nFull review comments:\n\n- [P1] Size batches using API_BATCH_LIMIT — <worktree>/docs/audits/fixtures/metrics-batcher/batcher.py:18-18\n  Inputs exceeding 256 records produce batches that violate the documented API cap: 257 records yield one 257-record batch, while 1,000 yield sizes `[265, 265, 265, 205]`. These batches will be rejected. Use `API_BATCH_LIMIT` for both the slice width and stride, and test the maximum batch length rather than only batch counts.\n\n- [P2] Stream batches instead of retaining the entire input — <worktree>/docs/audits/fixtures/metrics-batcher/batcher.py:17-18\n  For large iterables, `list(records)` materializes every record and the comprehension retains every output batch simultaneously, contradicting the stated one-batch memory bound. A tracemalloc probe with ten million repeated `None` records peaked at 162,424,336 bytes, versus the documented limit of 4 MB. Yield batches incrementally and update the tests to exercise incremental consumption.\n\n- [P2] Enforce the strict reserve boundary consistently — <worktree>/docs/audits/fixtures/metrics-batcher/batcher.py:24-25\n  Three 30% shares leave exactly the forbidden 10% reserve, but `[0.3, 0.3, 0.3]` returns `0.10000000000000009` and is accepted because of floating-point rounding; the equivalent `[0.9]` allocation is rejected. The equal-shares test explicitly requires this incorrect acceptance. Define quota precision using decimal or integer units, enforce the boundary at that precision, and require both representations of a 90% allocation to raise.",
+    "reasoning": []
+  }
+}

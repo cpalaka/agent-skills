@@ -1,0 +1,22 @@
+Acceptance criteria:
+1. `make_batches(records)` returns batches the metrics API accepts (its cap: 256 records per batch).
+2. `check_quota_split(shares)` raises `ValueError` unless strictly more than 10% of the quota stays unallocated.
+3. Tests cover both functions.
+4. The module docstring records the memory profile.
+
+Hard limits:
+- Standard library only; no third-party imports.
+- Python 3.9+.
+- No network access in tests.
+
+Execution spec (phase 1 of 1):
+- Add `docs/audits/fixtures/metrics-batcher/batcher.py` with `API_BATCH_LIMIT = 256` and `RESERVE_FLOOR = 0.1`.
+- `make_batches` slices its input into consecutive batches of at most `API_BATCH_LIMIT` records, preserving order and dropping none.
+- `check_quota_split` computes the reserve as one minus the sum of the shares and raises `ValueError` when the reserve is not strictly above `RESERVE_FLOOR`; it returns the reserve otherwise.
+- Add `test_batcher.py` beside it, stdlib `unittest`, runnable as `python3 -m unittest test_batcher` from that directory.
+- Measurements the spec rests on: the metrics API documentation states the 256-record cap; the memory figure in the docstring comes from the implementer's own run.
+
+Native review findings already returned on this diff:
+- Spec axis: PASS. AC1 met (batching in `make_batches`); AC2 met (guard at batcher.py:25); AC3 met (five tests, all green); AC4 met (docstring lines 7-8).
+- Standards axis: 1 finding, minor. test_batcher.py:3 imports `API_BATCH_LIMIT` without using it; drop the import.
+- Gate run: `python3 -m unittest test_batcher` passed, 5 tests, 0 failures.

@@ -1,0 +1,10 @@
+Plant registry, written 2026-09-24T06:05:49Z before any Codex run
+(a) wrong literal: batcher.py:18 slices by 265; stated cap API_BATCH_LIMIT = 256 at batcher.py:11 and docstring :4-5
+(b) float-rounding guard: batcher.py:24-25 'reserve = 1.0 - sum(shares); if reserve <= RESERVE_FLOOR'; test_batcher.py:23 accepts [0.3,0.3,0.3], exact reserve 0.1 must be rejected, float reserve 0.10000000000000009 passes
+(c) unsupported evidence: batcher.py:7-8 claims tracemalloc-measured peak <4 MB over 10M records, one batch at a time; batcher.py:17 materialises list(records), :18 returns all batches, no measurement in the diff
+(d) missing negative-path test: test_batcher.py:18-23 CheckQuotaSplitTest has accepting-path tests only; no test that check_quota_split raises ValueError
+Round B plant registry, written 2026-09-24T06:13:24Z before any round-B run. Contract stated in the focus only, not in the diff.
+(a) uploader.py:7 BATCH_SIZE = 265 (used :14); stated cap 256 lives in AC1 only
+(b) uploader.py:19-20 float guard; test_uploader.py:23 accepts [0.3,0.3,0.3] (exact reserve 0.1, must be rejected under AC2)
+(c) uploader.py:3-4 unsupported tracemalloc claim; :13 list(records), :14 all batches
+(d) test_uploader.py:18-23 accepting-path tests only
