@@ -23,6 +23,7 @@ entry, not a quiet edit.
 | [0016](0016-floor-ceiling-is-acceptance-time.md) | The floor ceiling is acceptance-time, and every standing number names its reader (amends 0014 § 7, 0015 § 2) |
 | [0017](0017-seats-pin-family-aliases.md) | Seats and workflow scripts pin a family alias, not a versioned model ID (amends 0011) |
 | [0018](0018-run-profile-derived-from-plan.md) | A run's profile is derived from its plan; the ticket pins dials, never levels; effort is a dial (amends 0011) |
+| [0019](0019-delegated-batch-over-subagent-coordinators.md) | A delegated batch runs per-ticket coordinators as subagents from one main session |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

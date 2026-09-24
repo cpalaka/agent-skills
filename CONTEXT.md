@@ -219,8 +219,8 @@ seat**, each a `code-reviewer` dispatch. The definition carries the model and ef
 name says what the position does. A seat is never a bare spawn, because a bare spawn inherits the
 parent's model. The plan-stop roster's `codex` is a lens struck like a seat, not a seat: no agent
 definition fills it.
-_Avoid_: delegate (acceptable shorthand for the implementer seat only), subagent (the host
-mechanism that fills a seat, not the seat), agent type (the host's field name).
+_Avoid_: delegate (the session standing in for the owner across a **batch**, never a seat),
+subagent (the host mechanism that fills a seat, not the seat), agent type (the host's field name).
 
 **run profile**:
 The set of per-run values the **Coordinator** derives from its own plan before dispatch — which
@@ -248,7 +248,8 @@ _Avoid_: gate label (the tracker label for what a session may do with the ticket
 **Coordinator**:
 The main-loop session running an implementation ticket: it writes the per-phase execution spec,
 dispatches the seats, adjudicates every finding against source, and merges. It writes no
-implementation diff and, where a gate-runner seat exists, runs no gate itself.
+implementation diff and, where a gate-runner seat exists, runs no gate itself. Under a **batch** it
+is a depth-1 dispatch of the `coordinator` definition, and the **delegate** is its reader.
 _Avoid_: orchestrator (the older name; "orchestrate" survives only as the toggle word paired
 with "solo"), main session (true but says nothing about the role), driver.
 
@@ -274,6 +275,25 @@ Historical: what a run record called the advisor's pre-merge reading when a tigh
 affordable slot, given before the diff existed. Retired by cpalaka/agent-skills#68, which moved the
 pre-merge critic off the advisor onto the **critic seat**, so no reading stands in for a diff that
 did not exist.
+
+**delegate**:
+The main session that stands in for the owner across a **batch**: it answers the plan stop, the
+Close approval and a slot-3 need the advisor cannot settle, reads every diff from git, and
+**parks** a ticket at any stop the owner keeps. Attributed `owner's delegate` in every run record
+([ADR 0019](docs/adr/0019-delegated-batch-over-subagent-coordinators.md)).
+_Avoid_: owner (the human it stands in for), outer coordinator / outer session (the test-run name),
+proxy, steward.
+
+**batch**:
+The tickets one **delegate** session works under a single grant, run one at a time through
+per-ticket **Coordinator** dispatches; a batch of one is legitimate. Defined by the delegate, never
+by the count.
+_Avoid_: chain (a blocked-by sequence, which a batch need not follow), run (one ticket's), loop.
+
+**park**:
+The **batch** exit that leaves a ticket open for the owner: a comment naming the stop, the claim
+released, the delegate moving to the next ticket. Two consecutive parks end the batch.
+_Avoid_: skip (says nothing was recorded), defer, block.
 
 ### Issue tracking
 
