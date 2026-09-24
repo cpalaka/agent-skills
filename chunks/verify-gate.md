@@ -25,4 +25,4 @@ the gate that loads it. Where none does, that is coverage **as inspection**, not
 language or a load-bearing decision. Part of the gate, not a follow-up.
 
 Only a clean gate permits a commit (`git-commit-format`) or handoff. Integration: load
-`git-flow-squash`. Seats: `implement-run`, slash-only so nothing lists it.
+`git-flow-squash`. Run procedure: `implement-run`, slash-only so nothing lists it.

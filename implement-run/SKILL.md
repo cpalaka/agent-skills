@@ -1,91 +1,181 @@
 ---
 name: implement-run
-description: How one ticket is run — the seat tier, the seats, the advisor's slots, the gates, the review lenses, the closing run record and the kickoff. Slash-only (/implement-run); the third-party /implement stub carries none of it.
+description: How one ticket is run — the run profile derived from the plan, the seats, the advisor's slots, the gates, the review lenses, the closing run record and the kickoff. Slash-only (/implement-run); the third-party /implement stub carries none of it.
 disable-model-invocation: true
 ---
 
-Loaded only by name. The third-party `/implement` stub carries none of this and stays unedited,
-unshadowed and unwrapped.
+Loaded by name, or by path by a delegated coordinator (§ Inside a batch). The third-party
+`/implement` stub carries none of this and stays unedited, unshadowed and unwrapped.
 
 **Knobs**: `<!-- knobs:implement-run -->` in the project contract your host adapter names; defaults
 apply where it is absent. `shape` (`subagents` | `coordinator-pane` | `workflow`; default
 `subagents`), `layout` (`parallel-when-disjoint` | `serial`; default `parallel-when-disjoint`),
 `gate_runner` (a seat or `coordinator`; default `gate-runner`), `advisor` (a seat or `none`;
-default `advisor`). `subagents` is described here in full, and `workflow`'s hand-off points in
-§ Workflow shape; the other shapes and the heartbeat recipes are in `multi-agent-policy`'s
-`COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's directory exists under
-`~/.claude/skills` or `~/.agents/skills`.
+default `advisor`), `light_set` (repository-relative globs, `**` matching any depth and a bare
+filename matching at the repository root only, written as a numbered list under its bullet;
+default `docs/**`, `CONTEXT.md`, `README.md`). `subagents` is described here in full, and
+`workflow`'s hand-off points in § Workflow shape; the other shapes and the heartbeat recipes are in
+`multi-agent-policy`'s `COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's
+directory exists under `~/.claude/skills` or `~/.agents/skills`.
+
+**Inside a batch.** Until cpalaka/agent-skills#96 lands the `implement-batch` Skill and the
+`coordinator` definition, no run is inside one. A brief that states the owner's delegation means
+this run is one ticket of a delegated batch, dispatched by the delegate, the main session standing
+in for the owner. There the shape is `subagents` whatever the knob says — the Workflow tool is
+absent at depth 1, and a pane driven from a subagent is unmeasured — and every stop this Skill
+gives the owner goes to the delegate, handed back in the form the brief names. The delegate answers
+the plan stop, the Close approval, the two cap stops, and a slot-3 need only after the advisor and
+only for what the advisor cannot settle; every other stop parks the ticket for the owner, such as
+a re-cost, a judgment the project's contract reserves, a `gate:decide`-shaped question or a gated
+write outside the batch grant. Load this file by path: the Skill tool's refusal
+of a slash-only Skill, with its text against replicating the workflow by other means, addresses a
+session replicating it for itself, not a coordinator the owner delegated.
 
 ## Seats
 
-Each from a pinned definition.
+Each from a pinned definition, dispatched by name: the bare name carries the default effort, a
+suffix any other (§ Run profile). No dispatch passes `model`: the model is pinned by role in the
+definition, and a second model family on a diff is the `codex` bug-hunter value, never an override.
 
 - **Coordinator** — the main loop: drafts the per-phase execution spec (prose in the dispatch
   prompt, never committed unless the ticket names a home for it), dispatches, adjudicates every
   finding against source, merges. Writes no implementation diff; runs no gate where a runner
-  resolves. Phase-size target: **60 implementer calls**; a phase the drafter expects to exceed it
-  is split before dispatch. Cost is near-linear in calls, $0.15–0.20 each; in the token-usage
-  audit behind cpalaka/agent-skills#68, phases at or under 60 calls cost $1–9, 60–85 cost $8–10,
-  past 85 $13–32.
-- **Implementer** — one fully specified phase, returning a handoff report. `layout` says only
-  whether two phases may be in flight at once: `parallel-when-disjoint` when their files are
-  disjoint, `serial` never. Worktrees are `parallel-work`'s decision: one phase in flight is its
-  single-task case and takes none; a second is its explicit signal, each implementer in its own
-  tree.
-- **Advisor** — slot 1, one consult (ticket, spec, first question); slot 3 continues it by message
-  or spawns fresh.
-- **Reviewer** — `code-reviewer`, dispatched twice with its axis (Standards, Spec) named;
-  `/code-review`'s sub-agents are this seat. The same seat fills the Correctness fallback and the
-  critic (§ Review), each a fresh dispatch.
-- **Gate-runner** — the project's `.claude/agents/gate-runner.md`. Whoever re-runs a gate never
-  wrote the diff.
+  resolves. Under a batch, a depth-1 dispatch of the `coordinator` definition (§ Inside a batch).
+- **Implementer** — `implementer` (`high`) or `implementer-medium`; one fully specified phase,
+  returning a handoff report. `layout` says only whether two phases may be in flight at once:
+  `parallel-when-disjoint` when their files are disjoint, `serial` never. Worktrees are
+  `parallel-work`'s decision: one phase in flight is its single-task case and takes none; a second
+  is its explicit signal, each implementer in its own tree.
+- **Advisor** — `advisor`, `high` only; slot 1, one consult (ticket, spec, first question); slot 3
+  continues it by message or spawns fresh.
+- **Reviewer** — `code-reviewer` (`high`), `code-reviewer-medium` or `code-reviewer-xhigh`, filling
+  the Spec axis, the Standards axis, the Correctness charter and the critic (§ Review), each a
+  fresh dispatch with its charge named; `/code-review`'s sub-agents are this seat only when
+  dispatched by the definition names the profile's `effort` line gives, for the dials that are on.
+- **Gate-runner** — the project's `.claude/agents/gate-runner.md`, `medium` only. Whoever re-runs a
+  gate never wrote the diff.
 
 **Toggles**: `solo` turns delegation off, review stays on; `orchestrate` turns it back on.
 
 A long-running seat needs a heartbeat; the recipes are in `COORDINATOR-PANE.md`, under the Knobs
 install gate.
 
-## Seat tier
+## Run profile
 
-`Seats: light` or `Seats: full` sits on its own line in the ticket body, where the project's
-tracker Chunk names a place (`tracker-github` § Acceptance and re-gating), and the line reads
-wherever it sits. Absent, malformed, or contradicted by the ticket's named files (checked
-before dispatch) or by the implementer's diff (checked at the certifying round) reads full; every
-upgrade goes under `Deviations`. A light line the named files contradict takes the plan stop after
-all: the run is full.
+Plan first, then derive the run profile from the plan, one dial at a time. Each dial has a default
+and one trigger, read off what the plan shows: its changed paths against `light_set` and the
+project contract's trigger table, an instruction file among them, and its expected implementer calls. Your
+confidence in the ticket's premises is no input: you cannot see your own false premise, which is
+why slot 1 runs on every plan above the light plan. The first column's tokens name the dials in a
+pin, the profile block and the workflow script's `args.profile`.
 
-**Light** is a documentation-and-records diff: every changed path is documentation, a decision
-record, a results record or tracker prose, none loaded by a gate or named by a trigger; a project
-contract may name its light set. Refactors, tooling and configuration never qualify by kind, and no
-Skill, seat definition or Chunk body a session loads is light, prose though it is. Light keeps the
-implementer, gate-runner and Spec-axis reviewer only, striking every advisor slot, the Standards
-axis, the bug hunter (Codex lens and fallback) and the critic: a diff no gate loads has no runtime
-surface to hunt, the Standards axis cost a full dispatch (8 calls) on the one measured docs run
-while the project's gate scans still run, and a docs ticket should spend no Planner consult. A
-certifying-round upgrade adds the Standards axis, lens and critic; slot 1's moment has passed, and
-the record says so.
+| Dial (token) | Range | Default | Turned by |
+|---|---|---|---|
+| `implementer`, `gate-runner`, `spec` | on | on | always |
+| `standards` | off, on | off | an instruction file in the diff, or a pin |
+| `advisor` (slot 1; slot 3 available) | off, on | off | any plan above the light plan |
+| `critic` | off, on | off | any plan above the light plan |
+| `bug hunter` | `off` < `correctness` < `codex` | `off` | any plan above the light plan, as `correctness`; `codex` by pin |
+| `gate tier` | the project contract's named tiers; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a pin only |
+| `effort <seat>` | `medium` < `high` < `xhigh`, each seat within the definitions § Seats lists for it | `high`; the gate-runner `medium`, its only value | a light plan derives `medium` for `implementer` and `spec`; an instruction file in the diff or a red gate derives `xhigh` for `critic` and the Correctness charter, where on |
+| `fix rounds` | 2, or a higher integer with a reason | 2 | a plan pin with a reason |
+| `scope` | the plan's deliverable count; 60 tool calls per implementer dispatch | the plan's count; 60 | a plan pin with a reason |
+| plan stop | none, stop | none | any dial above its default, a pin above default included |
 
-A ticket body still carrying `Advisor: pre-dispatch only` runs full: the marker is retired, noted
-under `Deviations`.
+**A light plan** is one whose every changed path matches `light_set`, is loaded by no gate, and is
+no instruction file; any other plan is above the light plan. The instruction-file test runs first,
+so no glob makes one light. "Loaded by no gate" is `verify-gate`'s derivation: grep what references
+the path and name the gate that loads it. On a light plan every unpinned dial sits at or below its
+default, so only a pin above default stops the run.
+
+**An instruction file** is whatever a host injects (a host adapter, the project contract, every
+contract or Chunk they import), every file under a Skill's directory, every seat definition, and
+every file one of those names as a read. *Named as a read* means named to be followed as
+instructions — a Chunk, a Skill, a contract, a seat body, a procedure — not a glossary, README, ADR
+or results record cited for reference: a host adapter or contract may name `CONTEXT.md` or `README.md`, and
+the default `light_set` holds both on purpose. One in the diff turns every dial the table gives an
+instruction file or a plan above the light plan. It changes the instrument the next run reads, and
+the Standards axis found 10 of its 11 measured findings on such diffs.
+
+**Effort** is dispatched as a definition name (§ Seats). A light plan's `medium` sits below the
+default and fires no stop, since speed is preferred where no gate loads the diff. The Codex lens
+takes no effort, and on a Codex host the role files keep `high`, so a seat there dispatches its role
+file bare: the block posts each `fixed by host`. Expected implementer calls turns no dial: it
+sizes phases and sets the `scope` cap.
+
+**Pins.** The ticket author pins a dial on its own line directly above the acceptance heading, or
+anywhere in the body where the tracker's ticket has none, `Pins: <token>: <value>`, several
+separated by `;`: `Pins: critic: on; gate tier: 2; effort critic: xhigh`. The `<seat>` of an effort
+token is one of the seat tokens above. A pin is a lower bound: the dial takes the higher of pin and
+derivation, nothing lowers it, and a decision to lower a dial has no pin. A line naming an unknown
+token, `fix rounds` or `scope` (only a plan pin raises those, its reason on the block line), or a
+value outside its range reads as absent, noted under `Deviations`. Adding a pin to a ticket not yet
+started is the tracker Chunk's body write for adding an acceptance criterion. Two retired forms read
+as absent, a `Seats: light` or `Seats: full` line (the retired seat tier) and the
+`Advisor: pre-dispatch only` marker: no pin is inferred, the run derives, and the record notes the
+line was present and read as absent. A body sentence naming a gate tier in prose ("runs tier 2",
+"Gate: tier 1") reads as a pin on `gate tier` alone, marked `pin (tier sentence)`. No open ticket's
+body is rewritten to remove either.
+
+**The ratchet** only raises, under `Deviations`, and reopens no stop. A diff path outside the plan's
+changed-path set re-derives the profile with that path in (for the gate tier, its default
+recomputed as the lowest tier plus the new set's trigger-table pulls, not the dial turned, which only
+a pin does), unless it adds a deliverable the plan did
+not count, which is `scope`'s stop; a material finding turns on an off seat that runs after its
+finder in § Review's order, so on a light plan a material Spec-axis finding turns the critic on; a
+red gate re-runs that gate and raises `effort critic` and the Correctness charter's effort to
+`xhigh` where those dials are on, turning no seat on and never the gate tier. Nothing mid-run lowers
+a dial. An `advisor` raised after dispatch opens slot 3 only: slot 1's moment has passed, and the
+record says so.
+
+**Caps** are constants, not risk-derived. `fix rounds`: two material rounds; a third is a stop.
+Wording-only findings ride the last material round or form one closing round that counts toward no
+cap; it re-runs every gate `verify-gate`'s skip rule cannot skip for its paths and every scan that
+reads prose, since a scan can match prose a fix round wrote, and takes no targeted re-review — you
+check the wording diff against the findings you accepted. `scope`: the plan's deliverable count, and
+60 tool calls per implementer dispatch, counted from its transcript; one past 60, in any shape, goes
+under `Deviations`. Cost is near-linear in calls, $0.15–0.20 each; in the token-usage audit behind
+cpalaka/agent-skills#68, phases at or under 60 calls cost $1–9, 60–85 cost $8–10, past 85 $13–32. A
+continued dispatch keeps its count, so one at 60 is never continued by message: its next leg, a fix
+round or the phase's remainder, goes to a fresh implementer handed the findings and the diff,
+counting from zero. A phase the plan expects to exceed 60 is split before dispatch. Work past the
+deliverable count is a stop, never a ratchet: more work is the reader's scope question. **A plan
+pin** raises `fix rounds` or `scope` in your own plan, its reason on that dial's block line,
+`fix rounds: 3 — a migration and its revert are two rounds by construction`; it sits above default,
+so it fires the stop.
+
+**The profile block** is one line per dial, `token: value — the fact that set it`, pins marked
+`(pin)`; the effort dials share one line naming the definition dispatched per seat, the
+gate-runner's fixed value unlisted:
+
+```
+effort: implementer-medium, code-reviewer-medium (spec) — light plan
+effort: implementer, code-reviewer (spec), code-reviewer (standards), code-reviewer-xhigh (critic), code-reviewer-xhigh (bug hunter), advisor — instruction file in the diff
+```
+
+Post it in the run's first message, whatever the plan; inside a batch that message is the brief's
+first output, which the delegate reads at the first hand-back or at Close. The run record repeats it
+as dispatched (§ Close), and every ratchet goes under `Deviations`.
+
+**The stop** fires only when a dial sits above its default: the reader approves the profile before
+any dispatch. The reader is the owner, or the delegate inside a batch. At or below default, post
+and go on.
 
 ## Start
 
-The chain is **pick → plan approval → implement → verify → sign-off**. Plan approval is a gate:
-for non-trivial scope, plan in 1–5 chat bullets and get approval before code; one-line fixes,
-token tweaks and doc edits skip it. Plan by question type: fuzzy idea → `grilling`; data-model or
-state-machine doubt → `prototype`; look-and-feel doubt → a minimal build and an `agent-browser`
-screenshot loop; codebase-bound, clear what, unclear how → plan mode. Verify is the `verify-gate`
-Chunk;
-sign-off is the Done gate the project's tracker chunk sets, or its own inline rule.
-Light tickets (§ Seat tier) skip plan approval, as one-line fixes and doc edits already do. The
-approval message carries the roster line with the tier defaults applied:
-`Seats: implementer, gate-runner, reviewer (Standards), reviewer (Spec), advisor, codex — strike by name`
-A struck seat goes under `Deviations`; striking `codex` strikes its fallback too (§ Review). The
-critic is not on the line: it runs on every full-tier ticket.
+The chain is **pick → plan → profile → stop, only above default → implement → verify →
+sign-off**. Every run plans and posts the plan, whatever its size: 1–5 chat bullets naming the
+changed paths, the deliverable count and the expected implementer calls, which the profile reads.
+Read the ticket's `Pins:` line and any tier sentence, derive the profile (§ Run profile), and post
+plan and profile block together; where the stop fires, get approval before code. Plan by question
+type: fuzzy idea → `grilling`; data-model or state-machine doubt → `prototype`; look-and-feel doubt
+→ a minimal build and an `agent-browser` screenshot loop; codebase-bound, clear what, unclear how →
+plan mode. Verify is the `verify-gate` Chunk; sign-off is the Done gate the project's tracker chunk
+sets, or its own inline rule.
 
 State the knob values in force, asking only where the ticket cannot fit them, and this session's
 role; if it is not Builder, ask the owner to switch, and stay on Planner (the metered role) only on
-their say-so. Read the ticket's `Seats:` line (§ Seat tier).
+their say-so.
 
 **Close any stateful editor for the dispatch window**: it is a second writer whose in-memory flush
 lands after the gates read the tree, so stale state passes green. Commit nothing inside the
@@ -95,28 +185,29 @@ window; reopen it after standdown. Under a worktree this lapses.
 
 Announce each.
 
-1. **Pre-dispatch**, on the full tier, always, spawned or held (Fallback). After checking the
-   drafted spec's premises against source, one pass looks for a false or unverified premise, a
-   missing hard limit, an observable that cannot go red, and — pasted verbatim — *what will this run
-   raise that the ticket does not list?* It names no claim of yours, so it audits your world, not
-   your sentence. The advisor definition's fourth differs — a finding it supplies, not a question
-   you ask; never sync the lists. Check the spec's *mechanisms* against its stated *intent* too: no
-   review or gate written from the spec can catch a mechanism that contradicts it, since the
-   deliverable matches. **A prose deliverable** (record, Skill, Chunk) loads in no gate: its
-   observable is an independent reader given the source rows, not the writer's table, calibrated by
-   one planted absent row whose count is read, beside a fresh agent's playthrough of it.
+1. **Pre-dispatch**, wherever the `advisor` dial is on, always, spawned or held (Fallback). After
+   checking the drafted spec's premises against source, one pass looks for a false or unverified
+   premise, a missing hard limit, an observable that cannot go red, and — pasted verbatim — *what
+   will this run raise that the ticket does not list?* It names no claim of yours, so it audits
+   your world, not your sentence. The advisor definition's fourth differs — a finding it supplies,
+   not a question you ask; never sync the lists. Check the spec's *mechanisms* against its stated
+   *intent* too: no review or gate written from the spec can catch a mechanism that contradicts
+   it, since the deliverable matches. **A prose deliverable** (record, Skill, Chunk) loads in no
+   gate: its observable is an independent reader given the source rows, not the writer's table,
+   calibrated by one planted absent row whose count is read, beside a fresh agent's playthrough of
+   it.
 2. **Pre-merge** — now the critic seat, a Builder dispatch (§ Review); no advisor consult.
-3. **Floating**, on the full tier — a reading you would otherwise decide silently or put to the
-   owner: a review finding you want to reject, one that would change an acceptance criterion, a
-   ticket premise reading false against source, a gate still red after one `diagnosing-bugs` loop.
-   A fourth need goes to the owner.
+3. **Floating**, wherever the `advisor` dial is on — a reading you would otherwise decide silently
+   or put to the owner: a review finding you want to reject, one that would change an acceptance
+   criterion, a ticket premise reading false against source, a gate still red after one
+   `diagnosing-bugs` loop. A fourth need goes to the owner (§ Inside a batch).
 
 Never the advisor: gates, reading a diff for conformance, prose records, git mechanics, a task
 scoped to named files. Read the meter before spawning; the owner decides a tight one.
 
-**Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner, and the critic,
-a Builder seat, spends no Planner meter. Advisor unavailable (no definition this host can
-dispatch, meter spent, knob `none`): hold the judgment yourself, ask the owner at the same
+**Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner (§ Inside a batch),
+and the critic, a Builder seat, spends no Planner meter. Advisor unavailable (no definition this
+host can dispatch, meter spent, knob `none`): hold the judgment yourself, ask the owner at the same
 triggers, say so. That is self-review unless slot 1's observable that cannot go red becomes a
 question the implementer's dispatch prompt asks before it writes code — a spec's author is the last
 reader to see that an observable does not mean what they intended. Gate-runner unavailable or knob
@@ -134,13 +225,26 @@ user reports the instruction they followed, not the invariant.
 
 ## Review
 
-Full tier: **native axes → Codex lens (or its fallback) → critic → adjudication → fix commits →
-merge**; light takes the Spec axis alone. Hand reviewers the measurements a spec summarises, not
-just the spec. Re-check a refuted finding about safety or data loss. A finding proves the defect,
-not the remedy. After fixes, re-run the affected checks and take a targeted review; reopen the full
-one only where scope or assumptions changed.
+Wherever the profile runs them: **Spec axis, Standards axis and bug hunter, dispatched together →
+critic → adjudication → fix commits → merge**. Under
+`subagents` the bug hunter, where on, goes out with the axes whatever its value, since the serial first pass
+was the largest phase in half the measured runs; the critic runs last because it reads every
+review. Each dispatch is the definition the profile's `effort` line names. Hand reviewers the
+measurements a spec summarises, not just the spec. Re-check a refuted finding about safety or data
+loss. A finding proves the defect, not the remedy. After material fixes, re-run the affected checks
+and take a targeted review; reopen the full one only where scope or assumptions changed. Fix
+rounds, the wording-only round and the 60-call ceiling are § Run profile's caps.
 
-**Codex lens**, once both native axes return:
+**Bug hunter.** `correctness` is the Correctness charter, a Reviewer dispatch over the same diff:
+*for each defect, what can go wrong, why the path is vulnerable, the likely impact, one clause of
+remedy; material findings only; end with `FINDINGS: n`*, recorded
+`LENS correctness: FINDINGS: <n>`. One clause of remedy, because a finding proves the defect, not
+the remedy; material only, because you adjudicate each; `FINDINGS: n`, so the record reads a
+count, not an impression. `codex`, by pin only, is the Codex lens below, and **any NOT RUN fires
+the Correctness charter** as its fallback: above the light plan the loop is never without a bug
+hunter and never runs two.
+
+**Codex lens**, dispatched beside the axes once the implementer's diff is committed:
 
 ```
 node "<installPath>/scripts/codex-companion.mjs" adversarial-review --json --base <fixed point> -- "$(cat <focus file>)" < /dev/null
@@ -150,16 +254,20 @@ node "<installPath>/scripts/codex-companion.mjs" adversarial-review --json --bas
 sole one, of the `plugins["codex@openai-codex"]` list in `~/.claude/plugins/installed_plugins.json`.
 Sandbox off: sandboxed, the companion failed before reaching Codex, on EPERM creating its state
 directory under `$CLAUDE_PLUGIN_DATA` (2026-09-23); network egress, never reached, is unmeasured.
-Focus: the ticket's acceptance criteria verbatim plus the execution spec's hard limits, staged in a
-file inside the repository and removed after. The script takes focus only as positional text, with
-no focus-file flag, and acceptance criteria carry backticks and quotes that an inline argument would
-execute or end on; content read through `$(cat …)` is not re-parsed, and `--` ends the options, so a
-focus beginning with a flag name is still read as text. Inside the repository, because sandboxed and
-unsandboxed shells resolve different temporary directories. `--base` reviews only commits while
-Codex reads the live tree, so commit the implementer's diff first, and **fix commits wait for the
-lens**. It has no timeout of its own: take the host's longest foreground timeout or its background
-mode, capturing stdout, never the plugin's `--background`/`result` route (its job record nests the
-payload differently); a timeout under a shorter budget is yours to re-run.
+Focus: the ticket's acceptance criteria verbatim plus the execution spec's hard limits, then this
+line verbatim, which closed the one planted defect every Codex variant missed
+(cpalaka/agent-skills#90):
+`Also check: does each guard have a test for its rejecting path as well as its accepting path?`
+Stage the focus in a file inside the repository and remove it after. The script takes focus only as
+positional text, with no focus-file flag, and acceptance criteria carry backticks and quotes that an
+inline argument would execute or end on; content read through `$(cat …)` is not re-parsed, and `--`
+ends the options, so a focus beginning with a flag name is still read as text. Inside the
+repository, because sandboxed and unsandboxed shells resolve different temporary directories.
+`--base` reviews only commits while Codex reads the live tree, so commit the implementer's diff
+first, and **fix commits wait for the lens**. It has no timeout of its own: take the host's longest
+foreground timeout or its background mode, capturing stdout, never the plugin's
+`--background`/`result` route (its job record nests the payload differently); a timeout under a
+shorter budget is yours to re-run.
 
 Record `LENS codex: <verdict> — <n> findings — <bytes> bytes` under `Review` (`.result.verdict`, the
 count of `.result.findings`, output bytes). A null `.result`, a `.parseError`, zero bytes, a
@@ -167,31 +275,30 @@ non-zero exit, or a failure before output (binary absent, not authenticated, reg
 no such key or element — quota, timeout at the longest budget) is `LENS codex: NOT RUN — <why>`. Its
 recommendations are hypotheses; adjudicate every finding against source.
 
-**Fallback: any NOT RUN fires the Correctness charter** — another `code-reviewer` dispatch over the
-same diff: *for each defect, what can go wrong, why the path is vulnerable, the likely impact, one
-clause of remedy; material findings only; end with `FINDINGS: n`*, recorded
-`LENS correctness: FINDINGS: <n>`. One clause of remedy, because a finding proves the defect, not
-the remedy; material only, because you adjudicate each; `FINDINGS: n`, so the record reads a count,
-not an impression. The loop is never without a bug hunter and never runs two by default. One
-exception: the owner's plan-stop strike, `LENS codex: STRUCK — owner, plan stop`, is not NOT RUN and
-fires no fallback.
-
-**Critic seat**, after every lens, before the merge, on every full-tier ticket in every shape: a
-fresh `code-reviewer` given the diff since the fixed point, the ticket, the execution spec and every
-review's output, charged: *completeness critic — what the reviewers and the lens missed and where
-their method erred: absence claims refuted by evidence outside a finder's scope, category errors, a
-survivor one arm shares and was not charged with; counter-critic — which findings source refutes,
-and which remedies add generality the spec never asked for.* Recorded `CRITIC: <n> findings`. A
-Builder seat after the lenses reads the real diff and every review, and spends no Planner meter.
+**Critic seat**, last — after every review and lens, before the merge — wherever the `critic` dial
+is on, in every shape: a fresh Reviewer dispatch given the diff since the fixed point, the ticket,
+the execution spec and every review's output, charged: *completeness critic — what the reviewers
+and the lens missed and where their method erred: absence claims refuted by evidence outside a
+finder's scope, category errors, a survivor one arm shares and was not charged with; counter-critic
+— which findings source refutes, and which remedies add generality the spec never asked for.*
+Recorded `CRITIC: <n> findings`. A Builder seat after the lenses reads the real diff and every
+review, and spends no Planner meter.
 
 ## Workflow shape
 
-Before the script, you draft the execution spec and take the plan stop; it runs the implementer,
-the certifying gate, the native axes and at most one fix round; on its return you run the Codex
-lens, dispatch the critic, adjudicate, merge and write the record. It never merges, writes the
-tracker or asks a question: none reaches a human turn from inside it. Its fix round precedes the
-lens, so it leaves its work committed (`--base` reads only commits); fix commits after the lens
-are yours.
+**Until `workflow.js` reads `args.profile` (cpalaka/agent-skills#95), a `workflow` run is
+unavailable: run `subagents`**, which every project's knob already names. This section is the
+contract that run takes.
+
+Before the script, you draft the execution spec, post the profile and take the stop where it fires;
+it runs the implementer, the certifying gate, the native axes with the Correctness charter beside
+them where `bug hunter` is `correctness`, and at most one fix round; on its return you run the Codex
+lens where `bug hunter` is `codex`, dispatch the critic, adjudicate, merge and write the record. It
+never merges, writes the tracker or asks a question: none reaches a human turn from inside it. Its
+fix round precedes the lens, so it leaves its work committed (`--base` reads only commits); fix
+commits after the lens are yours, and a lens after return departs from § Review's concurrent
+ordering, which the record notes under `Deviations`. A second material round and the wording round
+are yours after return, under § Run profile's caps.
 
 **Launch `workflow.js` beside this file by path**,
 `Workflow({scriptPath: "<this Skill's directory>/workflow.js", args})`, from a session started
@@ -199,11 +306,11 @@ with this Skill's directory added (`--add-dir`): the tool refuses a `scriptPath`
 working directory and added directories, even after a Read of the file. Without that, run
 `subagents`; a mid-session `/add-dir` is unmeasured. Never inline it: an inline `script` is a
 transcription — measured, the transcribing session dropped comments — not the file.
-`args`: `{ticket, checkout, fixedPoint, specPath, gateTier, roster, gateRunner?}` — `ticket` the
-issue reference; `roster` the whole plan-stop line after strikes, as an array (a comma string
-throws) — the script logs and skips the entries it does not own; `gateRunner` the `gate_runner`
-knob's seat when it is not `gate-runner`; `specPath` outside the checkout or ignored there, since
-the implementer commits everything and the spec stays uncommitted (§ Seats). It returns
+`args`: `{ticket, checkout, fixedPoint, specPath, gateTier, profile, gateRunner?}` — `ticket` the
+issue reference; `profile` the profile as posted, an object keyed by the dial tokens whose `effort`
+value maps each seat to its definition name; `gateRunner` the `gate_runner` knob's seat when it is
+not `gate-runner`; `specPath` outside the checkout or ignored there, since the implementer commits
+everything and the spec stays uncommitted (§ Seats). It returns
 `{gates, findings, implementerReport, fixRound, dropped, gateReports}`. **Resume**: stop the run,
 relaunch with `resumeFromRunId` and the original `args` verbatim — a resume drops them, and
 identical ones keep the journal's cache keys. **It needs a gate-runner seat the launching session
@@ -214,9 +321,9 @@ project on `gate_runner: coordinator` has none, so runs `subagents`.
 work is not all committed, so the scripted run does not count and you finish the ticket under
 `subagents` from the commits already made, committing nothing on its behalf. `fixRound.ran` with
 `gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): gate it
-yourself before the lens. Reconcile `dropped` against `journal.jsonl`, and check the diff against
-the seat tier: a light roster whose diff reads full takes the upgrade § Seat tier names, under
-`Deviations`.
+yourself before the lens. Reconcile `dropped` against `journal.jsonl`, read each implementer's calls
+from it (the `scope` cap), and check the diff's paths against the plan's
+changed-path set: a path outside it ratchets (§ Run profile).
 
 **Adoption**: `subagents` stays every project's default until three clean scripted runs —
 certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it),
@@ -231,10 +338,10 @@ its `agent-<id>.jsonl` — counted from the project's run records.
    in 105 sessions, measured on another Skill), and a squash without its clauses fails silently
    toward a lost tree: a peer's unpushed commit riding the push, a branch deleted against a moved
    `main`, an approval spent on a tree that no longer exists.
-3. **One approval covers posting the run record, the merge and the close.** Offer the diff, the
-   record and the close in one message, naming the acceptance reading you took and why; act on
-   the single yes. A ticket whose acceptance needs the owner's attended run stays open: the push
-   is not the acceptance.
+3. **One approval covers posting the run record, the merge and the close**, given by the owner, or
+   by the delegate inside a batch. Offer the diff, the record and the close in one message, naming
+   the acceptance reading you took and why; act on the single yes. A ticket whose acceptance needs
+   the owner's attended run stays open: the push is not the acceptance.
 4. **Emit the kickoff** once step 3's actions land, a ticket left open for the owner included, as
    its own message, unfenced: `/implement-run <n>` for the lowest ticket on the tracker chunk's
    frontier. An empty frontier takes the contract's frontier-empty instruction; where it names
@@ -242,14 +349,18 @@ its `agent-<id>.jsonl` — counted from the project's run records.
    from an unminted label, run its label check and report which. Nothing else follows — no other
    query, no grill, no wrap: the run record is the tracker write, the kickoff the handoff.
 
-**The run record** is one closing comment on the ticket (in the file, for a file ticket) under
-`Slots`, `Gates`, `Review`, `Deviations`. The body is the spec, and a run never rewrites its own
-ticket's body — `gh issue edit --body` and its equivalents replace it wholesale, so ticking one
-checkbox can take the spec with it. Checkboxes are the owner's; every observation, verdict and piece of evidence
-goes in a comment.
+**The run record is the tracker's closing record**: one comment on the ticket (in the file, for a
+file ticket) carrying both structures — the headings `Slots`, `Gates`, `Review`, `Deviations`, and
+each acceptance criterion by number with its evidence and the reviewed commit SHA. `Slots` repeats
+the profile block as dispatched, followed by `approved: owner` or
+`approved: owner's delegate — <what the delegate read>` where the stop fired; inside a batch it
+also names the batch grant. The body is the spec, and a run never rewrites its own ticket's body —
+`gh issue edit --body` and its equivalents replace it wholesale, so ticking one checkbox can take
+the spec with it. Checkboxes are the owner's; every observation, verdict and piece of evidence goes
+in a comment.
 
-**A criterion your run missed is the owner's to re-cost; the ask must not make your reading the
-default.** *The criterion was wrong* is an overrun's predictable output, and sometimes true; with
-the deliverable already on disk, *land it and decide later* installs your preference by silence.
-Produce the alternative as an artifact the owner can diff, not a number you describe, and leave
-the criterion unticked either way.
+**A criterion your run missed is the owner's to re-cost (§ Inside a batch); the ask must not make
+your reading the default.** *The criterion was wrong* is an overrun's predictable output, and
+sometimes true; with the deliverable already on disk, *land it and decide later* installs your
+preference by silence. Produce the alternative as an artifact the owner can diff, not a number you
+describe, and leave the criterion unticked either way.

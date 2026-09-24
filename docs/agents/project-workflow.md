@@ -45,6 +45,10 @@ paragraph). This block carries what varies here.
   § 4 declines to install an adapter-plus-contract gate anywhere until one has a trigger that can
   go green. A red reading is a decision the closing record names, not a block.
 - advisor: advisor
+- light_set:
+  1. `docs/**`
+  2. `CONTEXT.md`
+  3. `README.md`
 <!-- /knobs:implement-run -->
 
 **Wrap-commit push carve-out.** An end-of-session close-out that commits a promotion here — a

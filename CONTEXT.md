@@ -214,12 +214,11 @@ role exists), Opus (a model name), executor.
 
 **Seat**:
 A named position in a run filled by a pinned agent definition — implementer, advisor,
-gate-runner, and reviewer: the Standards and Spec axes, the Correctness fallback and the **critic
+gate-runner, and reviewer: the Standards and Spec axes, the Correctness charter and the **critic
 seat**, each a `code-reviewer` dispatch. A definition carries the model and effort, one definition
 per effort value the seat can reach, the bare seat name carrying the default; the seat name says
 what the position does. A seat is never a bare spawn, because a bare spawn inherits the
-parent's model. The plan-stop roster's `codex` is a lens struck like a seat, not a seat: no agent
-definition fills it.
+parent's model. The `codex` bug-hunter value is a lens, not a seat: no agent definition fills it.
 _Avoid_: delegate (the session standing in for the owner across a **batch**, never a seat),
 subagent (the host mechanism that fills a seat, not the seat), agent type (the host's field name).
 
@@ -242,10 +241,11 @@ always-on context text).
 
 **light plan**:
 A plan whose every changed path is in the project's light set, is loaded by no gate, and is no
-**instruction file**; on one, every unpinned **dial** sits at its default and no reader stops the
-run. The light set is a project **knob** (cpalaka/agent-skills#86).
+**instruction file**; on one, every unpinned **dial** sits at or below its default and, unless a
+pin sits above its default, no reader stops the run. The light set is a project **knob**
+(cpalaka/agent-skills#86).
 _Avoid_: floor, "above the floor" (ADR 0018's words for this; the glossary's **floor** is the
-always-on context text), base profile, light tier, docs mode.
+always-on context text), base profile, light tier (the retired seat tier's word), docs mode.
 
 **instruction file**:
 A file a session or seat follows as instructions: whatever a host injects (a **Host adapter**, the
@@ -283,9 +283,9 @@ _Avoid_: trigger (the condition that may spend a slot, not the slot), consult (t
 spending one), call.
 
 **critic seat**:
-The fresh `code-reviewer` dispatch after every lens and before the merge on every full-tier
-ticket, charged as completeness critic and counter-critic; the `implement-run` Skill's § Review
-carries the charter. A Builder seat, so it spends no Planner meter.
+The fresh `code-reviewer` dispatch after every lens and before the merge on every plan above
+the **light plan**, charged as completeness critic and counter-critic; the `implement-run` Skill's
+§ Review carries the charter. A Builder seat, so it spends no Planner meter.
 _Avoid_: slot 2 (the numbered position it fills, not its name), pre-merge consult, advisor critic
 (the retired arrangement).
 

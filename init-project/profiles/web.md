@@ -64,6 +64,10 @@ knobs:
     layout: "parallel-when-disjoint"
     gate_runner: "gate-runner"
     advisor: "advisor"
+    light_set:
+      - "docs/**"
+      - "CONTEXT.md"
+      - "README.md"
 ---
 ## Bespoke setup
 

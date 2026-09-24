@@ -55,7 +55,7 @@ knobs:
                                                         # project's own convention here, not this shape.
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
   implement-run:
-    # implement-run is a Skill too, read by marker. These four are its OWN defaults — the values that
+    # implement-run is a Skill too, read by marker. These five are its OWN defaults — the values that
     # apply wherever the block is absent, so a project stamped before this entry existed runs on
     # exactly them. Written out here because they are then the project's saved pick: the coordinator
     # states them at the start of a run and asks only where a ticket cannot fit them.
@@ -63,6 +63,10 @@ knobs:
     layout: "parallel-when-disjoint"
     gate_runner: "gate-runner"
     advisor: "advisor"
+    light_set:
+      - "docs/**"
+      - "CONTEXT.md"
+      - "README.md"
 ---
 
 ## Bespoke setup

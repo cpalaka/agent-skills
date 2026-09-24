@@ -99,14 +99,14 @@ stays open, gate unchanged. A decline closes **not planned** with the reply quot
 takes that exit too, never `completed`.
 
 A `gate:decide` ticket is re-gated by the owner relabelling it, or by a session working in order:
-quote their reply in a comment; where the decision kills an acceptance branch or fixes a seat
-tier, make the **re-gate write**, a body rewrite (§ Commit forms) whose approval shows the new
-text, cutting the body to the decided branch and adding the seat tier
-the diff takes under the `implement-run` Skill's § Seat tier; give each prerequisite the body now
+quote their reply in a comment; where the decision kills an acceptance branch or raises a pinnable dial,
+make the **re-gate write**, a body rewrite (§ Commit forms) whose approval shows the new text,
+cutting the body to the decided branch and adding the `Pins:` line the decision fixes (the
+`implement-run` Skill's § Run profile); give each prerequisite the body now
 names an edge it lacks (§ Unplanned tickets), and remove (`--remove-blocked-by`) an edge that only
 the cut branch named; and last, apply the gate they named, since a ticket
-relabelled before its edges can reach the frontier with a blocker open. Where a body carries a
-`Seats: light` or `Seats: full` line, it sits on its own line above the acceptance heading.
+relabelled before its edges can reach the frontier with a blocker open. A `Pins:` line sits on its
+own line directly above the acceptance heading.
 
 ### Unplanned tickets
 
