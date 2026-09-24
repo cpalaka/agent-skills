@@ -286,19 +286,27 @@ review, and spends no Planner meter.
 
 ## Workflow shape
 
-**Until `workflow.js` reads `args.profile` (cpalaka/agent-skills#95), a `workflow` run is
-unavailable: run `subagents`**, which every project's knob already names. This section is the
-contract that run takes.
+This section is the contract a `workflow` run takes.
 
-Before the script, you draft the execution spec, post the profile and take the stop where it fires;
-it runs the implementer, the certifying gate, the native axes with the Correctness charter beside
-them where `bug hunter` is `correctness`, and at most one fix round; on its return you run the Codex
-lens where `bug hunter` is `codex`, dispatch the critic, adjudicate, merge and write the record. It
-never merges, writes the tracker or asks a question: none reaches a human turn from inside it. Its
-fix round precedes the lens, so it leaves its work committed (`--base` reads only commits); fix
-commits after the lens are yours, and a lens after return departs from § Review's concurrent
-ordering, which the record notes under `Deviations`. A second material round and the wording round
-are yours after return, under § Run profile's caps.
+Before the script, you draft the execution spec, check out the run's branch in the checkout (the
+script commits on whatever branch is checked out and never switches), post the profile, take the
+stop where it fires and run slot 1 where `advisor` is on; it runs the implementer, the certifying
+gate, the native axes with the Correctness charter beside them where `bug hunter` is `correctness`,
+and at most one fix round. The stages the profile's `effort` value names (the implementer, the Spec
+and Standards axes, the Correctness charter) are each dispatched by that definition name, or the one
+the ratchet raises it to, their stage `effort` set from the same name so the two carriers cannot
+disagree; the gate-runner is dispatched by the `gate_runner` knob at `medium`. A red certifying gate
+raises the Correctness call to `code-reviewer-xhigh` inside the script, which logs the raise; you
+read the raise from that call's `agent-<id>.meta.json`, never from the log line, which lands only in
+the Workflow's `.output` wrapper, and record it under `Deviations`. Raising the critic stays yours.
+On its return you run the Codex lens where `bug hunter` is `codex`, dispatch the critic, adjudicate,
+merge and write the record. A Codex lens reading NOT RUN fires the Correctness charter after return
+too, yours (§ Review's fallback), at the Correctness charter's effort from § Run profile, derived
+as though `bug hunter` were `correctness`. It never merges, writes the tracker or asks a question:
+none reaches a human turn from inside it. Its fix round precedes the lens, so it leaves its work
+committed (`--base` reads only commits); fix commits after the lens are yours, and a lens after
+return departs from § Review's concurrent ordering, which the record notes under `Deviations`. A
+second material round and the wording round are yours after return, under § Run profile's caps.
 
 **Launch `workflow.js` beside this file by path**,
 `Workflow({scriptPath: "<this Skill's directory>/workflow.js", args})`, from a session started
@@ -306,10 +314,14 @@ with this Skill's directory added (`--add-dir`): the tool refuses a `scriptPath`
 working directory and added directories, even after a Read of the file. Without that, run
 `subagents`; a mid-session `/add-dir` is unmeasured. Never inline it: an inline `script` is a
 transcription — measured, the transcribing session dropped comments — not the file.
-`args`: `{ticket, checkout, fixedPoint, specPath, gateTier, profile, gateRunner?}` — `ticket` the
-issue reference; `profile` the profile as posted, an object keyed by the dial tokens whose `effort`
-value maps each seat to its definition name; `gateRunner` the `gate_runner` knob's seat when it is
-not `gate-runner`; `specPath` outside the checkout or ignored there, since the implementer commits
+`args`: `{ticket, checkout, fixedPoint, specPath, gateTier, profile, gateRunner?}`, the script's
+field names, any other field throwing — `ticket` the issue reference; `gateTier` the profile's
+`gate tier` spelled out for the gate-runner; `profile` the posted block transcribed to an object,
+keyed by the dial tokens verbatim, spaces included, except that the `effort <seat>` dials nest as
+one `effort` object mapping each seat token to its definition name: `{standards: "off",
+"bug hunter": "correctness", effort: {implementer: "implementer", spec: "code-reviewer",
+"bug hunter": "code-reviewer-xhigh"}}`; `gateRunner` the `gate_runner` knob's seat when it is not
+`gate-runner`; `specPath` outside the checkout or ignored there, since the implementer commits
 everything and the spec stays uncommitted (§ Seats). It returns
 `{gates, findings, implementerReport, fixRound, dropped, gateReports}`. **Resume**: stop the run,
 relaunch with `resumeFromRunId` and the original `args` verbatim — a resume drops them, and
@@ -320,10 +332,21 @@ project on `gate_runner: coordinator` has none, so runs `subagents`.
 **At return**, read the checkout's `git status --porcelain` yourself: non-empty means the script's
 work is not all committed, so the scripted run does not count and you finish the ticket under
 `subagents` from the commits already made, committing nothing on its behalf. `fixRound.ran` with
-`gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): gate it
-yourself before the lens. Reconcile `dropped` against `journal.jsonl`, read each implementer's calls
-from it (the `scope` cap), and check the diff's paths against the plan's
-changed-path set: a path outside it ratchets (§ Run profile).
+`gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): dispatch
+the gate-runner on it before the lens. Reconcile `dropped` against `journal.jsonl`, which gives each
+call's label, `agentId` and return value (the `started` records carry the label): the definition
+each stage was dispatched by is `agentType` in that agent's `agent-<id>.meta.json` beside it
+(`workflow-subagent` there is what an omitted `agentType` records), its model and effort are on its
+`agent-<id>.jsonl` assistant records, and an implementer's calls are the `tool_use` blocks in that
+transcript other than `StructuredOutput`, the schema return a `subagents` implementer never makes
+(the `scope` cap), one past 60 under `Deviations`. Check the diff's paths against the plan's
+changed-path set: a path outside it ratchets (§ Run profile). Inside the script a dropped gate
+reads green and a dropped review clean, so at return you make up what they would have run: for a
+`gate` label in `dropped` you dispatch the gate-runner before the lens, and before the critic you
+dispatch each review the profile now calls for that the script did not return, at its definition
+(both read off the profile as § Run profile's ratchet leaves it at return). A dropped
+`review:correctness` is never recorded as `FINDINGS: 0`, since above the light plan the loop is
+never without a bug hunter (§ Review).
 
 **Adoption**: `subagents` stays every project's default until three clean scripted runs —
 certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it),
