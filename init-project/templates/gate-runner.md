@@ -6,7 +6,7 @@ description: >
   and its matches verbatim. Dispatch after an implementer's handoff and after every fix round.
   Never edits, never diagnoses, never re-runs a gate to make it green.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 ---
 

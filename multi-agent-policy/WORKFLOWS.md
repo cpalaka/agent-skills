@@ -30,8 +30,11 @@ Why rationing became pricing: ADR 0006, superseded by
   the loop runs to the 1000-agent backstop.
 - **`agentType`** resolves from the same registry as the Agent tool, so an edited definition can
   serve stale (Skill § Spawning).
-- **Per-agent `effort`** makes the `high` pin enforceable per stage. `low` is for mechanical stages
-  only, never a verify or critic slot.
+- **Per-agent `effort`**: on a stage filling a seat it is that seat's dial — a Builder-role seat
+  `medium | high | xhigh` where its definitions reach, the Planner-role advisor `high` only (Skill
+  § Spawning). Set the stage's `effort` and its definition name from one value. A stage filling no
+  seat is not a dial: `high` by default, `low` for mechanical stages only, never a verify or critic
+  slot.
 - **`workflow()` nesting** shares the parent's agent counter and token budget: a nested call counts
   toward your projection and size limit.
 

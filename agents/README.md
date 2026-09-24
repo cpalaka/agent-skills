@@ -1,7 +1,7 @@
 # `agents/` — the seat definitions, versioned
 
 A **Seat** is a named position in a run filled by one pinned agent definition (`CONTEXT.md`
-§ Multi-agent runs). The definitions live here, one file per seat per host:
+§ Multi-agent runs). The definitions live here, one file per seat and effort value per host:
 `agents/claude/<name>.md` for Claude Code, `agents/codex/<name>.toml` for Codex.
 
 They are versioned beside the policy that names them because a seat without a resolvable
@@ -15,10 +15,10 @@ silently.
 
 | Seat | Claude Code | Codex |
 |---|---|---|
-| Implementer | `claude/implementer.md` | `codex/implementer.toml` |
+| Implementer | `claude/implementer.md`, `claude/implementer-medium.md` | `codex/implementer.toml` |
 | Advisor (Planner role, slots 1 and 3; slot 3 continues slot 1 by `SendMessage` or spawns fresh) | `claude/advisor.md` | — none, by design |
-| Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md` | `codex/code-reviewer.toml` |
-| Gate-runner | the project's own `.claude/agents/gate-runner.md`, once a project stamps one | — none |
+| Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md`, `claude/code-reviewer-medium.md`, `claude/code-reviewer-xhigh.md` | `codex/code-reviewer.toml` |
+| Gate-runner | the project's own `.claude/agents/gate-runner.md`, once a project stamps one; the stamped Template runs at `effort: medium` | — none |
 
 The gate-runner stays in its project: it carries that project's gate commands, so a shared copy
 would drift from the gate the coordinator would otherwise have run. Where a host cannot resolve
@@ -32,10 +32,10 @@ assuming one, because nothing in this repository may assume where the clone live
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
-# Stand in the wrong clone and the loop would link five names at nothing, silently.
+# Stand in the wrong clone and the loop would link eight names at nothing, silently.
 [ -f "$REPO/agents/claude/implementer.md" ] || { echo "not the agent-skills clone: $REPO" >&2; exit 1; }
 mkdir -p "$HOME/.claude/agents" "$HOME/.codex/agents"
-for n in implementer advisor code-reviewer; do
+for n in implementer implementer-medium advisor code-reviewer code-reviewer-medium code-reviewer-xhigh; do
   ln -sfn "$REPO/agents/claude/$n.md" "$HOME/.claude/agents/$n.md"
 done
 for n in implementer code-reviewer; do
@@ -52,6 +52,31 @@ The Claude seats pin a family alias — `opus` for the Builder seats, `fable` fo
 new release reaches them with no edit ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)).
 The Codex seats still pin `gpt-6-astra`, resolved by probe on 2026-09-17 from `codex doctor`'s
 resolved model and the CLI's built-in catalog; re-probe it on a Codex model release.
+
+## Effort fields
+
+Every Claude definition carries `effort:` explicitly
+([ADR 0018](../docs/adr/0018-run-profile-derived-from-plan.md) § 7). The bare name carries the
+seat's default, `high`, except the gate-runner's `medium`; a suffix names any other value, and the
+table above shows which values each seat reaches. A suffixed file is its bare file with only
+`name:`, `effort:` and one leading sentence changed. Re-apply an edit to a bare body to its
+suffixes by hand, then run this check. It prints one `diff` hunk per suffix, whose `<` lines are
+exactly that suffix's leading sentence and blank line, and nothing else:
+
+```sh
+REPO="$(git rev-parse --show-toplevel)"
+for p in implementer-medium:implementer code-reviewer-medium:code-reviewer code-reviewer-xhigh:code-reviewer; do
+  diff <(grep -vE '^(name|effort):' "$REPO/agents/claude/${p%%:*}.md") <(grep -vE '^(name|effort):' "$REPO/agents/claude/${p##*:}.md")
+done
+```
+
+The Codex role files keep `model_reasoning_effort = "high"`. A changed `effort:` line, like a
+changed `model:` line, is verified from a fresh session. Every assistant record in the seat's
+transcript, `~/.claude/projects/<project-slug>/<session-id>/subagents/agent-<id>.jsonl` in the
+parent session's transcript directory, carries the applied `effort`, and a definition's value
+overrides the parent session's (measured 2026-09-24). Run the parent at a value the seat does not
+carry (`claude -p --effort low`): a bare `claude -p` ran at `xhigh`, so an `xhigh` seat under it
+reads the same either way.
 
 ## Editing here is live
 
