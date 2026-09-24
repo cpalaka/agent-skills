@@ -232,10 +232,27 @@ _Avoid_: seat tier (the retired declared form), posture (the retired ADR 0006 la
 
 **dial**:
 One member of a **run profile**: a default, the plan fact that turns it, and a value. A ticket may
-**pin** a dial, a floor the coordinator never lowers, beside its acceptance criteria; mid-run
-evidence only ever raises one. An effort dial's value is a seat definition's name.
+**pin** a dial, a **lower bound** the coordinator never lowers, beside its acceptance criteria;
+mid-run evidence only ever raises one. An effort dial's value is a seat definition's name.
 _Avoid_: knob (per-project and engine-written, never per-run), lever, setting, strike (the retired
-act of removing a seat from the roster line).
+act of removing a seat from the roster line); floor, for a pin (the glossary's **floor** is the
+always-on context text).
+
+**light plan**:
+A plan whose every changed path is in the project's light set, is loaded by no gate, and is no
+**instruction file**; on one, every unpinned **dial** sits at its default and no reader stops the
+run. The light set is a project **knob** (cpalaka/agent-skills#86).
+_Avoid_: floor, "above the floor" (ADR 0018's words for this; the glossary's **floor** is the
+always-on context text), base profile, light tier, docs mode.
+
+**instruction file**:
+A file a session or seat follows as instructions: whatever a host injects (a **Host adapter**, the
+project contract, and every contract or **Chunk** they import), every file under a **Skill**'s
+directory, every seat definition, and every file one of those names as a read. One in a diff
+raises every seat and effort **dial**, never the gate tier, and no light set makes one light
+(cpalaka/agent-skills#86).
+_Avoid_: instrument set (ADR 0019's name for the same set; ADR 0016's "instrument" is the tool that
+reads a number), prompt file, config.
 
 **seat tier**:
 Historical: which seats a ticket's run dispatched, declared as `Seats: light` or `Seats: full` in

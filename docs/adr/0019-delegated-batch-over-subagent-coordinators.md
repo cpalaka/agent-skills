@@ -53,11 +53,12 @@ slash-only `implement-run` with text against replicating it by other means.
    mode it was started in; a dialog that surfaces blocks until the owner answers.
 6. **Screening before start.** The delegate re-derives the frontier with the tracker Chunk's
    query, treating the coordinator's emitted kickoff as a cross-check, then reads the live body for
-   an open question, a missing `## Acceptance`, and any path in the run's instrument set (this
-   library's Skills, Chunks and seat definitions, the project's contract and adapters). A hit
-   parks the ticket with a comment naming the defect; the gate label stays the owner's.
+   an open question, a missing `## Acceptance`, and any path in the run's instruction files (ADR
+   0018 § 1 as amended on #86; this library's Skills, Chunks and seat definitions and the project's
+   contract and adapters among them). A hit parks the ticket with a comment naming the defect; the
+   gate label stays the owner's.
 7. **Park versus stop.** Park on an owner stop, a gated write outside the grant, or a screening
-   hit. Stop the batch on an instruction file in a landed diff (ADR 0018 § 5), any instrument-set
+   hit. Stop the batch on an instruction file in a landed diff (ADR 0018 § 5), any instruction-file
    mtime change since batch start, a failed landing check (tree inequality against the reviewed
    commit, or the issue's state wrong), a 429 or meter stall, a dirty checkout after a run, or two
    consecutive parks. No ticket-count cap by default; the usage window at 80% ends the batch; the

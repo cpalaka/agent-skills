@@ -4,6 +4,9 @@
 effort ("pinned `high` on every seat, with no higher path"). Everything else there stands: two
 roles read off the meter, a model name in run artifacts only, every seat a pinned definition.
 Decided on cpalaka/agent-skills#85, under map #82, from the measurements on #81, #84 and #89.
+**Amended 2026-09-24 on #86**, the settings catalogue: § 1's Standards, bug-hunter and gate-tier
+rows and its floor paragraph, § 4, § 5, § 6 and § 8, each marked. The glossary names this ADR's
+floor a **light plan** and a pin a **lower bound**; this record keeps its own words.
 
 ## Context
 
@@ -26,17 +29,23 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    | Dial | Default | Turned by |
    |---|---|---|
    | implementer, gate-runner, Spec axis | on | nothing: always |
-   | Standards axis | off | any changed path outside the project's light set |
+   | Standards axis | off | no trigger of its own: an instruction file in the diff, or a pin (amended on #86) |
    | advisor slot 1; slot 3 available | off | anything above the floor |
    | critic | off | anything above the floor |
-   | bug hunter (`codex` \| `correctness` \| `off`) | off | runtime surface or an instruction file in the diff; `correctness` above the floor, `codex` by pin (resolved 2026-09-24 on #90, § Consequences) |
-   | gate tier | derived | `verify-gate`'s skip rule over the project's trigger table |
+   | bug hunter (`codex` \| `correctness` \| `off`) | off | anything above the floor; `correctness`, or `codex` by pin (value resolved 2026-09-24 on #90, trigger amended on #86; § Consequences) |
+   | gate tier | the project's lowest tier, plus every gate its trigger table pulls for the changed paths | a pin only (amended on #86, § 6) |
    | plan stop | none | any dial above its default |
 
-   The **floor** is a plan whose every changed path is in the project's light set and which no
-   gate loads. An **instruction file** in the diff (a Skill, Chunk, seat definition or contract)
-   turns every dial on, whatever else the plan says: the diff changes the instrument the next run
-   reads. That replaces the tier's "no Skill, seat definition or Chunk body is light" sentence.
+   The **floor** is a plan whose every changed path is in the project's light set, is loaded by no
+   gate, and is no instruction file. The light set is an `implement-run` knob of path globs,
+   `docs/**`, `CONTEXT.md` and `README.md` where the contract names none. An **instruction file**
+   is whatever a host injects (a host adapter, the project contract, and every contract or Chunk
+   they import), every file under a Skill's directory, every seat definition, and every file one
+   of those names as a read. One in the diff turns every seat and effort dial on, whatever else
+   the plan says, and no light-set glob makes it light: the diff changes the instrument the next
+   run reads. It never turns the gate tier (§ 6). That replaces the tier's "no Skill, seat
+   definition or Chunk body is light" sentence. (Amended on #86: the set was four kinds, while ADR
+   0019's instrument set also named the adapters.)
 
 2. **The ticket pins dials, never levels.** A pin is a floor on one dial (`critic: on`,
    `gate tier: 2`), written beside the acceptance criteria, and the coordinator never lowers a
@@ -49,21 +58,28 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    on, which generalises #79's decided B rule. The reader is the owner, or under #81 the
    **owner's delegate**, attributed as such in the record.
 
-4. **Signals are the four the coordinator can observe**: changed paths against the project's
-   trigger table, runtime surface, an instruction file in the diff, and expected implementer
-   calls. Confidence in the ticket's premises and novelty are not the coordinator's to grade,
+4. **Signals are the three the coordinator can observe**: changed paths against the project's
+   light set and trigger table, an instruction file in the diff, and expected implementer calls.
+   Expected calls turns no dial; it sizes phases and sets § 8's scope cap. (Amended on #86, which
+   dropped runtime surface: it was never defined, and the bug hunter now shares the floor
+   trigger.) Confidence in the ticket's premises and novelty are not the coordinator's to grade,
    since it cannot see its own false premise; they are why slot 1 runs on every profile above the
    floor, not inputs to it.
 
 5. **The ratchet is monotone.** Mid-run evidence raises a dial and nothing lowers one: a diff
    path outside the plan's changed-path set, a red gate, or a material finding while a downstream
-   seat is off. A raise goes under `Deviations` with its trigger and reopens no stop. One
-   exception: an instruction file in the diff that the plan did not name ends a delegated batch
-   after this ticket (#89).
+   seat is off. A red gate re-runs that gate and raises review effort under § 7, never the gate
+   tier (amended on #86). A raise goes under `Deviations` with its trigger and reopens no stop.
+   One exception: an instruction file in the diff that the plan did not name ends a delegated
+   batch after this ticket (#89).
 
 6. **The project's gate tier is a dial.** The glossary kept seat tier and gate tier apart so
    neither drifted; one derivation setting both removes the drift. The project's trigger table
-   stays where it is, as the input the derivation reads.
+   stays where it is, as the input the derivation reads. Its range is the project's named tiers,
+   or one full gate less `verify-gate`'s derived skips where the contract names none. Its default
+   is the lowest tier plus every trigger-table pull the changed paths hit, and only a pin raises
+   it: a higher tier's own trigger, in 3d-anim-lab a workload boundary or a milestone push, shows
+   in no changed path. (Amended on #86.)
 
 7. **Effort is a dial; the model is not.** A seat's model stays pinned by role (ADR 0011, 0017).
    Its effort is chosen per run among these values, `high` the default on every seat: a
@@ -78,11 +94,17 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    gate-runner. The definition's name carries the effort, so the run record naming the definition
    names the effort with it.
 
-8. **Two caps are constants, not risk-derived.** Fix rounds: two, wording-only findings batched
-   into one, and a third round is a stop to the reader. Scope: the plan states its deliverable
-   count and expected calls; the 60-call ceiling holds per dispatch, continuations included; and
-   exceeding either is a stop, never a ratchet, since more work is a scope question the reader
-   owns. The plan may pin either higher with a reason.
+8. **Two caps are constants, not risk-derived.** Fix rounds: two material rounds, and a third is
+   a stop to the reader. Wording-only findings ride the last material round, or form one closing
+   round that counts toward no cap; that round re-runs every gate `verify-gate`'s skip rule cannot
+   skip for its paths, a scan that reads prose always, and takes no targeted re-review, the
+   coordinator checking the wording diff against the findings it accepted. Scope: the plan states
+   its deliverable count and expected calls. The 60-call ceiling is per implementer, continuations
+   included: one at the ceiling is never continued by message, and its next leg, a fix round or the
+   phase's remainder, goes to a fresh implementer handed the findings and the diff. Work past the
+   deliverable count is a stop, never a ratchet, since more work is a scope question the reader
+   owns. The plan may pin either cap higher with a reason. (Amended on #86: as first written,
+   three of #84's twelve runs would have stopped at the ceiling, two of them on fix rounds.)
 
 9. **The roster line is replaced by a profile block**: one line per dial, `dial: value — the
    fact that set it`, pins marked. The run record repeats it as dispatched, and every ratchet
@@ -118,3 +140,13 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
   at about half the wall, so `correctness` is the default above the floor and `codex` a pinnable
   value for a second model family on a diff; the lens focus gains the test-gap charter line, the
   one plant every Codex variant missed. Recall on large real diffs stays unmeasured.
+- **Amended 2026-09-24 on #86**, from #84's per-project split. The Standards axis yielded 0.56
+  unique material findings per active minute on this repository's Skill and Chunk diffs and 0.08
+  on 3d-anim-lab's four code tickets, and 10 of its 11 came on diffs editing an instruction file,
+  so it runs where every dial runs. The serial first-pass review was the largest phase in 6 of 12
+  runs (median 9.6 min), and the lens's place after both axes had no recorded reason: the bug
+  hunter is dispatched with the native axes, whichever value, and the critic stays last because it
+  reads every review. That is ordering, not a dial. On 3d-anim-lab#48 a scan matched prose a fix
+  round wrote, which is why a wording round re-gates. The Spec's children carry the rest: the
+  `light_set` knob, 3d-anim-lab's light-set sentence losing its two adapters, and how the
+  `workflow` shape reaches a concurrent bug hunter.
