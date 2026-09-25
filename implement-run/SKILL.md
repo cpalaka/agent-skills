@@ -8,15 +8,17 @@ Loaded by name, or by path by a delegated coordinator (§ Inside a batch). The t
 `/implement` stub carries none of this and stays unedited, unshadowed and unwrapped.
 
 **Knobs**: `<!-- knobs:implement-run -->` in the project contract your host adapter names; defaults
-apply where it is absent. `shape` (`subagents` | `coordinator-pane` | `workflow`; default
-`subagents`), `layout` (`parallel-when-disjoint` | `serial`; default `parallel-when-disjoint`),
-`gate_runner` (a seat or `coordinator`; default `gate-runner`), `advisor` (a seat or `none`;
-default `advisor`), `light_set` (repository-relative globs, `**` matching any depth and a bare
-filename matching at the repository root only, written as a numbered list under its bullet;
-default `docs/**`, `CONTEXT.md`, `README.md`). `subagents` is described here in full, and
-`workflow`'s hand-off points in § Workflow shape; the other shapes and the heartbeat recipes are in
-`multi-agent-policy`'s `COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's
-directory exists under `~/.claude/skills` or `~/.agents/skills`.
+apply where it is absent. Where the session is rooted elsewhere, this and every other read of the
+project contract here is the target project's, on disk (§ Advisor slots, Cross-repo gate-runner).
+`shape` (`subagents` | `coordinator-pane` | `workflow`; default `subagents`), `layout`
+(`parallel-when-disjoint` | `serial`; default `parallel-when-disjoint`), `gate_runner` (a seat or
+`coordinator`; default `gate-runner`), `advisor` (a seat or `none`; default `advisor`), `light_set`
+(repository-relative globs, `**` matching any depth and a bare filename matching at the repository
+root only, written as a numbered list under its bullet; default `docs/**`, `CONTEXT.md`,
+`README.md`). `subagents` is described here in full, and `workflow`'s hand-off points in § Workflow
+shape; the other shapes and the heartbeat recipes are in `multi-agent-policy`'s
+`COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's directory exists under
+`~/.claude/skills` or `~/.agents/skills`.
 
 **Inside a batch.** A brief that states the owner's delegation means this run is one ticket of a
 delegated batch, dispatched by the delegate, the main session standing in for the owner. There the
@@ -44,8 +46,10 @@ replicating it for itself, not a coordinator the owner delegated.
 ## Seats
 
 Each from a pinned definition, dispatched by name: the bare name carries the default effort, a
-suffix any other (§ Run profile). No dispatch passes `model`: the model is pinned by role in the
-definition, and a second model family on a diff is the `codex` bug-hunter value, never an override.
+suffix any other (§ Run profile). No dispatch of a definition that pins a model passes `model`: the
+model is pinned by role in the definition, and a second model family on a diff is the `codex`
+bug-hunter value, never an override. One whose definition pins none passes it (§ Advisor slots,
+Cross-repo gate-runner).
 
 - **Coordinator** — the main loop: drafts the per-phase execution spec (prose in the dispatch
   prompt, never committed unless the ticket names a home for it), dispatches, adjudicates every
@@ -63,7 +67,7 @@ definition, and a second model family on a diff is the `codex` bug-hunter value,
   fresh dispatch with its charge named; `/code-review`'s sub-agents are this seat only when
   dispatched by the definition names the profile's `effort` line gives, for the dials that are on.
 - **Gate-runner** — the project's `.claude/agents/gate-runner.md`, `medium` only. Whoever re-runs a
-  gate never wrote the diff.
+  gate never wrote the diff. Out of a session's reach when rooted elsewhere: § Advisor slots.
 
 **Toggles**: `solo` turns delegation off, review stays on; `orchestrate` turns it back on.
 
@@ -222,7 +226,28 @@ scoped to named files. Read the meter before spawning; the owner decides a tight
 the owner at the same triggers (§ Inside a batch), say so. That is self-review unless slot 1's
 observable that cannot go red becomes a question the implementer's dispatch prompt asks before it
 writes code — a spec's author is the last reader to see that an observable does not mean what they
-intended. Gate-runner unavailable or knob `coordinator`: run the gates yourself, say so.
+intended. Gate-runner unavailable (the target project stamps none) or knob `coordinator` (the target
+project's; see Knobs): run the gates yourself, say so.
+
+**Cross-repo gate-runner.** A project-local seat resolves only in a session rooted in its project,
+and nothing names the cause: working on project X from a session rooted elsewhere, a dispatch of X's
+seat returns `Agent type '<name>' not found` — or, unmeasured, reaches a seat of that name your own
+project or user scope holds. So the test is never the error: it is the session's root, or, in a
+session rooted in X, a seat stamped since the session started. Where X's `gate_runner` knob names a
+seat and X's `.claude/agents/<seat>.md` exists, X's contract keeps the gate apart from its judge,
+and running the gates yourself would overrule it. Dispatch `general-purpose` instead, with `model`
+set to the definition's frontmatter `model:`, its body below the frontmatter verbatim, then the
+checkout, whatever else that body asks its prompt to name, and a request to name each path its gates
+wrote. `general-purpose` pins no model and would inherit yours. The Agent tool takes no effort, and
+`general-purpose` holds tools the definition's `tools:` withholds, so the seat's effort is not kept
+and nothing enforces its read-only rule: read the effort off its `agent-<id>.jsonl` (`.effort`), and
+before and after it take `git -C <X's checkout>` `rev-parse HEAD`, `status --porcelain` and
+`diff HEAD | shasum`. They see X's HEAD, tracked contents and path list — not ignored paths, an
+untracked file rewritten, or anything outside X. A change other than an untracked path its report
+names as a gate's output is a write: its verdicts do not count, you revert nothing, and the write
+goes to the owner (§ Inside a batch). Record under `Deviations` the substitution, the model passed,
+the effort read and the before and after reads. A workflow run cannot substitute — its script passes
+no `model` and writes its own gate prompt — so a cross-repo run takes `subagents`.
 
 ## Handoffs
 
