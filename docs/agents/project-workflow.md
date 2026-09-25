@@ -65,7 +65,12 @@ rather than leaving the arm to volunteer it. A Claude seat is handed the whole i
 hierarchy — both instruction files, this contract, the memory index, and the tracker Chunk where
 the path is approved — so the dispatch reads the seat's own delivery record and names what is in
 it, with file attribution as the discriminator. A Codex arm expands no `@` line and its set
-differs; read it rather than reciting this one.
+differs; read it rather than reciting this one. **Where the playthrough tests what a downstream
+project reads**, that inherited hierarchy is itself the confound, so the arm is a headless session
+rooted in a clone of the target: `claude -p --permission-mode auto`, resumed with
+`--resume <session-id>` at each stop the procedure gives the owner, and the owner's reply relayed
+verbatim (#30). Its set is then the target's files, the global instruction file and whichever `@`
+imports that path has approved. Read its tool calls from its transcript, not from its report.
 
 ## Issue tracker
 
