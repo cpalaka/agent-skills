@@ -191,6 +191,19 @@ anything project-specific has to live.
 _Avoid_: leaf (fine as shorthand), custom; Zone 3 (the retired name from when a project's rules
 lived in `CLAUDE.md` beside its imports).
 
+**engine zone**:
+The region of an emitted file that the `init-project` engine owns and may rewrite on a re-run:
+the tagged knob blocks, the import block and the derived read list, the `<!-- profile:… -->`
+markers and their inserted fragments, the canary line, and the gate-runner seat's body above its
+`## Project gates` heading. Everything outside an engine zone — the contract's **project
+sections**, every **inline-leaf**, a Profile asset the project has edited — is the project's, and
+the engine never compares or rewrites it. The discriminator is ownership, not position: a line the
+engine derived from Profile or Chunk data is in a zone; a line a person wrote for this project is
+not. A held tracker block the engine no longer knows how to write is a zone it holds verbatim
+rather than refreshes.
+_Avoid_: engine-written block (the knob block is one zone, not the set), stamped region (a
+Template is stamped too and is the project's to edit), template zone.
+
 ### Multi-agent runs
 
 The `multi-agent-policy` and `implement-run` Skills share these terms. A run is any
