@@ -67,7 +67,14 @@ Cross-repo gate-runner).
   fresh dispatch with its charge named; `/code-review`'s sub-agents are this seat only when
   dispatched by the definition names the profile's `effort` line gives, for the dials that are on.
 - **Gate-runner** — the project's `.claude/agents/gate-runner.md`, `medium` only. Whoever re-runs a
-  gate never wrote the diff. Out of a session's reach when rooted elsewhere: § Advisor slots.
+  gate never wrote the diff. Out of a session's reach when rooted elsewhere: § Advisor slots. In
+  every shape its dispatch (§ Workflow shape, `gateTier`) names the checkout and the profile's
+  `gate tier` spelled out as only the gates to run: each of `verify-gate`'s five it takes by its
+  knob key, `build` carrying `build_check`, which is never listed as its own gate; any other gate (a
+  project gate, a trigger-table pull, a key of the `<!-- knobs:verify-gate -->` block beyond the
+  eight the engine stamps — the five, `build_check`, `dir`, `env`) by name with its command as given
+  (the contract's trigger table or knob value, or the seat's `## Project gates`). It lists none left
+  out: the seat derives none and marks those itself.
 
 **Toggles**: `solo` turns delegation off, review stays on; `orchestrate` turns it back on.
 
@@ -90,7 +97,7 @@ pin, the profile block and the workflow script's `args.profile`.
 | `advisor` (slot 1; slot 3 available) | off, on | off | any plan above the light plan |
 | `critic` | off, on | off | any plan above the light plan |
 | `bug hunter` | `off` < `correctness` < `codex` | `off` | any plan above the light plan, as `correctness`; `codex` by pin |
-| `gate tier` | the project contract's named tiers; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a pin only |
+| `gate tier` | a named tier of the project contract plus any trigger-table pulls; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a pin only |
 | `effort <seat>` | `medium` < `high` < `xhigh`, each seat within the definitions § Seats lists for it | `high`; the gate-runner `medium`, its only value | a light plan derives `medium` for `implementer` and `spec`; an instruction file in the diff or a red gate derives `xhigh` for `critic` and the Correctness charter, where on |
 | `fix rounds` | 2, or a higher integer with a reason | 2 | a plan pin with a reason |
 | `scope` | the plan's deliverable count; 60 tool calls per implementer dispatch | the plan's count; 60 | a plan pin with a reason |
