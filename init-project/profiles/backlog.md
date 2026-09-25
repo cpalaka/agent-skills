@@ -97,11 +97,14 @@ the repo root.)
 3. **DoD defaults — hand-edit `backlog/config.yml`.** The key is `definition_of_done`,
    snake_case in the file, and `backlog config set` does NOT expose it — so hand-edit the yaml
    (config is fine to hand-edit; task files are NOT — the CLI owns IDs/naming/frontmatter). Write
-   the `DoD` knob list — **the calling Profile's, where another Profile is running these steps**
-   (the godot Profile's board step brings its own, Godot-flavoured list); this Profile's own entries
-   are placeholder shapes and are the list only when backlog is the project type. Adapt items 1–N to
-   the project's standing gates and **always end with the explicit user sign-off** item (the
-   human-in-the-loop Done-gate; also surfaced per-task by `backlog-core`). Read it back with
+   the `DoD` knob list. **Where another Profile runs these steps, the list is the `DoD` in the
+   project's `<!-- knobs:backlog-core -->` block**, which engine step 1 wrote from the calling
+   Profile's `knobs` (the godot Profile's Tracker (conditional) step brings its own, Godot-flavoured
+   list), or from this Profile's where the caller lists none (a `web` stamp whose owner picked
+   backlog). This Profile's own entries are placeholder shapes, answered from the project wherever
+   they are the source. Adapt items 1–N to the project's standing gates and **always end with the
+   explicit user sign-off** item (the human-in-the-loop Done-gate; also surfaced per-task by
+   `backlog-core`). Read it back with
    `backlog config get definitionOfDone` — the CLI takes the camelCase spelling for the same key
    (verified 2026-09-03 on 1.45.2).
 

@@ -140,6 +140,8 @@ network, after which init re-runs from the top at no cost. The tracker choice is
    files, and adopts one later.
 
 Then stop and let the owner pick; do not choose for them and do not proceed with this Profile.
+**Called by reference from another Profile's precondition**, the calling section says what the
+owner's pick does, and this stop binds a stamp of this Profile only.
 **A re-run costs nothing, because nothing was written** — once the remote exists, run init again
 from the top and there is no half-stamped state to clean up first.
 

@@ -2,9 +2,11 @@
 type: godot
 imports: []                 # No UNCONDITIONAL imports beyond dev-base. The fork is imported
                             # nowhere — it is a Skill the engine names in both adapters.
-                            # backlog-core is CONDITIONAL (like blender-mcp-guide): the recipe's
-                            # "Board (conditional)" step decides it at apply time and wires it
-                            # (import line + knob block + init) — never the default knob pass.
+                            # The tracker (tracker-github or backlog-core) is CONDITIONAL: the
+                            # recipe's § 0 tracker choice decides it at engine step 0; step 1
+                            # writes its import line in both adapters and its knob block, as
+                            # engine step 0's tracker rule settles; and the recipe's
+                            # "Tracker (conditional)" step wires the rest at step 5.
 fork: git-flow-squash       # The default (ADR-0002) and, since ADR-0013, the only variant shipped.
                             # MIGRATION: check the fork against the repo's REAL git history, not this
                             # default. Pre-chunk Godot bootstrapping prescribed NO git-flow
@@ -96,8 +98,18 @@ settings:                 # merged into .claude/settings.local.json by the engin
 # Skills are gated" in the recipe below). Read the wrapper's VERDICT line, never `$?`; give it a
 # scope (`--all`, or the scan's own diff arguments), because VACUOUS is not a pass.
 knobs:
-  backlog-core:             # CONDITIONAL — written ONLY when backlog-core is imported (board-driven
-                            # project); skipped entirely for a board-less prototype.
+  tracker-github:           # CONDITIONAL — written ONLY where engine step 0's tracker rule
+                            # settles on GitHub. Listed because it carries the values that pick
+                            # writes, and its position here is the one the block is written at.
+                            # profiles/github.md is canonical for the shape — exactly these two
+                            # keys, in this order, prompts mirrored from there; REPO is derived by
+                            # that Profile's § A stage 2 (run from the recipe's § 0) and confirmed
+                            # with the owner.
+    REPO: "<owner/repo>"
+    RESULTS_DIR: "<a path relative to the repository root where a gate:accept ticket's result note goes — or `none` for comments only>"
+  backlog-core:             # CONDITIONAL — written ONLY where engine step 0's tracker rule settles
+                            # on backlog-core (a board-driven project); skipped entirely for a
+                            # github or none pick.
     VERSION: "<pin the installed backlog CLI version>"
     PLANS_DIR: "docs/plans/"
     VERIFY_EXAMPLES: "tests/run_tests.sh green via the headless runner; an in-editor F5 / interactive verification of the affected surface; a Gotcha pre-commit scan — `tools/agent/godot-gotchas-scan.sh --all`, or the scan's diff arguments for the change (read the VERDICT line, not `$?`; with no scope on a clean tree it prints `VERDICT: VACUOUS`, which is NOT a pass), then a hand-scan of the diff's Detect-proactively patterns"
@@ -157,7 +169,8 @@ and the gate seat (the @imports, the tagged knob blocks above, and the four `ada
 Template stamping, the lockfile-freeze MECHANIC, verify-after-write including the byte gate, and the
 handoff. Do **not** re-run those here.
 This recipe supplies only what the manifest can't express: the MCP install, the `project.godot`
-edits, the freeze PAYLOAD, and the load-bearing WHYs. Run the numbered steps in order.
+edits, the freeze PAYLOAD, and the load-bearing WHYs. Run the numbered steps 1–7 in order here;
+step 0 runs at engine step 0, by its `<!-- precondition -->` marker, and engine step 5 skips it.
 
 **Companion Skills are gated.** Nothing this Profile stamps hard-requires a companion Skill.
 Where a step is better with one, it tests for that Skill's directory under **both**
@@ -175,24 +188,42 @@ project's contract and in `backlog/config.yml`, where both hosts read it, so it 
 and the wrapper does the resolving. Its own exit 2 (neither root holds a runnable scanner) is a
 broken install to fix, never a clean verdict.
 
-**Board (conditional):** backlog-core is NOT imported unconditionally — it actively instructs
-board ops ("session start: check the board"), so it is not safe-when-unused. Decide at apply
-time whether this project is board-driven: if `backlog/` already exists,
-or the user wants a board (default **yes** for a real game project, **no** for a
-prototype/sketch), then (a) add `@~/.claude/chunks/backlog-core.md` to the `CLAUDE.md` import
-block, (b) write the `<!-- knobs:backlog-core -->` block from the manifest knobs **into
-`docs/agents/project-workflow.md`**, at the position this manifest's `knobs` order gives it,
-(c) run **steps 1–4 of `profiles/backlog.md` → `## Bespoke setup`** — the install check, the
-`backlog init`, the `definition_of_done` hand-edit, and the seeding pass (which still needs an
-explicit go-ahead per `backlog-core`); its step 5, the adoption commit, is the engine handoff's job,
-not a second commit here — (d) stamp that Profile's `issue-tracker.md` and `triage-labels.md`
-Templates to `docs/agents/` (`issue-tracker.md` is the canonical tracker pointer
-for skills that look up that path: code-review, triage, to-tickets), and (e) insert that Profile's
-contract fragment `## Board` section into `docs/agents/project-workflow.md`, so the two pointers
-have a reader. If board-less, skip all five —
-the project keeps its task-tracking guidance in the contract's project sections instead. Re-running
-init-project later with the board enabled adds exactly this wiring (the engine is idempotent:
-import-line dedup + knob insert).
+**Tracker (conditional):** no tracker is imported unconditionally. backlog-core actively instructs
+board ops ("session start: check the board"), so it is not safe-when-unused, and a prototype or
+sketch wants no tracker at all. **§ 0 below picks the tracker at engine step 0** — github first,
+backlog when the owner wants a board, none for a prototype or sketch; where `backlog/` already
+exists, the offer names the existing board beside it — and engine step 0's tracker rule makes that
+pick the only tracker steps 1–5 write. **The import line in both adapters and the knob block are
+engine step 1's**, written for the tracker step 0 settled, from this manifest's `knobs` entry for it
+(`REPO` is § A stage 2's value, confirmed with the owner). **This step does the rest, at engine
+step 5**, and runs that tracker's setup only where step 0's tracker rule lets it run — godot's own
+tracker is none, so over a held tracker nothing here runs. Profiles do not compose; reference,
+don't copy. After (a), ask the owner each `*<Fill at init:` prompt a stamped Template carries and
+write the answer in — step 7 fails on any that survive.
+
+- **github** — (a) stamp `profiles/github.md`'s two `templates` entries,
+  `profiles/github/templates/issue-tracker.md` and `triage-labels.md`, to `docs/agents/`,
+  skip-if-exists as engine step 3 does (`issue-tracker.md` is the canonical tracker pointer for
+  skills that look up that path: code-review, triage, to-tickets); (b) append its contract fragment
+  (`profiles/github/templates/contract.md`, the `## Issue tracker` section) **as the contract's
+  final section** — step 1 consumed the `<!-- profile:contract-sections -->` marker — **only where
+  the contract has no `## Issue tracker` section yet**, so a re-run does not duplicate it and the
+  two pointers have a reader; (c) run `profiles/github.md` → `## Bespoke setup` → **§ B**, the
+  label mint, as written there, then the verify-after-write items its closing paragraph lists.
+- **backlog** — the same three, by reference to `profiles/backlog.md`: (a) its two `templates`
+  entries from `profiles/backlog/templates/` to `docs/agents/`, skip-if-exists; (b) its contract
+  fragment's `## Board` section (`profiles/backlog/templates/contract.md`) **appended as the
+  contract's final section**, only where the contract has no `## Board` section yet; (c) where
+  `backlog/` is absent, its `## Bespoke setup` steps 1–4 — the install check, the `backlog init`,
+  the `definition_of_done` hand-edit with the `DoD` list the knob block step 1 wrote, and the
+  seeding pass, which still needs an explicit go-ahead per `backlog-core`; its step 5, the adoption
+  commit, is the engine handoff's, not a second commit here.
+- **none** — nothing; the project keeps its task-tracking guidance in the contract's project
+  sections.
+
+Re-running init-project later adds exactly the picked wiring to a project that took none (the
+engine is idempotent: import-line dedup + knob insert); a project whose contract already holds
+either tracker's block stays on it (engine step 0's tracker rule).
 
 **Reference docs:** the engine always stamps `docs/godot-mcp-guide.md`, `docs/godot-gotchas.md` and
 `docs/agents/domain.md`. **The Blender pair is opt-in, and the two travel together** — only if the
@@ -218,6 +249,30 @@ written **after** step 5's lockfile-freeze — otherwise they point at a tree th
 directory, not the repo), so its `{{PROJECT_ROOT}}` is filled from `pwd` at the repo root, derived,
 never asked. `chmod +x tools/agent/godot-gotchas-scan.sh` after stamping it; a present-but-non-
 executable copy takes the wrapper's exit-2 path.
+
+<!-- precondition -->
+### 0. Tracker choice — at engine step 0, before anything is written
+
+**Skipped where engine step 0's tracker rule settled the tracker from the contract**: the project
+stays on the tracker its contract holds, and nothing here runs or is offered.
+
+Otherwise run **stage 1** of `profiles/github.md` → `## Bespoke setup` → **§ A** by reference — is
+there a GitHub remote at all — and act on its answer here, not in § A:
+
+- **Stage 1 `yes`** → offer the owner three trackers, in this order: **github** first; **backlog**
+  when the owner wants a board; **none** for a prototype or sketch. Where `backlog/` already
+  exists, say so beside the offer: the project has a board, and picking backlog keeps it. On
+  **github**, run the rest of § A by reference, still here — stage 2, and its stop on a failure
+  there.
+- **Stage 1 `no`** → github is not on offer. § A's offer, backlog or none, is this Profile's
+  tracker choice, not a switch of Profile: this section, not § A, says what the pick does, and the
+  stamp continues with it rather than stopping. Where `backlog/` already exists, say so beside the
+  offer here too.
+
+The pick is what engine step 0's tracker rule lets steps 1–5 write; the tracker step in this
+recipe's preamble wires it at engine step 5. This section carries the `<!-- precondition -->`
+marker for the reason engine step 0 gives: the engine reads preconditions only off the stamped
+Profile's own file.
 
 ### 1. User-level helpers (once per machine, idempotent — independent of this project)
 
@@ -474,7 +529,7 @@ Run the engine's `## Migrate mode` first; it moves the prose. Four things are go
   section is adopted by hand: `docs/agents/domain.md` is named by § Working in this repo bullet 1,
   `tools/agent/godot-gotchas-scan.sh` by the § Running gotcha-scan paragraph. The Board pair is
   `profiles/backlog.md`'s (its `adapters:` comment), and its `## Board` is **offered** and adopted by
-  hand like the other two — the recipe's Board step cannot insert into a migrated contract, which
-  carries no `<!-- profile:contract-sections -->` marker.
+  hand like the other two — the recipe's Tracker (conditional) step cannot insert into a migrated
+  contract, which carries no `<!-- profile:contract-sections -->` marker.
 - **`docs/godot-mcp-guide.md` § Host adapters is the one guide gap neither mode fills** — migrate
   moves no guide and init skips the existing one; pair 1 of the parity check (the guide diff) owns it.

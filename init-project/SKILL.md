@@ -169,12 +169,78 @@ target — `ls CLAUDE.md AGENTS.md docs/agents/project-workflow.md docs/agents/A
 thing that exists, plan to merge or skip. **A `CLAUDE.md` that carries knob blocks or project
 sections is a pre-contract project: stop and run `## Migrate mode` instead of this algorithm.**
 
+**One tracker per project — step 0's tracker rule.** The two trackers are the Chunks
+`tracker-github` and `backlog-core`, and a project imports one or neither, never both —
+`tracker-github`'s header states the either-or. **A Profile's own tracker** is the tracker Chunk
+its `imports` names, or none: today `web.md` and `github.md` → `tracker-github`, `backlog.md` →
+`backlog-core`, and `godot.md` → none, its tracker being chosen by its recipe. **A tracker's
+setup** is its Templates, its contract fragment and its recipe steps (the label mint; the board
+setup) — everything but its import line, its read-list entry and its knob block. **A tracker
+Profile's whole `## Bespoke setup` is its tracker's setup**, so where that setup does not run, no
+section of it runs: `profiles/backlog.md` stamped over a held `tracker-github` runs none of its
+steps 1–5, the adoption commit included, and `profiles/github.md` over a held `backlog-core` runs
+neither § A nor § B. **Read what the target already holds before any precondition runs**, from its
+contract, anchored so a prose mention of a marker in backticks does not match:
+
+```sh
+grep -oE '^<!-- knobs:(tracker-github|backlog-core) -->$' docs/agents/project-workflow.md
+```
+
+No contract means nothing is held. Then:
+
+- **One held → the project stays on it.** Every precondition section that checks or offers a
+  tracker is skipped, so no remote check runs and no offer is put — **even where the held tracker
+  is the Profile's own**: a `github.md` or `web.md` re-run over `tracker-github` runs no remote or
+  `gh` auth check at step 0. A held tracker needs no fit check, and re-running one would put the
+  backlog-or-none offer against a tracker the project already holds, which no pick can honour;
+  remote or auth trouble surfaces instead at that tracker's own recipe step (the label list in
+  `profiles/github.md` § B), and the run stops there. The held tracker's import line, read-list
+  entry and knob block are kept. **Its setup runs again only where it is the Profile's
+  own tracker** — an ordinary re-run (today `web.md` or `github.md` over `tracker-github`,
+  `backlog.md` over `backlog-core`), where each part is idempotent. Otherwise **no tracker setup
+  runs**, for either tracker, and step 8 gives the `Tracker:` line below — so a `godot.md` re-run
+  over either held tracker runs no tracker setup and gives the line.
+- **Both held → stop before anything is written** and report both markers. A contract carrying
+  both is hand-made, and which one survives is the owner's decision.
+- **Nothing held →** the Profile's own tracker path decides, including the owner's pick at an
+  offer a precondition puts — today: backlog or none after `profiles/github.md` § A's stage-1
+  `no`, backlog instead where `web.md` § A finds an existing `backlog/` at stage-1 `yes`, or
+  `godot.md`'s three-way choice — and the tracker it settles on gets its setup.
+
+**Whatever this settles — the held tracker, the Profile's, the owner's pick, or none — is the only
+tracker steps 1–5 write, and step 1 writes it whether or not the Profile's `imports` lists it.**
+Step 1's `CLAUDE.md` import block and `AGENTS.md` item-3 read list carry it and no other tracker, so
+a godot stamp, whose `imports` is empty, gets its tracker in both adapters from step 1 rather than
+from a recipe line that would reach `CLAUDE.md` alone. Its knob block is kept where it exists, or
+written — values from the Profile's `knobs` entry for it, or, where the Profile has none (a `web`
+stamp whose owner picked backlog at the offer), from that tracker's own Profile's
+(`profiles/backlog.md`, `profiles/github.md`), answered from the project — and the other tracker's
+block is never written. Step 1's retired-block deletion spares the settled tracker's block, so a
+`web` re-run over a backlog project keeps its `<!-- knobs:backlog-core -->` block although
+`web.md` does not list that id. Steps 1, 3 and 5 insert, stamp and run the settled tracker's setup
+only where the bullets above let it run, and never the other tracker's.
+
+**Wherever a held tracker is not the Profile's own, step 8 gives this line**, filled in, as one
+line:
+
+```
+Tracker: this project stays on <held> — its contract holds a <!-- knobs:<held> --> block, so init ran no tracker choice and no tracker setup (<each skipped part>). Moving it to another tracker is the owner's decision; no init run makes it.
+```
+
+**Why here and not at step 1.** The `github` remote check is itself a step-0 precondition, so a
+rule first read at step 1 fires after the backlog-or-none offer has already been put. And a wrong
+tracker, once written, stays: the `CLAUDE.md` import merge removes no line, a stamped Template is
+never deleted, and a minted label stays minted. **This is not migrate:** Migrate mode's step 0
+stops on a project that has a contract and no knob block in its `CLAUDE.md` — every project this
+engine stamped — so a re-run over one is always init.
+
 **A Profile's recipe may declare a precondition step, and it runs here**, before step 1 writes
 anything. The engine fixes the position; the recipe says only what the step checks and what happens
 when the check fails. **This is the inverse of step 6's freeze**, which runs where the recipe puts
-it — a precondition's place is not the recipe's to choose, because **no step in this algorithm
-removes a line it wrote**, so a check whose failure should stop the stamp is worth nothing once the
-first write has landed.
+it — a precondition's place is not the recipe's to choose, because **the writes step 0's *Why
+here* names are never taken back** — the `CLAUDE.md` import merge removes no line, a stamped
+Template is never deleted, a minted label stays minted — so a check whose failure should stop the
+stamp is worth nothing once the first write has landed.
 
 **A precondition is declared by a marker, never by how its heading is worded.** The line
 `<!-- precondition -->` immediately above a `##`/`###` heading in `## Bespoke setup` makes that
@@ -191,6 +257,11 @@ grep -A1 '^<!-- precondition -->$' profiles/<type>.md | grep '^#'
 *mentions* the marker in its own prose matches that and is not thereby declaring anything. The
 marker is the Profile's and is never emitted.
 
+**The engine reads preconditions only off the stamped Profile's own file**, never through a
+reference, so a Profile that reaches another Profile's precondition by reference marks its own
+calling section. Unmarked, that section is an ordinary recipe step, and the check it calls runs at
+step 5, after step 1 has written the tracker import.
+
 **1. Write the contract, the two adapters and the gate seat.** Fragments go in whole — init writes
 the targets a `<!-- requires: -->` comment names, so the fragment target check does not run here.
 
@@ -202,30 +273,37 @@ the targets a `<!-- requires: -->` comment names, so the fragment target check d
   later, which is why the board's `## Board` section lands last. **A fragment section that is not a
   stub replacement keeps its position in its own fragment's order**: a fragment running Working in
   this repo → godot-ai addon → Running emits the addon section between those two, not after both.
+  **A tracker Profile's contract fragment is that tracker's setup**, so it is withheld wherever
+  step 0 runs no setup for its tracker — step 0's tracker rule.
 
   **Write a tagged block `<!-- knobs:<id> -->` … `<!-- /knobs:<id> -->` for each id in `knobs` that
-  is either actually imported** (it rides dev-base, or it is in `imports`) **or read by marker by a
+  is either actually imported** (it rides dev-base, or it is in `imports` — for a tracker, the one
+  step 0 settled, by step 0's tracker rule) **or read by marker by a
   Skill — today `parallel-work` and `implement-run`, which are Skills no project imports and which
   read their block out of this contract exactly as the Chunks did (ADR 0014 § decision 2).**
   Today's `fork` is neither — `git-flow-squash` declares no knobs — so it gets no block; a later
   one that reads a block by marker qualifies under that second limb like any other Skill, and the
   test decides it, not the key it arrived under.
   On re-run, replace *only* the content between the tags, and insert the block if absent. **Delete,
-  tags and all, any `<!-- knobs:<id> -->` block whose id the Profile's `knobs` no longer lists at
-  all** — a chunk the library has retired, which a re-run would otherwise preserve forever (ADR 0014
-  § decision 3). Absence from `knobs` is the whole test, so this never touches a block the Profile
-  still declares, including a conditional one: that one's presence is the recipe step's call, below.
+  tags and all, every `<!-- knobs:<id> -->` block whose id the Profile's `knobs` does not list and
+  that is not the tracker block step 0 settled** (step 0's tracker rule) — a chunk the library has
+  retired, which a re-run would otherwise preserve forever (ADR 0014 § decision 3).
   **The values inside an existing block are this project's own answers, not the manifest's:** a
   re-run keeps them and fills from the manifest only an absent block. What it does change between
   existing tags is the key set — a key the Profile has added or renamed since the last stamp is
-  added or renamed in place, its value answered from the project as at apply time. **Never write
-  knob values into a chunk file**: they live here, and the chunks and Skills read them out by
-  marker. **A chunk listed in `knobs` whose import is CONDITIONAL** — e.g. the godot Profile's
-  `backlog-core` — gets its block from the Profile's conditional recipe step at the moment that
-  step adds the import, at the position the Profile's `knobs` order gives it, never from this
-  default pass; a board-less project must not be left with a dangling
-  `<!-- knobs:backlog-core -->` block. **The engine owns the header and the knob blocks and nothing
-  else here:** it never edits a project section it did not write.
+  added or renamed in place, its value answered from the project as at apply time. For a held
+  tracker block the stamped Profile's `knobs` does not list (a `web` re-run over `backlog-core`),
+  the key set is that tracker's own Profile's (`profiles/backlog.md`, `profiles/github.md`), the
+  same fallback step 0 gives its values. **Never write knob values into a chunk file**: they live
+  here, and the chunks and Skills read them out by marker. **A tracker's block comes from this
+  pass, as step 0 settled it** (step 0's tracker rule), at the settled tracker's entry in the
+  Profile's `knobs` order, or first where the Profile lists none for it. **Any other chunk listed
+  in `knobs` whose import is CONDITIONAL** gets its block from the Profile's conditional recipe
+  step at the moment that step adds the import, at the position the Profile's `knobs` order gives
+  it, never from this default pass. Either way a board-less project must not be left with a
+  dangling `<!-- knobs:backlog-core -->` block, and is not: step 0 settles `github` or none there.
+  **The engine owns the header and the knob blocks and nothing else here:** it never edits a
+  project section it did not write.
 
   **The inner shape of a knob block is fixed**, because a chunk reads it by marker out of a file it
   never sees whole: **one bullet per key, `- <key>: <value>`, the key spelled exactly as the Profile
@@ -239,7 +317,8 @@ the targets a `<!-- requires: -->` comment names, so the fragment target check d
   <!-- /knobs:parallel-work -->
   ```
 - **`CLAUDE.md` — the thin Claude Code adapter.** The import block, in order:
-  `@~/.claude/chunks/dev-base.md`, then each `imports` entry, then
+  `@~/.claude/chunks/dev-base.md`, then each `imports` entry — its tracker entry being the one
+  step 0 settled, written here even where `imports` lists none (step 0's tracker rule) — then
   **`@docs/agents/project-workflow.md`** — an `@` import, not a prose pointer, so the project rules
   stay always-loaded. **The `fork` is not in the import block at all**: it is a Skill, and the
   engine writes it into the Template's skill-list slot as `/<fork>` — `/git-flow-squash` today.
@@ -248,15 +327,21 @@ the targets a `<!-- requires: -->` comment names, so the fragment target check d
   Template's one section — `## Claude Code mechanics (this host only)` — carrying host mechanics
   only, its `.claude/agents/` bullet unconditional because every Profile stamps the gate seat there.
   **No knob block and no project rule may remain in this file.**
-- **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first: the chunks
-  `~/.claude/chunks/dev-base.md` bundles — read it for the list — plus each `imports` entry. **The
-  `fork` is not on that list**: it is a Skill, written instead into the Template's skill-list slot
-  as `$<fork>` — `$git-flow-squash` today. The read list expands into **item 3**, not a free-standing
-  sentence, and it carries the count so a reader can tell a short read from a complete one:
+- **`AGENTS.md` — the Codex adapter.** Derive `{{CHUNK_READ_LIST}}` first, from `CLAUDE.md`'s
+  merged import block: the chunks `~/.claude/chunks/dev-base.md` bundles — read it for the list —
+  plus each `@~/.claude/chunks/<name>.md` import in the `CLAUDE.md` import block this step just
+  wrote or merged, `dev-base.md` itself aside (the contract's `@docs/…` import is not a chunk). So a
+  hand-placed import `CLAUDE.md` keeps is read on Codex too, and the tracker on the list is the one
+  step 0 settled, as in `CLAUDE.md`. **The `fork` is not on that list**: it is a Skill, written
+  instead into the Template's skill-list slot as `$<fork>` — `$git-flow-squash` today. The read
+  list expands into **item 3**, not a free-standing sentence, and it carries the count so a reader
+  can tell a short read from a complete one:
   `These <count> files under ~/.codex/chunks/ (the dev-process rules, shared with the other host):`
   then the file names with their `.md` suffixes. `<count>` is the length of the list you just
-  derived, spelled as a word. **Keep the file under 8 KiB before Profile fragments**; step 7's byte
-  gate caps the pair that is actually loaded.
+  derived, spelled as a word. **On a re-run over an existing `AGENTS.md`, item 3's read list is
+  re-derived that way and replaced in place, its count re-spelled; nothing else in the file is
+  touched.** **Keep the file under 8 KiB before Profile fragments**; step 7's byte gate caps the
+  pair that is actually loaded.
 
   **The canary is the truncation signal.** A fresh Codex session that cannot quote the last line did
   not receive the whole file — the auto-loaded pair is over the cap, or the file never loaded at all
@@ -284,7 +369,8 @@ repo root at stamp time, and `{{PROJECT_NAME}}` is the answer step 1 already has
 *copied*, not referenced (unlike chunks): their source of truth is the Profile asset, realigned by
 a parity check where the Profile has one, never hand-merged. **Leave behind any `templates` entry
 whose comment says it waits for the lockfile-freeze** — the recipe stamps those itself, after the
-freeze, because they point into a tree that does not exist yet.
+freeze, because they point into a tree that does not exist yet. **Stamp a tracker's Templates only
+where step 0's tracker rule runs its setup** — listed here or stamped by a recipe by reference.
 
 **4. Merge `.claude/settings.local.json`.** Apply the Profile's `settings` delta (if any): union its
 `allow` globs into `permissions.allow`, and add its `enabled_mcp_servers` to `enabledMcpjsonServers`.
@@ -302,8 +388,9 @@ under `~/.claude/skills` or `~/.agents/skills`); where it is not, skip that read
 express — a CLI `init`, editing `project.godot`, a pinned tool install. Empty for simple types.
 **Minus every section the recipe marks `<!-- precondition -->`, which step 0 has already run** —
 those are the one part of the section this step does not re-run, and re-running a check whose whole
-point was to fire before the first write buys nothing. Everything else in `## Bespoke setup` runs
-here, in the order the recipe gives it.
+point was to fire before the first write buys nothing. **Skip, too, every recipe section or step
+that is a tracker's setup, wherever step 0's tracker rule runs none for that tracker.** Everything
+else in `## Bespoke setup` runs here, in the order the recipe gives it.
 
 **6. Lockfile-freeze (when the recipe declares pinned installs).** Install once into a local tree,
 **commit the lockfile, not the modules**, gitignore the module tree (append with exact-string
@@ -367,7 +454,8 @@ project's `.gitignore`: both files are per-clone and machine-local, so one line 
 covers every project; (e) **both hosts need a new session after an MCP or settings change** —
 nothing re-reads either mid-session; (f) any fresh-clone rehydrate command from step 6; (g) step 7's
 figures — every measurement step 7 lists, not a subset named here; (h) anything the Profile
-recipe defers to an interactive editor step.
+recipe defers to an interactive editor step; (i) wherever a held tracker is not the Profile's own,
+the `Tracker:` line step 0's tracker rule gives, filled in.
 
 ## Migrate mode
 
@@ -500,7 +588,8 @@ ledger which of the two happened.
 **Do not insert the `contract` fragment**: the project already has its own prose for those sections,
 and this mode moves prose rather than replacing it. Offer it in the ledger instead — the Profile's
 contract fragment, and any conditional fragment its recipe would insert where the condition already
-holds here (the godot recipe's Board section where `backlog/` exists) — in both kinds:
+holds here (the `## Board` section the godot recipe's Tracker (conditional) step appends on a
+backlog pick, where the project imports `backlog-core`) — in both kinds:
 
 - A fragment section whose heading **matches** one the migration moved (by the prefix rule) —
   offered as the Profile's current wording for that section, to adopt by hand.
@@ -542,6 +631,7 @@ later creates returns through the Profile's parity check, not through either mod
 Read `profiles/` for the roster. Today: `backlog.md` (board-driven — dev-base plus `backlog-core`,
 the fork named as a Skill in both adapters), `github.md` (GitHub-issue-driven — `tracker-github`, the two pointer Templates, a
 remote check before the first write and the thirteen-label mint), `web.md` (the npm-shaped toolchain
-gate; app directory, secrets location and task-branch convention answered at apply time), `godot.md`
-(the heavy bespoke recipe — MCP install, `project.godot` edits, lockfile-freeze — and its own
-Template assets).
+gate; app directory, secrets location and task-branch convention answered at apply time; lands on
+the GitHub tracker by reference to `github.md`), `godot.md` (the heavy bespoke recipe — MCP install,
+`project.godot` edits, lockfile-freeze — and its own Template assets; offers github, backlog or
+none).
