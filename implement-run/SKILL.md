@@ -340,8 +340,8 @@ identical ones keep the journal's cache keys. **It needs a gate-runner seat the 
 can dispatch**, and a project-local seat resolves only in a session rooted in that project; a
 project on `gate_runner: coordinator` has none, so runs `subagents`.
 
-**At return**, read the checkout's `git status --porcelain` yourself: non-empty means the script's
-work is not all committed, so the scripted run does not count and you finish the ticket under
+**At return**, read the checkout's `git status --porcelain` yourself: non-empty, less any untracked
+(`??`) path the gate-runner's report names as a gate's own output, means the script's work is not all committed, so the scripted run does not count and you finish the ticket under
 `subagents` from the commits already made, committing nothing on its behalf. `fixRound.ran` with
 `gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): dispatch
 the gate-runner on it before the lens. Reconcile `dropped` against `journal.jsonl`, which gives each
@@ -360,7 +360,9 @@ dispatch each review the profile now calls for that the script did not return, a
 never without a bug hunter (§ Review).
 
 **Adoption**: `subagents` stays every project's default until three clean scripted runs —
-certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it),
+certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it) with
+each of the five gates on a `GATE` line or a line below `OVERALL`, and every `OWNED ELSEWHERE:` line
+closed by its seat's verdict or its not-due clause, quoted in the record,
 calls sent reconciled against results returned in `journal.jsonl`, each agent's model read from
 its `agent-<id>.jsonl` — counted from the project's run records.
 

@@ -68,7 +68,8 @@ at apply time — prompt the user, or derive it from the repo. Pure-invariant ch
 no knob block, and no `fork` declares one today. **The `verify-gate` key set is the same eight in every
 Profile** — five for the chunk's invariant sequence, three (`dir`, `build_check`, `env`) for what it
 reads alongside them — so a Profile varies the commands, never the keys; a step the project has no
-command for says so in its value rather than going missing.
+command for says so in its value rather than going missing, written `none — <why>`, which the
+gate-runner reads as declared absent.
 
 `adapters:` names four files under the Profile's own `templates/`. **Every `<!-- profile:… -->`
 marker is consumed** — replaced by its fragment, or deleted where the field or the key is absent.

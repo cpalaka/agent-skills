@@ -140,7 +140,7 @@ Gate tier for this ticket (the profile's \`gate tier\`, spelled out by the coord
 This is a certifying round${afterFix ? ', following a fix round' : ''}. The run's fixed point is ${fixedPoint}; the diff under test is \`git -C ${checkout} diff ${fixedPoint}...HEAD\`.
 
 Return your report through the schema:
-- \`report\`: your whole text report, verbatim, every part of it (CONTROL lines, Matches, Inspections, Commands, OVERALL, OUTSTANDING JUDGMENT): they have no other home.
+- \`report\`: your whole text report, verbatim, every part of it (CONTROL lines, Matches, Inspections, Commands, OVERALL, and the OWNED ELSEWHERE, DECLARED ABSENT, UNCLASSIFIED KEY and OUTSTANDING JUDGMENT lines below it): they have no other home.
 - \`overall\`: the value on your OVERALL line.
 - \`gates\`: one entry per GATE line, in order. \`kind\` is \`gate\` for a plain \`GATE <name>:\` line, \`judgment\` for a \`GATE <name> (judgment):\` line, \`tier\` for a \`GATE <name> (tier):\` line; \`log\` is the log file or directory that line names.
 - \`porcelain\`: after your gates, run \`git -C ${checkout} status --porcelain\` (read-only) and return its output verbatim. This is the script's requirement beside your report shape, not a gate: it gets no GATE line and does not move OVERALL.`
