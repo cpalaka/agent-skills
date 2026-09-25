@@ -104,3 +104,10 @@ Two pointers sit beside it, hand-written here for the same reason:
   reads it by path; `triage`, `to-tickets` and `wayfinder` expect it by description.
 - **`docs/agents/triage-labels.md`** — the map from the triage-label roles skills speak in to this
   tracker's gate labels.
+
+**Frontier empty.** This is the frontier-empty instruction `implement-run`'s kickoff reads; inside a
+batch, the kickoff keeps to the batch's grant. Where the Chunk's frontier query returns nothing, run
+its label check first: a missing label is the Chunk's stop, reported to the owner. With every label
+present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
+the kickoff, since a session works a `gate:accept` ticket and the owner accepts it. Where that is
+empty too, say that nothing workable remains.

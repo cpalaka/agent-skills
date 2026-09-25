@@ -19,14 +19,17 @@ identity file, the planted known-bad and reading the match count are
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue: `gh issue create`. Its labels, its four verbatim body sections and its
-gated-write status are the Chunk's (§ Unplanned tickets; § Two label axes; § Commit forms, and
-clauses deferred here).
+Create a GitHub issue: `gh issue create`. Its labels and its gated-write status are the Chunk's
+(§ Two label axes; § Commit forms, and clauses deferred here), and so are the four verbatim body
+sections an unplanned ticket takes (§ Unplanned tickets). A spec child takes the body the skill
+filing it gives.
 
 ## When a skill says "fetch the relevant ticket"
 
-`gh issue view <n> --comments`. Per the Chunk's § Frontier and claim, read the live issue before
-the session's first write.
+`gh issue view <n>` for the body, which is the spec, then `gh issue view <n> --comments` for the
+comments — outside a terminal `--comments` prints the comments alone, so it never stands in for the
+first call. Per the Chunk's § Frontier and claim, read the live issue before the session's first
+write.
 
 ## Relationships
 

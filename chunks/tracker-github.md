@@ -44,9 +44,10 @@ A parent closes with its last child, in the same approval; this says whether it 
 A completed chain's parent closes plain (`gh issue close <n>`); one whose chain was never filed
 closes `--reason "not planned"`; one closed any other way is reopened (`gh issue reopen <n>`).
 
-**Decomposition** — filing a parent's children — needs an explicit go-ahead before the first
-`gh issue create`: propose titles plus one-liners, wait for a yes. A single unplanned ticket is not
-decomposition. A standing CLI authorization covers mechanics, not scope or structure.
+**Decomposition** — filing a parent's children — needs an explicit go-ahead before the first child's
+`gh issue create` (§ Commit forms gates each create as well): propose titles plus one-liners, wait
+for a yes. A single unplanned ticket is not decomposition. A standing CLI authorization covers
+mechanics, not scope or structure.
 
 ### Frontier and claim
 
