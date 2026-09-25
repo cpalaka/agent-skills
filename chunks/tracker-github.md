@@ -67,7 +67,9 @@ exit 0 — `gh label list -L 200` tells them apart; for the second, see § Two l
 **Read the live issue before the session's first write**; a summary, dispatch or handoff is not
 the issue. Claim with `gh issue edit <n> --add-assignee @me`, which adds rather than sets: re-read
 the assignees (`gh issue view <n> --json assignees --jq '[.assignees[].login]'`), and if there is
-more than one, `--remove-assignee @me`, report the collision to the owner and wait.
+more than one, `--remove-assignee @me`, report the collision to the owner and wait. The re-read
+sees only a collision between different accounts: two sessions under one account add one login, so
+there the owner never starts two sessions on one ticket.
 
 ### Footer by gate, and the closing record
 

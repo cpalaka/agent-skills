@@ -26,7 +26,8 @@ that file, absence is your answer) says the import expanded, never that it is fr
 the parent's session-start snapshot, so read disk for anything touching an edit made since.
 Reading absent, suspect approval first, a walk memoized before it second, the boundary last.
 Two things reached no payload: the `implement-run` Skill, which a seat needing the procedure
-opens itself, and block-level HTML comments — so a `<!-- knobs:… -->` marker is disk-only.
+opens itself, and block-level HTML comments — so a `<!-- knobs:… -->` marker *line* is disk-only (the string still arrives
+inline, inside a code span).
 
 ## Load-bearing facts
 

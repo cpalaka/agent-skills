@@ -16,8 +16,8 @@ reached one at a time rather than through `dev-base`: the tracker Chunk by impor
 
 The `implement-run` **Skill** carries the procedure — it is slash-only, so a run loads it by name
 and reads the block below by marker — **from the file, never from context**, because the loader
-strips every HTML comment on its own line from every injected copy (`CLAUDE.md` § the import
-paragraph). This block carries what varies here.
+strips every HTML comment on its own line from every injected copy (`CLAUDE.md`, the paragraph
+beginning "So a seat need not"). This block carries what varies here.
 
 <!-- knobs:implement-run -->
 - shape: subagents
@@ -86,8 +86,10 @@ project's absolute-path entry in `~/.claude.json`, never in this repository.
 whether they load.
 
 **Claude Code: read the shape of your context, not its words.** Expanded, the Chunk arrives as an
-injected block of its own, under a `Contents of …` header ending in `chunks/tracker-github.md` —
-spelled absolute, never the `~/` form the `@` line uses. Unexpanded, no such block exists anywhere
+injected block of its own, under a `Contents of <path> (…):` header whose path ends in
+`chunks/tracker-github.md` — spelled absolute, never the `~/` form the `@` line uses. Test the
+path, not the line's end: a parenthetical follows it, so a header-suffix test misses a loaded
+Chunk. Unexpanded, no such block exists anywhere
 in your context. Any phrase quoted here would be in your context because this file is, so the
 block is the only honest discriminator. Present, the tracker convention is loaded and you may rely
 on it; absent, it is not, and you open `chunks/tracker-github.md` yourself. A seat dispatched

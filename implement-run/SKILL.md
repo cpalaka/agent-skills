@@ -148,8 +148,9 @@ cap; it re-runs every gate `verify-gate`'s skip rule cannot skip for its paths a
 reads prose, since a scan can match prose a fix round wrote, and takes no targeted re-review — you
 check the wording diff against the findings you accepted. `scope`: the plan's deliverable count, and
 60 tool calls per implementer dispatch, counted from its transcript; one past 60, in any shape, goes
-under `Deviations`. Cost is near-linear in calls, $0.15–0.20 each; in the token-usage audit behind
-cpalaka/agent-skills#68, phases at or under 60 calls cost $1–9, 60–85 cost $8–10, past 85 $13–32. A
+under `Deviations`. Cost is near-linear in calls, 0.15–0.20 USD each; in the token-usage audit behind
+cpalaka/agent-skills#68, phases at or under 60 calls cost 1–9 USD, 60–85 cost 8–10 USD, past 85,
+13–32 USD. A
 continued dispatch keeps its count, so one at 60 is never continued by message: its next leg, a fix
 round or the phase's remainder, goes to a fresh implementer handed the findings and the diff,
 counting from zero. A phase the plan expects to exceed 60 is split before dispatch. Work past the

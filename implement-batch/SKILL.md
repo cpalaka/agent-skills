@@ -141,9 +141,9 @@ if [ ! -e "$g/implement-batch-snapshot" ]; then
   wc -l < "$g/implement-batch-snapshot"; exit 0
 fi
 command diff "$g/implement-batch-snapshot" "$g/implement-batch-now" |
-  sed -n 's/^[<>] [0-9]* //p' | awk '{d = $0; sub(/\/[^\/]*$/, "", d)
-  print d "\t" substr($0, length(d) + 2)}' | LC_ALL=C sort -u |
-  awk -F '\t' '$1 != p {print $1 "/"; p = $1} {print "  " $2}'
+  sed -n 's/^[<>] [0-9]* //p' | awk '{d = $(0); sub(/\/[^\/]*$/, "", d)
+  print d "\t" substr($(0), length(d) + 2)}' | LC_ALL=C sort -u |
+  awk -F '\t' '$(1) != p {print $(1) "/"; p = $(1)} {print "  " $(2)}'
 )
 ```
 
