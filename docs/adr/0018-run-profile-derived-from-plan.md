@@ -10,6 +10,8 @@ floor a **light plan** and a pin a **lower bound**; this record keeps its own wo
 **Amended 2026-09-24 on #87**, the model-and-effort pin question: § 7, one Considered option and
 one Consequence, each marked.
 **Amended 2026-09-26 on #112**, the gate's place in the run: § 7's `xhigh` trigger, marked.
+**Superseded 2026-09-26 by [ADR 0023](0023-light-default-run-profile.md)** on #101: the text below
+stays as the record of what was decided.
 
 ## Context
 

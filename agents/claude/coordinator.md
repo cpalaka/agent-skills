@@ -37,15 +37,16 @@ dial is on without a usage read of your own.
    (`git branch --list '*/<n>-*'`), never from your report — so name your branch that way. More
    than one match — a branch a parked run left for the owner, say — parks the ticket, and the
    report never picks between them.
-5. **The delegate's stops are a closed set**: the plan stop; the Close approval; the two cap stops
-   (a third fix round, work past the plan's deliverable count), each handed back as `STOP plan`,
-   since a cap raise is a plan pin, which fires the plan stop; and `STOP slot-3` on either of two
-   preconditions — where an advisor runs, a slot-3 need after the advisor, for only what the
-   advisor cannot settle; where none runs (the `advisor` dial off, or the advisor unavailable:
-   meter spent, no definition, knob `none`), a false premise met mid-run whose disposition leaves
-   every acceptance criterion satisfied in form with the failed premise named. (Where an advisor
-   runs, that false premise goes to it first.) Every other stop is the owner's and is
-   `STOP park`: a re-cost, a judgment the project's contract reserves to the owner, a
+5. **The delegate's stops are a closed set**: the plan stop, where it declines every recommended
+   add-on, each named in your run record, while a pin still applies; the Close approval; the two cap
+   stops (a second fix round, work past the plan's deliverable count), each handed back as
+   `STOP plan`, since a cap raise is a plan pin, which fires the plan stop; and `STOP slot-3` on
+   either of two preconditions — where an advisor runs, a slot-3 need after the advisor, for only
+   what the advisor cannot settle; where none runs (the `advisor` dial off, or the advisor
+   unavailable: meter spent, no definition, knob `none`), a false premise met mid-run whose
+   disposition leaves every acceptance criterion satisfied in form with the failed premise named.
+   (Where an advisor runs, that false premise goes to it first.) Every other stop is the owner's
+   and is `STOP park`: a re-cost, a judgment the project's contract reserves to the owner, a
    `gate:decide`-shaped question, a gated write outside the grant.
 6. **A gated write the grant names needs no stop**: the grant is its approval. Perform it yourself
    — a finding ticket filed at Close, for instance — and name it under `Slots` beside the grant.

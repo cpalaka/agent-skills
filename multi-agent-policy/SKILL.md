@@ -40,12 +40,13 @@ Builder main session — the **delegate** — which dispatches one `coordinator`
   aloud; research qualifies only when its question does.
 - **Check the meter, weekly and session, before spawning the advisor or fanning out from Planner.**
   Every dispatch and returned report spends the parent's window.
-- **A Builder-role seat runs `medium | high | xhigh` where its definitions reach, the Planner-role
-  advisor `high` only** (list: [`agents/README.md`](../agents/README.md);
-  [ADR 0018](../docs/adr/0018-run-profile-derived-from-plan.md) § 7). The dispatched name carries
-  it — the bare name the seat's default, `high`, except the gate-runner's `medium` — or a workflow
-  stage's `effort`; the Agent tool pins only `model`. Never pass `model` on a seat dispatch: it
-  overrides the pin; a run never changes a seat's model.
+- **A Builder-role seat runs `medium | high` where its definitions reach, `medium` the default and
+  `high` an add-on, the Planner-role advisor `high` only** (list:
+  [`agents/README.md`](../agents/README.md);
+  [ADR 0023](../docs/adr/0023-light-default-run-profile.md)). The dispatched name carries it — the
+  `-medium` name the default dispatch, the bare name the `high` add-on, the gate-runner `medium` —
+  or a workflow stage's `effort`; the Agent tool pins only `model`. Never pass `model` on a seat
+  dispatch: it overrides the pin; a run never changes a seat's model.
 - **Drive `agent-browser` in the parent, never a sub-agent** (load `agent-browser-gotchas`). A
   sub-agent's screenshot never reaches you, so a visual acceptance passes with nobody having seen
   the page. Do the pass yourself rather than handing "eyeball this" to the owner.

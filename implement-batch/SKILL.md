@@ -220,16 +220,19 @@ Two closed sets.
 
 **You answer these**, the delegated stops, and nothing else:
 
-- the plan stop;
+- the plan stop, where you decline every recommended add-on: the ticket runs the default, and its
+  run record names each recommendation you declined. A pin is the owner's decision at filing, not a
+  recommendation, and applies (`implement-run` § Run profile);
 - the Close approval;
-- the two cap stops: a third fix round, and work past the plan's deliverable count. Each hands back
-  as `STOP plan`, since a cap raise is a plan pin, which fires the plan stop (`implement-run`
-  § Run profile, Caps);
+- the two cap stops: the fix-round cap stop (a second fix round), which you answer on its merits,
+  the ask naming *land and file the residue* beside *one more round*, and work past the plan's
+  deliverable count. Each hands back as `STOP plan`, since a cap raise is a plan pin, which fires
+  the plan stop (`implement-run` § Run profile, Caps);
 - a slot-3 need, only after the advisor and only for what the advisor cannot settle; with no
   advisor running, it parks;
 - a false premise met mid-run, only where its disposition leaves every acceptance criterion
   satisfied in form with the failed premise named (ADR § 3): after the advisor where one runs;
-  where none runs — the `advisor` dial off, as on a light plan, or the advisor unavailable (meter
+  where none runs — the `advisor` dial off, its default, or the advisor unavailable (meter
   spent, no definition, knob `none`) — it reaches you directly as `STOP slot-3`.
 
 So `STOP slot-3` has two preconditions, and the `coordinator` definition carries both: a slot-3

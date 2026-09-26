@@ -22,11 +22,12 @@ entry, not a quiet edit.
 | [0015](0015-chunk-cap-250-ceiling-2900.md) | The condensed-Chunk cap is 250 words and the floor ceiling is 2,900 (amends 0014) |
 | [0016](0016-floor-ceiling-is-acceptance-time.md) | The floor ceiling is acceptance-time, and every standing number names its reader (amends 0014 § 7, 0015 § 2; amended by 0021) |
 | [0017](0017-seats-pin-family-aliases.md) | Seats and workflow scripts pin a family alias, not a versioned model ID (amends 0011) |
-| [0018](0018-run-profile-derived-from-plan.md) | A run's profile is derived from its plan; the ticket pins dials, never levels; effort is a dial (amends 0011) |
+| [0018](0018-run-profile-derived-from-plan.md) | A run's profile is derived from its plan; the ticket pins dials, never levels; effort is a dial (amends 0011; superseded by 0023) |
 | [0019](0019-delegated-batch-over-subagent-coordinators.md) | A delegated batch runs per-ticket coordinators as subagents from one main session |
 | [0020](0020-migrate-retired.md) | Migrate mode is retired; an engine Template asserts engine facts only (supersedes 0010, amends 0009) |
 | [0021](0021-mechanical-stamping-is-a-script.md) | Mechanical stamping is a script; prose keeps judgment (amends 0016 § 4) |
 | [0022](0022-tracker-is-an-engine-step.md) | The tracker is an engine step; a Chunk may be frozen with importers (extends 0013) |
+| [0023](0023-light-default-run-profile.md) | A run posts a light default profile; the owner turns add-ons on; `xhigh` is retired (supersedes 0018) |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

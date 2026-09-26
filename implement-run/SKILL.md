@@ -1,6 +1,6 @@
 ---
 name: implement-run
-description: How one ticket is run — the run profile derived from the plan, the seats, the advisor's slots, the gates, the review lenses, the closing run record and the kickoff. Slash-only (/implement-run); the third-party /implement stub carries none of it.
+description: How one ticket is run — the run profile posted from the plan and its add-ons, the seats, the advisor's slots, the gates, the review lenses, the closing run record and the kickoff. Slash-only (/implement-run); the third-party /implement stub carries none of it.
 disable-model-invocation: true
 ---
 
@@ -35,11 +35,14 @@ delegate, handed back in the form the brief names: `STOP <kind>`, nothing pendin
 the delegate's read, so neither is asked. A herdr pane child whose prompt states the delegation, the
 fallback transport, is a main session instead: it reads its own role and meter as § Start and
 § Advisor slots say, and a Planner pane asks the delegate, which parks it, since a role switch is
-not among the delegate's stops. The delegate answers the plan stop; the Close approval; the two cap
-stops, each handed back as `STOP plan`, since a cap raise is a plan pin, which fires the plan stop
-(§ Run profile); a slot-3 need, where an advisor runs, only after the advisor and only for what the
-advisor cannot settle; and a false premise met mid-run whose disposition leaves every acceptance
-criterion satisfied in form with the failed premise named — after the advisor where one runs,
+not among the delegate's stops. The delegate declines every recommended add-on, the ticket running
+the default and the record naming each; a pin, the owner's decision at filing, still applies. The
+delegate answers the plan stop; the Close approval; the two cap stops (a second fix round, no
+add-on, answered on its merits; work past the deliverable count), each handed back as `STOP plan`,
+since a cap raise is a plan pin, which fires the plan stop (§ Run profile); a slot-3 need, where an
+advisor runs, only after the advisor and only for what the advisor cannot settle; and a false
+premise met mid-run whose disposition leaves every acceptance criterion satisfied in form with the
+failed premise named — after the advisor where one runs,
 handed back as `STOP slot-3` where none runs (the dial off, or the advisor unavailable, as Fallback
 lists). Every other stop parks the ticket for the owner, such as a re-cost, a judgment the project's
 contract reserves, a `gate:decide`-shaped question or a gated write outside the batch grant. A gated
@@ -50,8 +53,8 @@ replicating it for itself, not a coordinator the owner delegated.
 
 ## Seats
 
-Each from a pinned definition, dispatched by name: the bare name carries the default effort, a
-suffix any other (§ Run profile). No dispatch of a definition that pins a model passes `model`: the
+Each from a pinned definition, dispatched by name: the `-medium` name is the default dispatch, the
+bare name the `high` add-on (§ Run profile). No dispatch of a definition that pins a model passes `model`: the
 model is pinned by role in the definition, and a second model family on a diff is the `codex`
 bug-hunter value, never an override. One whose definition pins none passes it (§ Advisor slots,
 Cross-repo gate-runner).
@@ -60,14 +63,14 @@ Cross-repo gate-runner).
   prompt, never committed unless the ticket names a home for it), dispatches, adjudicates every
   finding against source, merges. Writes no implementation diff; runs no gate where a runner
   resolves. Under a batch, a depth-1 dispatch of the `coordinator` definition (§ Inside a batch).
-- **Implementer** — `implementer` (`high`) or `implementer-medium`; one fully specified phase,
+- **Implementer** — `implementer-medium` or `implementer` (`high`); one fully specified phase,
   returning a handoff report. `layout` says only whether two phases may be in flight at once:
   `parallel-when-disjoint` when their files are disjoint, `serial` never. Worktrees are
   `parallel-work`'s decision: one phase in flight is its single-task case and takes none; a second
   is its explicit signal, each implementer in its own tree.
-- **Advisor** — `advisor`, `high` only; slot 1, one consult (ticket, spec, first question); slot 3
+- **Advisor** — `advisor`, `high` only, an add-on as a whole; slot 1, one consult (ticket, spec, first question); slot 3
   continues it by message or spawns fresh.
-- **Reviewer** — `code-reviewer` (`high`), `code-reviewer-medium` or `code-reviewer-xhigh`, filling
+- **Reviewer** — `code-reviewer-medium` or `code-reviewer` (`high`), filling
   the Spec axis, the Standards axis, the Correctness charter and the critic (§ Review), each a
   fresh dispatch with its charge named; `/code-review`'s sub-agents are this seat only when
   dispatched by the definition names the profile's `effort` line gives, for the dials that are on.
@@ -89,113 +92,115 @@ install gate.
 
 ## Run profile
 
-Plan first, then derive the run profile from the plan, one dial at a time. Each dial has a default
-and one trigger, read off what the plan shows: its changed paths against `light_set` and the
-project contract's trigger table, an instruction file among them, and its expected implementer calls. Your
-confidence in the ticket's premises is no input: you cannot see your own false premise, which is
-why slot 1 runs on every plan above the light plan. The first column's tokens name the dials in a
-pin, the profile block and the workflow script's `args.profile`.
+Plan first, then post the run profile: every dial at its default, read off the plan's changed paths
+(against `light_set` and the project contract's trigger table, an instruction file among them) and
+its expected implementer calls, plus the add-ons you recommend. An **add-on** is a dial value above
+its default that you may recommend with a named reason, turned on only by the owner's approval or a
+pin. The first column's
+tokens name the dials in a pin, the profile block and the workflow script's `args.profile`.
 
-| Dial (token) | Range | Default | Turned by |
+| Dial (token) | Range | Default | Add-on, recommended when |
 |---|---|---|---|
-| `implementer`, `gate-runner`, `spec` | on | on | always |
-| `standards` | off, on | off | an instruction file in the diff, or a pin |
-| `advisor` (slot 1; slot 3 available) | off, on | off | any plan above the light plan |
-| `critic` | off, on | off | any plan above the light plan |
-| `bug hunter` | `off` < `correctness` < `codex` | `off` | any plan above the light plan, as `correctness`; `codex` by pin |
-| `gate tier` | a named tier of the project contract plus any trigger-table pulls; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a pin only |
-| `effort <seat>` | `medium` < `high` < `xhigh`, each seat within the definitions § Seats lists for it | `high`; the gate-runner `medium`, its only value | a light plan derives `medium` for `implementer` and `spec`; an instruction file in the diff derives `xhigh` for `critic` and the Correctness charter, a red gate for `critic` alone, where on |
-| `fix rounds` | 2, or a higher integer with a reason | 2 | a plan pin with a reason |
+| `implementer`, `gate-runner`, `spec` | on | on | none |
+| `standards` | off, on | off | on, where an instruction file is in the diff |
+| `advisor` (slot 1; slot 3 only where on) | off, on | off | on, only by naming the premise or design question you cannot settle alone |
+| `critic` | off, on | off | on |
+| `bug hunter` | `off`, `codex`, `correctness` | `codex`; `off` on a light plan | `codex` on a light plan; `correctness` only in place of `codex` (§ Review) |
+| `gate tier` | a named tier of the project contract plus any trigger-table pulls; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a higher tier, by pin only |
+| `effort <seat>` | `medium` < `high`, each seat within the definitions § Seats lists for it | `medium`; the gate-runner `medium` only, the advisor `high` only | `high` |
+| `fix rounds` | 1, or a higher integer with a reason | 1 | none: raised only at the fix-round cap stop or by a plan pin with a reason |
 | `scope` | the plan's deliverable count; 60 tool calls per implementer dispatch | the plan's count; 60 | a plan pin with a reason |
-| plan stop | none, stop | none | any dial above its default, a pin above default included |
+| plan stop | none, stop | none | fires on a recommended add-on or a pin above default |
 
 **A light plan** is one whose every changed path matches `light_set`, is loaded by no gate, and is
 no instruction file; any other plan is above the light plan. The instruction-file test runs first,
 so no glob makes one light. "Loaded by no gate" is `verify-gate`'s derivation: grep what references
-the path and name the gate that loads it. On a light plan every unpinned dial sits at or below its
-default, so only a pin above default stops the run.
+the path and name the gate that loads it.
 
 **An instruction file** is whatever a host injects (a host adapter, the project contract, every
 contract or Chunk they import), every file under a Skill's directory, every seat definition, and
 every file one of those names as a read. *Named as a read* means named to be followed as
 instructions — a Chunk, a Skill, a contract, a seat body, a procedure — not a glossary, README, ADR
 or results record cited for reference: a host adapter or contract may name `CONTEXT.md` or `README.md`, and
-the default `light_set` holds both on purpose. One in the diff turns every dial the table gives an
-instruction file or a plan above the light plan. It changes the instrument the next run reads, and
-the Standards axis found 10 of its 11 measured findings on such diffs.
+the default `light_set` holds both on purpose. One in the diff makes you recommend the Standards
+axis, which found 10 of its 11 measured findings on such diffs (ADR 0018's #86 amendment), since it
+changes the instrument the next run reads; it turns nothing on by itself.
 
-**Effort** is dispatched as a definition name (§ Seats). A light plan's `medium` sits below the
-default and fires no stop, since speed is preferred where no gate loads the diff. The Codex lens
-takes no effort. Expected implementer calls turns no dial: it sizes phases and sets the `scope`
-cap.
+**Effort** is dispatched as a definition name (§ Seats): `medium` for every seat, `high` an add-on;
+the advisor, an add-on as a whole, and the batch `coordinator`, the main loop rather than a dial,
+keep their one `high` definition. The Codex lens takes no effort. Expected implementer calls turns
+no dial: it sizes phases and sets the `scope` cap.
 
 **Pins.** The ticket author pins a dial on its own line directly above the acceptance heading, or
 anywhere in the body where the tracker's ticket has none, `Pins: <token>: <value>`, several
-separated by `;`: `Pins: critic: on; gate tier: 2; effort critic: xhigh`. The `<seat>` of an effort
-token is one of the seat tokens above. A pin is a lower bound: the dial takes the higher of pin and
-derivation, nothing lowers it, and a decision to lower a dial has no pin. A line naming an unknown
+separated by `;`: `Pins: critic: on; gate tier: 2; effort critic: high`. The `<seat>` of an effort
+token is one of the seat tokens above. A pin is a lower bound on you: the dial takes the higher of
+pin and default, and only the owner lowers one (the stop, below). A line naming an unknown
 token, `fix rounds` or `scope` (only a plan pin raises those, its reason on the block line), or a
 value outside its range reads as absent, noted under `Deviations`. Adding a pin to a ticket not yet
 started is the tracker Chunk's body write for adding an acceptance criterion. Two retired forms read
 as absent, a `Seats: light` or `Seats: full` line (the retired seat tier) and the
-`Advisor: pre-dispatch only` marker: no pin is inferred, the run derives, and the record notes the
+`Advisor: pre-dispatch only` marker: no pin is inferred, the run takes its defaults, and the record notes the
 line was present and read as absent. A body sentence naming a gate tier in prose ("runs tier 2",
 "Gate: tier 1") reads as a pin on `gate tier` alone, marked `pin (tier sentence)`. No open ticket's
 body is rewritten to remove either.
 
-**The ratchet** only raises, under `Deviations`, and reopens no stop. A diff path outside the plan's
-changed-path set re-derives the profile with that path in (for the gate tier, its default recomputed
-as the lowest tier plus the new set's trigger-table pulls, not the dial turned, which only a pin
-does), unless it adds a deliverable the plan did not count, which is `scope`'s stop; a material
-finding turns on an off seat that runs after its finder in § Review's order, so on a light plan a
-material Spec-axis finding turns the critic on; a red gate re-runs that gate and raises `effort
-critic` to `xhigh` where the critic is on, turning no seat on and never the gate tier. The
-Correctness charter is not raised: it goes out with the axes, before the gate (§ Review), and is
-never re-dispatched, so the run carries one `LENS correctness` line, the original call's; the Codex
-lens's fallback after return (§ Workflow shape) is that one call too, at the effort derived without
-the red gate. Nothing mid-run lowers a dial. An `advisor` raised after dispatch opens slot 3 only:
-slot 1's moment has passed, and the record says so.
+**The ratchet** raises defaults only, under `Deviations`, and reopens no stop. A diff path outside
+the plan's changed-path set re-derives the defaults with that path in — a plan leaving the light
+plan turns `bug hunter` to `codex`; the gate tier's default is recomputed as the lowest tier plus the
+new set's trigger-table pulls, the dial itself turned only by a pin — unless it adds a deliverable
+the plan did not count, which is `scope`'s stop. It turns no add-on on: a red gate re-runs its gate
+as a round (§ Review) and turns nothing on; only a material finding that argues for another seat
+becomes an add-on recommendation, carried to the next owner stop, the fix-round cap stop or the
+Close approval. An `advisor` turned on after dispatch opens slot 3 only: slot 1's moment has
+passed, and the record says so.
 
-**Caps** are constants, not risk-derived. `fix rounds`: two material rounds; a third is a stop.
-Wording-only findings ride the last material round or form one closing round that counts toward no
-cap; it re-runs every gate `verify-gate`'s skip rule cannot skip for its paths and every scan that
-reads prose, since a scan can match prose a fix round wrote, and takes no targeted re-review — you
-check the wording diff against the findings you accepted. `scope`: the plan's deliverable count, and
+**Caps** are constants, not risk-derived. `fix rounds`: one material round; a second is **the
+fix-round cap stop**, whose ask names both options, *land and file the residue* and *one more
+round*, and states which way the residue fails. Residue that fails safe, its failure ending in a
+stop or a refusal, never a silent pass, defaults to landing; residue that fails open carries no
+default, the ask presenting both options evenly. Wording-only findings ride the material round or
+form one closing round that counts toward no cap: every scan that reads prose checks its diff,
+since a scan can match prose a fix round wrote, the certifying gate runs after it where it lands
+after that gate, and it takes no targeted re-review — you check the wording diff against the
+findings you accepted. `scope`: the plan's deliverable count, and
 60 tool calls per implementer dispatch, counted from its transcript; one past 60, in any shape, goes
-under `Deviations`. Cost is near-linear in calls, 0.15–0.20 USD each; in the token-usage audit behind
-cpalaka/agent-skills#68, phases at or under 60 calls cost 1–9 USD, 60–85 cost 8–10 USD, past 85,
-13–32 USD. A
-continued dispatch keeps its count, so one at 60 is never continued by message: its next leg, a fix
+under `Deviations`. Cost is near-linear in calls, 0.15–0.20 USD each, and a phase past 85 cost 13–32
+USD (the token-usage audit behind cpalaka/agent-skills#68). A continued dispatch keeps its count, so one at 60 is never continued by message: its next leg, a fix
 round or the phase's remainder, goes to a fresh implementer handed the findings and the diff,
 counting from zero. A phase the plan expects to exceed 60 is split before dispatch. Work past the
 deliverable count is a stop, never a ratchet: more work is the reader's scope question. **A plan
 pin** raises `fix rounds` or `scope` in your own plan, its reason on that dial's block line,
-`fix rounds: 3 — a migration and its revert are two rounds by construction`; it sits above default,
+`fix rounds: 2 — a migration and its revert are two rounds by construction`; it sits above default,
 so it fires the stop.
 
 **The profile block** is one line per dial, `token: value — the fact that set it`, pins marked
-`(pin)`; the effort dials share one line naming the definition dispatched per seat, the
-gate-runner's fixed value unlisted:
+`(pin)`, then one `recommend <token>: <value> — <reason>` line per recommended add-on; the effort
+dials share one line naming the definition dispatched per seat, the gate-runner's fixed value
+unlisted:
 
 ```
-effort: implementer-medium, code-reviewer-medium (spec) — light plan
-effort: implementer, code-reviewer (spec), code-reviewer (standards), code-reviewer-xhigh (critic), code-reviewer-xhigh (bug hunter), advisor — instruction file in the diff
+effort: implementer-medium, code-reviewer-medium (spec) — default
+effort: implementer-medium, code-reviewer-medium (spec), code-reviewer (critic), advisor — critic and its high pinned; advisor approved
+recommend standards: on — an instruction file in the diff
 ```
 
 Post it in the run's first message, whatever the plan; inside a batch that message is the brief's
 first output, which the delegate reads at the first hand-back or at Close. The run record repeats it
 as dispatched (§ Close), and every ratchet goes under `Deviations`.
 
-**The stop** fires only when a dial sits above its default: the reader approves the profile before
-any dispatch. The reader is the owner, or the delegate inside a batch. At or below default, post
-and go on.
+**The stop** fires only on a recommended add-on or a pin above default: the reader approves the
+profile before any dispatch. The reader is the owner, or the delegate inside a batch (§ Inside a
+batch). Otherwise post and go on. At the stop, or by interrupting after the
+posted profile, the owner may lower any dial but `spec`, a pinned one included, recorded under
+`Deviations` as the owner's decision; nothing else lowers a dial.
 
 ## Start
 
-The chain is **pick → plan → profile → stop, only above default → implement → verify →
+The chain is **pick → plan → profile → stop, only on an add-on or pin → implement → verify →
 sign-off**. Every run plans and posts the plan, whatever its size: 1–5 chat bullets naming the
 changed paths, the deliverable count and the expected implementer calls, which the profile reads.
-Read the ticket's `Pins:` line and any tier sentence, derive the profile (§ Run profile), and post
+Read the ticket's `Pins:` line and any tier sentence, set the profile (§ Run profile), and post
 plan and profile block together; where the stop fires, get approval before code. Plan by question
 type: fuzzy idea → `grilling`; data-model or state-machine doubt → `prototype`; look-and-feel doubt
 → a minimal build and an `agent-browser` screenshot loop; codebase-bound, clear what, unclear how →
@@ -214,7 +219,7 @@ window; reopen it after standdown. Under a worktree this lapses.
 
 Announce each.
 
-1. **Pre-dispatch**, wherever the `advisor` dial is on, always, spawned or held (Fallback). After
+1. **Pre-dispatch**, spawned wherever the `advisor` dial is on, held otherwise (Fallback). After
    checking the drafted spec's premises against source, one pass looks for a false or unverified
    premise, a missing hard limit, an observable that cannot go red, and — pasted verbatim — *what
    will this run raise that the ticket does not list?* It names no claim of yours, so it audits
@@ -225,7 +230,7 @@ Announce each.
    gate: its observable is an independent reader given the source rows, not the writer's table,
    calibrated by one planted absent row whose count is read, beside a fresh agent's playthrough of
    it.
-2. **Pre-merge** — now the critic seat, a Builder dispatch (§ Review); no advisor consult.
+2. **Pre-merge** — now the critic seat, an add-on Builder dispatch (§ Review); no advisor consult.
 3. **Floating**, wherever the `advisor` dial is on — a reading you would otherwise decide silently
    or put to the owner: a review finding you want to reject, one that would change an acceptance
    criterion, a ticket premise reading false against source, a gate still red after one
@@ -236,8 +241,9 @@ scoped to named files. Read the meter before spawning; the owner decides a tight
 (§ Inside a batch).
 
 **Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner
-(§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor unavailable
-(no definition this host can dispatch, meter spent, knob `none`): hold the judgment yourself, ask
+(§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor off, the
+default, or unavailable (no definition this host can dispatch, meter spent, knob `none`): hold the
+judgment yourself, ask
 the owner at the same triggers (§ Inside a batch), say so. That is self-review unless slot 1's
 observable that cannot go red becomes a question the implementer's dispatch prompt asks before it
 writes code — a spec's author is the last reader to see that an observable does not mean what they
@@ -276,28 +282,38 @@ user reports the instruction they followed, not the invariant.
 
 ## Review
 
-Wherever the profile runs them: **Spec axis, Standards axis and bug hunter, dispatched together →
-adjudication → fix commits → certifying gate → critic → merge**, in both shapes. Under `subagents`
-the bug hunter, where on, goes out with the axes whatever its value, since the serial first pass was
-the largest phase in half the measured runs. The gate runs after the review's fixes land, because a
-fix invalidates a gate round that ran before it: eight of 3d-anim-lab's readable runs paid such a
-round, at 205–340 s each (cpalaka/agent-skills#112). A red gate's fix is a round, re-gated before
-the critic. The critic runs last because it reads every review, the fixes and the gate; a material
-finding of its own is a round under the caps, re-gated before the merge. The certifying reading is
-the last gate before the merge. Each dispatch is the definition the profile's `effort` line names.
-Hand reviewers the measurements a spec summarises, not just the spec. Re-check a refuted finding
-about safety or data loss. A finding proves the defect, not the remedy. After material fixes, re-run
-the affected checks and take a targeted review; reopen the full one only where scope or assumptions
-changed. Fix rounds, the wording-only round and the 60-call ceiling are § Run profile's caps.
+Wherever the profile runs them: **Spec axis, bug hunter and any Standards axis, dispatched together
+→ adjudication → fix round, re-verified by a check aimed at it → targeted review (the critic, where
+on) → certifying gate, on the final tree → merge**, in both shapes where the Skill controls the
+order. Under `subagents` the bug hunter, where on, goes out with the axes whatever its value, since
+the serial first pass was the largest phase in half the measured runs. The gate runs once, last,
+because a fix invalidates a gate round that ran before it: eight of 3d-anim-lab's readable runs paid
+such a round, at 205–340 s each (cpalaka/agent-skills#112). After a material round, one targeted
+review at `code-reviewer-medium` reads the fix diff, handed the accepted findings, with no Codex
+re-run. The critic, where on, is that review, run whether or not a round ran (Critic seat). Its
+material finding is a round under the caps; reopen the full review only where scope or assumptions
+changed. Only a red certifying reading re-runs the gate: its fix is a round under the caps,
+re-checked by an aimed check, then certified once more. Hand reviewers the measurements a spec
+summarises, not just the spec. Re-check a refuted finding about safety or data loss. A finding
+proves the defect, not the remedy. Fix rounds, the wording-only round and the 60-call ceiling are
+§ Run profile's caps.
 
-**Bug hunter.** `correctness` is the Correctness charter, a Reviewer dispatch over the same diff:
-*for each defect, what can go wrong, why the path is vulnerable, the likely impact, one clause of
-remedy; material findings only; end with `FINDINGS: n`*, recorded
-`LENS correctness: FINDINGS: <n>`. One clause of remedy, because a finding proves the defect, not
-the remedy; material only, because you adjudicate each; `FINDINGS: n`, so the record reads a
-count, not an impression. `codex`, by pin only, is the Codex lens below, and **any NOT RUN fires
-the Correctness charter** as its fallback: above the light plan the loop is never without a bug
-hunter and never runs two.
+**Re-verify a fix, not the world.** A fix round re-verifies with a check aimed at it: the failing
+cases, any cases the findings name, and a sample of what passed. A verification whose cost scales
+with the whole suite or matrix runs once, on the final tree, before Close: the certifying gate. A
+new defect a review finds mid-run is recommended as a split-off ticket unless its fix is small. **A
+command block in an instruction file is code**: it ships, and a fix-round remedy adding or changing
+one is adopted, only after a fixture run in which a known-bad input turns it red, since a
+playthrough runs no embedded command against a known-bad and one that no-ops passes it.
+
+**Bug hunter.** `codex`, the default above the light plan, is the Codex lens below, and **any NOT
+RUN fires the Correctness charter** as its fallback, so the loop never lacks the bug hunter its
+profile names and never runs two. `correctness`, that fallback or the owner's choice in place of
+`codex` at the stop, is the Correctness charter, a Reviewer dispatch over the same diff: *for each
+defect, what can go wrong, why the path is vulnerable, the likely impact, one clause of remedy;
+material findings only; end with `FINDINGS: n`*, recorded `LENS correctness: FINDINGS: <n>`. One
+clause of remedy, because a finding proves the defect, not the remedy; material only, because you
+adjudicate each; `FINDINGS: n`, so the record reads a count, not an impression.
 
 **Codex lens**, dispatched beside the axes once the implementer's diff is committed:
 
@@ -330,15 +346,15 @@ non-zero exit, or a failure before output (binary absent, not authenticated, reg
 no such key or element — quota, timeout at the longest budget) is `LENS codex: NOT RUN — <why>`. Its
 recommendations are hypotheses; adjudicate every finding against source.
 
-**Critic seat**, last — after every review and lens and the certifying gate, before the merge —
-wherever the `critic` dial is on, in every shape, at `code-reviewer-xhigh` where a gate in the run
-went red (§ Run profile's ratchet): a fresh Reviewer dispatch given the diff since the fixed point,
-the ticket, the execution spec and every review's output, charged: *completeness critic — what the
+**Critic seat**, an add-on and the targeted review, in every shape wherever the `critic` dial is on
+— after every review, lens and fix round, and before the certifying gate where the Skill controls
+the order: a fresh Reviewer dispatch
+given the diff since the fixed point, the ticket, the execution spec and every review's output,
+charged: *completeness critic — what the
 reviewers and the lens missed and where their method erred: absence claims refuted by evidence
 outside a finder's scope, category errors, a survivor one arm shares and was not charged with;
 counter-critic — which findings source refutes, and which remedies add generality the spec never
-asked for.* Recorded `CRITIC: <n> findings`. A Builder seat after the lenses reads the real diff and
-every review, and spends no Planner meter.
+asked for.* Recorded `CRITIC: <n> findings`.
 
 ## Workflow shape
 
@@ -346,37 +362,39 @@ This section is the contract a `workflow` run takes.
 
 Before the script, you draft the execution spec, check out the run's branch in the checkout (the
 script commits on whatever branch is checked out and never switches), post the profile, take the
-stop where it fires and run slot 1 where `advisor` is on; it runs the implementer, the native axes
-with the Correctness charter beside them where `bug hunter` is `correctness`, at most one fix round,
-and the certifying gate after the review's fixes, in § Review's order. With hard findings, the fix
-round takes them and the gate follows it (`fixRound.gatesAfter`, `gates` empty); with none, the gate
-runs (`gates`), and where it is red the fix round takes its failures and the gate runs again
-(`fixRound.gatesAfter`). The script's certifying reading is `fixRound.gatesAfter` where
-`fixRound.ran`, else `gates`, until a gate you run after return supersedes it (§ Review: the last
-gate before the merge certifies). The stages the profile's `effort` value names (the implementer,
-the Spec and Standards axes, the Correctness charter) are each dispatched by that definition name,
-their stage `effort` set from the same name so the two carriers cannot disagree; the gate-runner is
-dispatched by the `gate_runner` knob at `medium`. The script raises nothing: a `FAIL` in either list
-is a red gate, which raises the critic you dispatch to `code-reviewer-xhigh` (§ Run profile's
-ratchet), and the script's Correctness call stays the run's one `LENS correctness` line. On its
-return you run the Codex lens where `bug hunter` is `codex`, adjudicate, dispatch the critic, merge
-and write the record. The script's fix round is the run's first material round (§ Run profile's
-caps), and takes the hard findings unadjudicated, its seat checking each against source; you
-adjudicate every finding, the rest and the lens's included, before the critic. So here the fix round
-and its gate precede your adjudication: a standing property of this shape, not a `Deviations` entry.
-**The critic is the fix round's targeted review**: where `fixRound.ran`, its charge names every fix
-since the implementer by commit range, `<implementer's last commit>..HEAD`, HEAD read at its
-dispatch and the implementer's last commit the first token of the last `implementerReport.commits`
-entry. Ending at HEAD covers a fix seat that was dropped or committed nothing, and your own rounds
-after return; since the critic reads the full diff and every review, § Review's targeted review
-after material fixes is met without another dispatch. A Codex lens reading NOT RUN fires the
-Correctness charter after return too, yours (§ Review's fallback), at the Correctness charter's
-effort from § Run profile, derived as though `bug hunter` were `correctness`. The script never
-merges, writes the tracker or asks a question: none reaches a human turn from inside it. Its fix
-round precedes the lens, so it leaves its work committed (`--base` reads only commits); fix commits
-after the lens are yours, each re-gated before the critic (§ Review), and a lens after return
-departs from § Review's concurrent ordering, which the record notes under `Deviations`. A second
-material round and the wording round are yours after return, under § Run profile's caps.
+stop where it fires and run slot 1 (§ Advisor slots); it runs the implementer, the native axes with
+the Correctness charter beside them where `bug hunter` is `correctness`, at most one fix round, and
+a gate after it, here before the targeted review. With hard findings, the fix round takes them and
+the gate follows it (`fixRound.gatesAfter`, `gates` empty); with none, the gate runs (`gates`), and
+where it is red the fix round takes its failures and the gate runs again (`fixRound.gatesAfter`).
+The script's certifying reading is `fixRound.gatesAfter` where `fixRound.ran`, else `gates`, until a
+gate you run after return supersedes it (§ Review: the last gate before the merge certifies). The
+stages the profile's `effort` value names (the implementer, the Spec and Standards axes, the
+Correctness charter) are each dispatched by that definition name, their stage `effort` set from the
+same name so the two carriers cannot disagree; the gate-runner is dispatched by the `gate_runner`
+knob at `medium`. The script raises nothing: a `FAIL` in either list is a red gate, which turns
+nothing on (§ Run profile's ratchet). On its return you run the Codex lens where `bug hunter` is
+`codex`, the default, adjudicate, fix, take the targeted review (the critic, where on), run the
+certifying gate on the final tree where a fix of yours landed, merge and write the record. The
+script's fix round takes the hard findings unadjudicated, its seat checking each against source; you
+adjudicate every finding, the rest and the lens's included, before the targeted review. So here the
+fix round and its gate precede your adjudication and the targeted review: a standing property of
+this shape, not a `Deviations` entry. **The targeted review** (§ Review; the critic, where on):
+where `fixRound.ran`, its charge names every fix since the implementer by commit range,
+`<implementer's last commit>..HEAD`, HEAD read at its dispatch and the implementer's last commit the
+first token of the last `implementerReport.commits` entry. Ending at HEAD covers a fix seat that was
+dropped or committed nothing, and your own fixes after return; where only your lens fixes form the
+round, the range runs from the commit before your first fix to HEAD. A Codex lens reading NOT RUN
+fires the Correctness charter after return too, yours (§ Review's fallback), at
+`code-reviewer-medium` unless the profile raised `effort bug hunter`. The script never merges,
+writes the tracker or asks a question: none reaches a human turn from inside it. Its fix round
+precedes the lens, so it leaves its work committed (`--base` reads only commits); fixes for the
+lens's findings are yours (§ Review), and a lens after return departs from § Review's concurrent
+ordering, which the record notes under `Deviations`. The script's fix round and your lens fixes
+together are the run's one material round (§ Run profile's caps), since the lens cannot join a round
+that precedes it; a later one is the fix-round cap stop, and it and the wording round are yours.
+Where a fix of yours lands, the script's gate no longer certifies, and the certifying gate runs once
+more on the final tree: a standing cost of this shape.
 
 **Launch `workflow.js` beside this file by path**,
 `Workflow({scriptPath: "<this Skill's directory>/workflow.js", args})`, from a session started
@@ -389,8 +407,7 @@ field names, any other field throwing — `ticket` the issue reference; `gateTie
 `gate tier` spelled out for the gate-runner; `profile` the posted block transcribed to an object,
 keyed by the dial tokens verbatim, spaces included, except that the `effort <seat>` dials nest as
 one `effort` object mapping each seat token to its definition name: `{standards: "off",
-"bug hunter": "correctness", effort: {implementer: "implementer", spec: "code-reviewer",
-"bug hunter": "code-reviewer-xhigh"}}`; `gateRunner` the `gate_runner` knob's seat when it is not
+"bug hunter": "codex", effort: {implementer: "implementer-medium", spec: "code-reviewer-medium"}}`; `gateRunner` the `gate_runner` knob's seat when it is not
 `gate-runner`; `specPath` outside the checkout or ignored there, since the implementer commits
 everything and the spec stays uncommitted (§ Seats). It returns
 `{gates, findings, implementerReport, fixRound, dropped, gateReports}`. **Resume**: stop the run,
@@ -407,9 +424,8 @@ commits already made, committing nothing on its behalf. A path a gate wrote is o
 path its report named, never a named directory as a whole, since a gate may name `src` for a cache
 while a seat's forgotten file sits beside it. The script subtracts the same set before its
 `fix:gate` and in its last-round warning. `fixRound.ran` with `gatesAfter` empty means no gate saw
-the fix work (a dropped fix seat may have committed): dispatch the gate-runner on it before the
-critic, after the lens and its fixes where one runs, since a lens fix would invalidate it (§
-Review). Reconcile `dropped` against `journal.jsonl`, which gives each call's label, `agentId` and
+the fix work (a dropped fix seat may have committed): the certifying gate you run last covers it
+(§ Review). Reconcile `dropped` against `journal.jsonl`, which gives each call's label, `agentId` and
 return value (the `started` records carry the label): the definition each stage was dispatched by is
 `agentType` in that agent's `agent-<id>.meta.json` beside it (`workflow-subagent` there is what an
 omitted `agentType` records), its model and effort are on its `agent-<id>.jsonl` assistant records,
@@ -418,11 +434,11 @@ and an implementer's calls are the `tool_use` blocks in that transcript other th
 past 60 under `Deviations`. Check the diff's paths against the plan's changed-path set: a path
 outside it ratchets (§ Run profile). Inside the script a dropped gate reads green and a dropped
 review clean, so at return you make up what they would have run: for a `gate` or `fix:gate` label in
-`dropped` you dispatch the gate-runner at the same point, and before the critic you dispatch each
-review the profile now calls for that the script did not return, at its definition (both read off
-the profile as § Run profile's ratchet leaves it at return). A dropped `review:correctness` is never
-recorded as `FINDINGS: 0`, since above the light plan the loop is never without a bug hunter (§
-Review).
+`dropped` you run the certifying gate last, and before the targeted review you
+dispatch each review the profile now calls for that the script did not return, at its definition
+(both read off the profile as § Run profile's ratchet leaves it at return). A dropped
+`review:correctness` is never recorded as `FINDINGS: 0`, since the loop never lacks the bug hunter
+its profile names (§ Review).
 
 **Adoption**: `subagents` stays every project's default until three clean scripted runs —
 certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it) with

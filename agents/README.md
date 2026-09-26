@@ -22,7 +22,7 @@ silently.
 | Coordinator (inside a delegated batch, one per ticket, depth 1; dispatched by `implement-batch`'s delegate) | `claude/coordinator.md` |
 | Implementer | `claude/implementer.md`, `claude/implementer-medium.md` |
 | Advisor (Planner role, slots 1 and 3; slot 3 continues slot 1 by `SendMessage` or spawns fresh) | `claude/advisor.md` |
-| Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md`, `claude/code-reviewer-medium.md`, `claude/code-reviewer-xhigh.md` |
+| Reviewer — Standards axis, Spec axis, Correctness fallback, critic seat; each a fresh dispatch | `claude/code-reviewer.md`, `claude/code-reviewer-medium.md` |
 | Gate-runner | the project's own `.claude/agents/gate-runner.md`, once a project stamps one; the stamped Template runs at `effort: medium` |
 
 The gate-runner stays in its project: it carries that project's gate commands, so a shared copy
@@ -37,10 +37,10 @@ assuming one, because nothing in this repository may assume where the clone live
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
-# Stand in the wrong clone and the loop would link seven names at nothing, silently.
+# Stand in the wrong clone and the loop would link six names at nothing, silently.
 [ -f "$REPO/agents/claude/implementer.md" ] || { echo "not the agent-skills clone: $REPO" >&2; exit 1; }
 mkdir -p "$HOME/.claude/agents"
-for n in coordinator implementer implementer-medium advisor code-reviewer code-reviewer-medium code-reviewer-xhigh; do
+for n in coordinator implementer implementer-medium advisor code-reviewer code-reviewer-medium; do
   ln -sfn "$REPO/agents/claude/$n.md" "$HOME/.claude/agents/$n.md"
 done
 ```
@@ -56,16 +56,18 @@ new release reaches them with no edit ([ADR 0017](../docs/adr/0017-seats-pin-fam
 ## Effort fields
 
 Every Claude definition carries `effort:` explicitly
-([ADR 0018](../docs/adr/0018-run-profile-derived-from-plan.md) § 7). The bare name carries the
-seat's default, `high`, except the gate-runner's `medium`; a suffix names any other value, and the
-table above shows which values each seat reaches. A suffixed file is its bare file with only
+([ADR 0023](../docs/adr/0023-light-default-run-profile.md), superseding
+[ADR 0018](../docs/adr/0018-run-profile-derived-from-plan.md) § 7). A profile seat's `-medium` name
+is the default dispatch and its bare name, `high`, the add-on; the advisor and the `coordinator`
+keep their one `high` definition, and the gate-runner runs `medium`. The table above shows which
+values each seat reaches. A suffixed file is its bare file with only
 `name:`, `effort:` and one leading sentence changed. Re-apply an edit to a bare body to its
 suffixes by hand, then run this check. It prints one `diff` hunk per suffix, whose `<` lines are
 exactly that suffix's leading sentence and blank line, and nothing else:
 
 ```sh
 REPO="$(git rev-parse --show-toplevel)"
-for p in implementer-medium:implementer code-reviewer-medium:code-reviewer code-reviewer-xhigh:code-reviewer; do
+for p in implementer-medium:implementer code-reviewer-medium:code-reviewer; do
   diff <(grep -vE '^(name|effort):' "$REPO/agents/claude/${p%%:*}.md") <(grep -vE '^(name|effort):' "$REPO/agents/claude/${p##*:}.md")
 done
 ```
@@ -75,8 +77,8 @@ assistant record in the seat's transcript,
 `~/.claude/projects/<project-slug>/<session-id>/subagents/agent-<id>.jsonl` in the parent session's
 transcript directory, carries the applied `effort`, and a definition's value overrides the parent
 session's (measured 2026-09-24). Run the parent at a value the seat does not carry
-(`claude -p --effort low`): a bare `claude -p` ran at `xhigh`, so an `xhigh` seat under it reads the
-same either way.
+(`claude -p --effort low`), so an inherited value cannot pass for the definition's; a bare
+`claude -p` ran at the CLI's own default, above every seat's value.
 
 ## Editing here is live
 

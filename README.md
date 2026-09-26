@@ -63,7 +63,7 @@ on first launch, and the session must be restarted before they load.
 
 A third install surface, and the only one the verifier never sees. `agents/` holds one pinned agent
 definition per seat and effort value, all for Claude Code — `implementer`, `advisor`,
-`code-reviewer` and `coordinator`, plus a `-medium` or `-xhigh` suffix where a seat reaches another
+`code-reviewer` and `coordinator`, plus a `-medium` suffix where a seat reaches another
 value. Codex has no named seats; [`agents/README.md`](agents/README.md) says why. The definitions
 install as one symlink each, exactly like a Skill; that README carries the seat table and the loop.
 
@@ -187,12 +187,12 @@ Which capability role fills which seat in a multi-agent run. Two roles — **Pla
 **Builder** — each defined by a property (does it draw on its own weekly meter?) rather than a
 model name, so a model release does not silently invalidate the routing. Carries the pin rule
 (every seat is a definition; a bare spawn inherits the parent), the meter check, effort by
-definition — Builder-role seats `medium | high | xhigh` where their definitions reach, the
-Planner-role advisor `high` only, and no seat dispatch passes `model` — and the rule that model
-names live in run artifacts, as family aliases, and never in
+definition — Builder-role seats `medium | high` where their definitions reach, `medium` the
+default and `high` an add-on, the Planner-role advisor `high` only, and no seat dispatch passes
+`model` — and the rule that model names live in run artifacts, as family aliases, and never in
 durable prose ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
 [ADR 0017](docs/adr/0017-seats-pin-family-aliases.md),
-[ADR 0018](docs/adr/0018-run-profile-derived-from-plan.md)). The procedure an implementation run
+[ADR 0023](docs/adr/0023-light-default-run-profile.md)). The procedure an implementation run
 follows is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.
 
 **When to use:** before a delegated implementation (even a single implementer), a review with

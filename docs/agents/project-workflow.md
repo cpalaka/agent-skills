@@ -65,7 +65,13 @@ frontier of the later bloat review (`/review-promotions`); a close-out commit ne
 **A prose deliverable is verified by an agent following it, never by re-reading it.** Everything
 here is prose an agent executes, so a ticket that changes a Skill, a Chunk or a Template closes on
 a playthrough against a throwaway target — "where did you guess, where did the text contradict
-itself, what did it name that does not exist" — and the **dispatch** names the confound set,
+itself, what did it name that does not exist" — **one per such change**, more only on the
+Coordinator's recommendation or where the acceptance criteria name them
+([ADR 0023](../adr/0023-light-default-run-profile.md) § 9). **A command block in an instruction
+file is code**, which a playthrough does not certify: it never runs the block against a known-bad,
+so a block that no-ops silently passes it (#96). The block ships only after a fixture run in which
+a known-bad input turns it red, and a fix-round remedy that adds or changes one is measured the
+same way before adoption. The **dispatch** names the confound set,
 rather than leaving the arm to volunteer it. A Claude seat is handed the whole instruction
 hierarchy — both instruction files, this contract, the memory index, and the tracker Chunk where
 the path is approved — so the dispatch reads the seat's own delivery record and names what is in

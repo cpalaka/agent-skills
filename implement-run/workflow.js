@@ -31,8 +31,8 @@ if (gateRunner === 'coordinator') {
 }
 
 // Profile: keyed by the Skill's dial tokens, verbatim. Dials the script does not fill (advisor,
-// critic, ...) are the coordinator's and pass unread; so does `gate tier`, since the gate is
-// briefed from args.gateTier, the same tier spelled out.
+// critic, ...) are the coordinator's and pass unread, their effort values checked only as names;
+// so does `gate tier`, since the gate is briefed from args.gateTier, the same tier spelled out.
 let p = a.profile
 if (typeof p === 'string') {
   try { p = JSON.parse(p) } catch (e) { throw new Error(`args.profile is a string that is not JSON: ${e.message}`) }
@@ -49,7 +49,7 @@ if (!p.effort || typeof p.effort !== 'object' || Array.isArray(p.effort)) {
 // Each definition name → the effort its frontmatter carries. A stage's agentType and its effort
 // option are both read from the one profile value, so the two carriers can never disagree.
 const IMPLEMENTERS = { 'implementer': 'high', 'implementer-medium': 'medium' }
-const REVIEWERS = { 'code-reviewer': 'high', 'code-reviewer-medium': 'medium', 'code-reviewer-xhigh': 'xhigh' }
+const REVIEWERS = { 'code-reviewer': 'high', 'code-reviewer-medium': 'medium' }
 const FAMILY = { 'implementer': IMPLEMENTERS, 'spec': REVIEWERS, 'standards': REVIEWERS, 'bug hunter': REVIEWERS }
 const used = ['implementer', 'spec']
 if (p.standards === 'on') used.push('standards')
@@ -61,6 +61,12 @@ for (const s of used) {
     throw new Error(`args.profile.effort["${s}"] is ${JSON.stringify(name)}: the ${s} seat takes ${Object.keys(family).join(' | ')}`)
   }
   seat[s] = { agentType: name, effort: family[name] }
+}
+// A seat the script does not dispatch (the critic, the advisor, an off axis) is still a definition
+// name, so a retired one fails here rather than passing unread.
+const KNOWN = [...Object.keys(IMPLEMENTERS), ...Object.keys(REVIEWERS), 'advisor']
+for (const [s, name] of Object.entries(p.effort)) {
+  if (!KNOWN.includes(name)) throw new Error(`args.profile.effort["${s}"] is ${JSON.stringify(name)}: not a definition name; allowed ${KNOWN.join(' | ')}`)
 }
 // medium is the gate-runner's only value (the Skill's § Seats).
 const GATE_SEAT = { agentType: gateRunner, effort: 'medium' }
@@ -223,8 +229,9 @@ async function gateRound(label, phaseTitle, afterFix) {
 }
 
 // The gate runs after the review's fixes land, as under subagents (the Skill's § Review): a fix
-// invalidates a gate round that ran before it. A red gate raises no review here — the Correctness
-// call has already returned, and the critic, which the ratchet raises, is the coordinator's.
+// invalidates a gate round that ran before it. A red gate turns nothing on — the Correctness call,
+// where one runs, has already returned, and the targeted review (the critic, where on) is the
+// coordinator's.
 phase('Review')
 const reviewCalls = [
   ...(seat.standards ? [['Standards', seat.standards]] : []),
@@ -241,7 +248,7 @@ reviewCalls.forEach(([axis], i) => {
 })
 
 // One fix round at most, on the hard findings or, where there were none, on a red gate; either
-// way a gate follows it. The coordinator's critic reviews its commits after return. True when the
+// way a gate follows it. The coordinator's targeted review reads its commits after return. True when the
 // tree is ready to gate.
 async function fixRound(items, outputs) {
   phase('Fix')
@@ -254,7 +261,7 @@ async function fixRound(items, outputs) {
 These items (hard review findings, or where there were none, gate failures) are UNADJUDICATED — nobody has checked them against source:
 ${items}
 
-Verify each against source first. Fix what source confirms; refuse what source refutes and report the refutation with its evidence. One round only: no review runs inside this script after it; the coordinator's critic reviews these commits after return.${leave}
+Verify each against source first. Fix what source confirms; refuse what source refutes and report the refutation with its evidence. Re-check each fix with a check aimed at it (the failing cases, any cases an item names, and a sample of what passed), not a re-run of every suite or matrix: the full gate runs after you. One round only: no review runs inside this script after it; the coordinator's targeted review reads these commits after return.${leave}
 
 ${RULES}
 
