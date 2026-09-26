@@ -43,8 +43,10 @@ they printed.
 
 ## The sequence
 
-Read the `<!-- knobs:verify-gate -->` block in `docs/agents/project-workflow.md` **at run time**.
-That block is the contract; nothing here restates its values.
+Read the `<!-- knobs:verify-gate -->` block in `docs/agents/project-workflow.md` **at run time,
+from the file on disk** — a copy injected into your context has lost its marker lines. If the file
+cannot be read, stop and name the path. That block is the contract; nothing here restates its
+values.
 
 **The full gate set is the `verify-gate` Chunk's five steps — `typecheck`, `test`, `build`,
 `smoke`, `secret_scan` — in that order, then `## Project gates`**, each of the five run by the

@@ -7,9 +7,14 @@ disable-model-invocation: true
 Loaded by name, or by path by a delegated coordinator (§ Inside a batch). The third-party
 `/implement` stub carries none of this and stays unedited, unshadowed and unwrapped.
 
-**Knobs**: `<!-- knobs:implement-run -->` in the project contract your host adapter names; defaults
-apply where it is absent. Where the session is rooted elsewhere, this and every other read of the
-project contract here is the target project's, on disk (§ Advisor slots, Cross-repo gate-runner).
+**Knobs**: `<!-- knobs:implement-run -->` in the project contract your host adapter names, read
+from the file on disk, never from a copy injected into your context: Claude Code strips every
+HTML-comment line from what it injects, so the marker, and with it the block, reads absent there,
+though its value lines survive unmarked. A contract that cannot be read is a stop: name the path.
+One that reads with no block takes the defaults, and the knob statement § Start asks for says so:
+`no knobs:implement-run block in <path>; defaults`. Where the session is rooted elsewhere, this and
+every other read of the project contract here is the target project's (§ Advisor slots,
+Cross-repo gate-runner).
 `shape` (`subagents` | `coordinator-pane` | `workflow`; default `subagents`), `layout`
 (`parallel-when-disjoint` | `serial`; default `parallel-when-disjoint`), `gate_runner` (a seat or
 `coordinator`; default `gate-runner`), `advisor` (a seat or `none`; default `advisor`), `light_set`
@@ -73,8 +78,9 @@ Cross-repo gate-runner).
   knob key, `build` carrying `build_check`, which is never listed as its own gate; any other gate (a
   project gate, a trigger-table pull, a key of the `<!-- knobs:verify-gate -->` block beyond the
   eight the engine stamps — the five, `build_check`, `dir`, `env`) by name with its command as given
-  (the contract's trigger table or knob value, or the seat's `## Project gates`). It lists none left
-  out: the seat derives none and marks those itself.
+  (the contract's trigger table or knob value, or the seat's `## Project gates`), reading that
+  block's keys and values alike on disk, as Knobs says. It lists none left out: the seat derives
+  none and marks those itself.
 
 **Toggles**: `solo` turns delegation off, review stays on; `orchestrate` turns it back on.
 

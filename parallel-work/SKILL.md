@@ -12,7 +12,9 @@ checkout is never itself a signal; a worktree you did not create is someone else
 throwaway tree that only runs a gate (`verify-gate`) needs no signal. *Attended* = a human driving
 or watching, whoever writes the diff — not `implement-run`'s `solo`, which turns delegation off.
 
-**Knobs** (`<!-- knobs:parallel-work -->` in the project contract your host adapter names):
+**Knobs** (`<!-- knobs:parallel-work -->` in the project contract your host adapter names, read
+from the file on disk — an injected copy has lost its marker lines; a contract that cannot be read
+is a stop that names the path):
 `worktree_path_prefix`, a path template whose last segment is the branch name (`<path>` below,
 filled in), and `install`, the command that makes a fresh tree buildable. Never bake in a literal.
 

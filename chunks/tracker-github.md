@@ -159,7 +159,9 @@ that Chunk's gate.
 
 ### Knobs
 
-`<!-- knobs:tracker-github -->` carries exactly **REPO** (`owner/repo`) and **RESULTS_DIR** — the
-repository-relative path for a `gate:accept` ticket's result note, or `none` for comments only.
+`<!-- knobs:tracker-github -->`, read from the contract file on disk (an injected copy has lost its
+marker lines; a contract that cannot be read is a stop that names the path), carries exactly
+**REPO** (`owner/repo`) and **RESULTS_DIR** — the repository-relative path for a `gate:accept`
+ticket's result note, or `none` for comments only.
 `PROJECT`, `COLUMNS`, `AGENT_LABEL` and `RECORDS_DIR` are retired; a contract still naming them
 moves them to the project's own policy file, never back into this chunk.
