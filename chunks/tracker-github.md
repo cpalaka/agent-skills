@@ -1,7 +1,6 @@
 <!-- chunk:tracker-github | kind: value-variant | single-source: agent-skills/chunks/tracker-github.md -->
 <!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
      Edit here only — no per-project copies, no parity. -->
-<!-- The tracker fork's GitHub side: a project imports this OR backlog-core, never both. -->
 
 ## Task tracking (GitHub Issues)
 
@@ -141,11 +140,11 @@ both and branches `<type>/<slug>`. Another repository's issue is `owner/repo#<n>
 searches: `git log -E --grep '#<n>([^0-9]|$)'` (a bare `#25` matches `#250`).
 
 `git-flow-squash` is a Skill — load it at task start and at integration. Its merge model and
-pre-push audit stand; here the issue number replaces `task-NNN`, and the project is **not**
-board-less, since the issue numbers are the task ids. **Nothing is marked Done on the branch**: the
-integration commit carries code and the footer, no board change, and the closing record follows
-the merge. There are no board notes, so the notes-SHA policy has no subject; the reviewed SHA is in
-the closing record. No tracker files live in the tree, so there is nothing to groom-push or stage.
+pre-push audit stand, and the project is **not** board-less, since the issue numbers are the task
+ids. **Nothing is marked Done on the branch**: the integration commit carries code and the footer,
+no board change, and the closing record follows the merge. There are no board notes, so the
+notes-SHA policy has no subject; the reviewed SHA is in the closing record. No tracker files live in
+the tree, so there is nothing to stage.
 
 The `implement-run` Skill's Done gate resolves here to the closing record. Under `parallel-work`
 the coordinator alone writes issues, except an attended worktree session on the issue it owns.

@@ -24,5 +24,3 @@ How to use it:
 - **New domain language is a doc change, not a code comment.** If a slice introduces a term the
   glossary does not carry, add it to `CONTEXT.md` in the same change (the `domain-modeling` skill has
   the format and the three-gate test for whether the decision behind it also earns an ADR).
-- Before minting a numbered ADR file, follow the `backlog-core` chunk's rule for hand-numbered
-  sequences — it owns the max+1 hazard and the renumbering call.

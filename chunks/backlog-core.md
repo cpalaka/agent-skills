@@ -1,3 +1,4 @@
+<!-- FROZEN: kept for its existing importers only — stamped by nothing, takes no edits. -->
 <!-- chunk:backlog-core | kind: value-variant | single-source: agent-skills/chunks/backlog-core.md -->
 <!-- Delivered by Claude @import or a Codex AGENTS.md explicit read through the host's chunk symlink.
      Edit here only — no per-project copies, no parity. -->

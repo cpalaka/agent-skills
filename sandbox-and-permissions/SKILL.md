@@ -45,7 +45,7 @@ Bypass from the **first** attempt. Few of these errors mention the sandbox.
 | Godot, headless included (`--headless`, `--import`, a test runner) | 4.7-stable: SIGSEGV at boot (MoltenVK, or `user://logs`). 4.7.2: exits 0 but prints `ERROR:` lines (log file, CA store, editor settings) that a runner treating `^ERROR:` as fatal reads as **FAIL** | every launch |
 | Playwright `browser.launch()` | **nothing** — no output, not even the script's own `catch`, for minutes; reads as a slow browser | every launch |
 | `gh <anything>`, reads included | `x509: OSStatus -26276` — macOS denying gh's TLS stack the keychain trust store, not host blocking | every invocation (reads measured failing 2026-07-28) |
-| write-side git **from a worktree** — `add`, `commit`, `fetch`, the `backlog` CLI's automatic fetch | `Unable to create '<main>/.git/worktrees/<name>/index.lock'` | every write-side op there |
+| write-side git **from a worktree** — `add`, `commit`, `fetch` | `Unable to create '<main>/.git/worktrees/<name>/index.lock'` | every write-side op there |
 
 Plain `git push`/`fetch` over HTTPS uses git's own TLS and needs no bypass.
 

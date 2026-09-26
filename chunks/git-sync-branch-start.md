@@ -25,5 +25,4 @@ git switch -c <branch>                      # only once that pull has SUCCEEDED
 
 **A failed pull is a stop**: resolve or report it, never branch anyway.
 
-Branch naming: load `git-flow-squash` at task start. Tracker wiring: `backlog-core` or
-`tracker-github`. Shared checkouts: `parallel-work`.
+Branch naming: load `git-flow-squash` at task start. Shared checkouts: `parallel-work`.

@@ -152,10 +152,10 @@ host, and nothing here depends on it ([ADR 0008](docs/adr/0008-public-private-sp
   Derive membership instead — per lettered clause, the marker set must equal the governed-noun hit
   set, so it is a command's output rather than a judgment that accretes exceptions. For
   `git-flow-squash`, whose governing sentence defers task ids, the board, Done-marking and
-  `--notes` to the tracker chunk:
+  the notes to the tracker chunk:
 
   ```sh
-  awk '/^\*\*\([a-z]\)/{c=substr($0,1,5)} c&&/task id|task-NNN|backlog|--notes|Done/{n[c]=1}
+  awk '/^\*\*\([a-z]\)/{c=substr($0,1,5)} c&&/task id|task-NNN|backlog|notes|Done/{n[c]=1}
        c&&/resolves this/{m[c]=1} END{for(k in n) print (k in m?"ok  ":"GAP ") k}' \
       git-flow-squash/SKILL.md | sort
   ```

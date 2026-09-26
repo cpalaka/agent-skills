@@ -55,7 +55,7 @@ not check out, or `git checkout main` refuses or would carry changes along.
 
 **Mode B — Attended worktrees.** `git worktree add <path> -b <branch> origin/main` — branching off
 fresh `origin/main` is the sync, so don't re-pull inside. Which tracker writes the session may make
-is the tracker chunk's (`backlog-core` or `tracker-github`).
+is the tracker chunk's.
 
 - **A fresh interactive worktree inherits no gitignored host config.** Claude Code:
   `cp .claude/settings.local.json <path>/.claude/` before launch, or the session silently runs
@@ -64,7 +64,7 @@ is the tracker chunk's (`backlog-core` or `tracker-github`).
 
 **A worktree isolates files, not tool state.** A tool that scans "the repo", resolves its root once,
 or keys on anything but your working directory sees — or writes — a sibling's world; verify what
-each keys on (`backlog`'s max+1 ID scan, `backlog-core`).
+each keys on.
 
 **Visual or feel acceptance runs attended**, never as a wave: the diff may be delegated, the
 acceptance may not.

@@ -6,8 +6,7 @@ type: github
 # imports here.
 imports:
   - tracker-github          # UNCONDITIONAL — this is the tracker-typed Profile, so there is nothing
-                            # to decide at apply time. A project imports this OR backlog-core,
-                            # never both; the chunk's own header states that fork.
+                            # to decide at apply time.
 fork: git-flow-squash       # the ADR-0002 default and, since ADR-0013, the only variant.
                             # Exactly one, and it is imported nowhere: the engine names it as a
                             # Skill in both adapters (`/git-flow-squash`, `$git-flow-squash`).
@@ -130,14 +129,12 @@ GitHub remote" would move a project off this Profile over an expired token. If s
 and stage 2 fails, **stop and report what `gh` printed**: the remedy is `gh auth login` or a
 network, after which init re-runs from the top at no cost. The tracker choice is not in question.
 
-**On a stage-1 `no`, stop before anything is written** and put two named alternatives to the owner
-(this is the only path that reaches the offer — a stage-2 failure does not):
+**On a stage-1 `no`, stop before anything is written** and put the alternative to the owner (this is
+the only path that reaches the offer — a stage-2 failure does not):
 
-1. **Run `profiles/backlog.md` instead** — the board-driven Profile. It tracks work in files under
-   `backlog/` and needs no remote of any kind.
-2. **Stamp no tracker at all** — run neither tracker Profile. The project gets the contract, the
-   two adapters and the gate seat with no tracker import, no tracker knob block and no pointer
-   files, and adopts one later.
+**Stamp no tracker at all** — run no tracker Profile. The project gets the contract, the two
+adapters and the gate seat with no tracker import, no tracker knob block and no pointer files, and
+adopts one later.
 
 Then stop and let the owner pick; do not choose for them and do not proceed with this Profile.
 **Called by reference from another Profile's precondition**, the calling section says what the

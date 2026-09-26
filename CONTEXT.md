@@ -112,11 +112,12 @@ second source for a convention to drift from, and a check would cost more than i
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
 
 **Fragment target check**:
-Migrate mode's gate on a fragment or Template bullet. The bullet's `<!-- requires: -->` comment
-names its *targets* — what must already exist in the project for the bullet to be true. Every
-target resolves → the bullet is inserted, comment stripped; any fails → the bullet is *withheld*
-whole to the migration ledger, never reworded ([ADR 0010](docs/adr/0010-fragment-bullets-declare-their-targets.md)).
-Init strips the comments and inserts every bullet, because it writes the targets they name.
+Historical: migrate mode's gate on a fragment or Template bullet. The bullet's `<!-- requires: -->`
+comment names its *targets* — what must already exist in the project for the bullet to be true.
+Every target resolves → the bullet is inserted, comment stripped; any fails → the bullet is
+*withheld* whole to the migration ledger, never reworded ([ADR 0010](docs/adr/0010-fragment-bullets-declare-their-targets.md)).
+Retired with Migrate mode by [ADR 0020](docs/adr/0020-migrate-retired.md) (cpalaka/agent-skills#125): no mode
+withholds a bullet, and no `requires:` comment remains.
 _Avoid_: fill gate, existence check.
 
 ### Chunks & composition
@@ -158,9 +159,8 @@ includes the four floor Chunks (git-sync-branch-start, git-commit-format,
 git-confirm-destructive, verify-gate). Claude Code expands its `@import` lines; Codex follows the
 bundle's explicit read directive. Its membership *is* the always-on list — the engine derives the
 Codex read list from it, and no other manifest or header field routes a Chunk (ADR 0014). The
-tracker chunk (`backlog-core` or `tracker-github`) is deliberately NOT in it — the Profile imports
-it explicitly, because `@import` cannot be undone; the git-flow fork is a Skill the Profile names,
-not a Chunk it imports.
+tracker chunk is deliberately NOT in it — the Profile imports it explicitly, because `@import`
+cannot be undone; the git-flow fork is a Skill the Profile names, not a Chunk it imports.
 _Avoid_: base chunk (it is a *bundle* of Chunks), boilerplate.
 
 **Profile**:

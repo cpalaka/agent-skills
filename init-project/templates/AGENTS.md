@@ -43,9 +43,6 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   and read `$codex-sandbox-and-approvals` for the measurements, before calling a server broken.
 - MCP servers connect **at session start** — nothing re-reads a config change mid-session; start a
   new session.
-<!-- requires: contract states: which MCP server writes and which only read -->
-- Which server writes and which only read is in the contract, § Working in this repo — not
-  host-specific; only the tool-name prefix you see is.
 
 ## Sandbox, approvals, git gates
 
@@ -61,8 +58,7 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
 ## Child agents
 
 - **One writer per repository main.** A child works its own worktree (the prefix is the contract's
-  `parallel-work` knob); the coordinator is the only seat that merges, runs the gates, and writes any
-  board row but the child's own.
+  `parallel-work` knob); the coordinator is the only seat that merges and runs the gates.
 - **A child may not merge or run the gates**, whatever its sandbox permits. Role-file mechanics —
   inheritance, disabling a server, when a role file is read — are in the
   `codex-sandbox-and-approvals` Skill; personal roles live in `~/.codex/agents/`.

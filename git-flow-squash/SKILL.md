@@ -9,10 +9,11 @@ Integration is a local **squash-merge** to `main`, with no PRs. **(a)**, **(b)**
 coupled and stay together (ADR 0002, kept by ADR 0013). Sync and branch per
 `git-sync-branch-start`; write commit messages per `git-commit-format`.
 
-**Board-less projects** (neither `backlog-core` nor `tracker-github` imported) have no task ids:
-branches are `<type>/<slug>`, and every `task-NNN` form and (c) drop out. A `tracker-github`
-project is **not** board-less: a clause naming a task id, a board, Done or `--notes` resolves as
-that chunk's deferred-clauses section says. The integration mechanics stay the same either way.
+**Board-less projects** (no tracker Chunk imported) have no task ids: branches are
+`<type>/<slug>`, and every task-id form and (c) drop out. A `tracker-github`
+project is **not** board-less: a clause naming a task id, a board, Done or the tracker's notes
+resolves as that chunk's deferred-clauses section says. The integration mechanics stay the same
+either way.
 
 **(a) Integration = squash-merge: code and Done land as ONE commit on `main`.** Once (d)'s diff
 approval is in, mark the task Done **on the branch** and commit it there (`tracker-github`
@@ -54,12 +55,12 @@ resolves this). Then squash.
   If the base has moved, `SQ` reverts what the peer landed. A parent check or `git diff $SQ HEAD`
   passes by construction, so neither one catches this.
 
-**(b) Branch = `<type>/task-NNN`.** Use a conventional-commit type (`feat`, `fix`, `chore`,
-`docs`, `refactor`, `test`) and the task id zero-padded to 3 digits, optionally followed by a
-kebab description, e.g. `feat/task-003`. (`tracker-github` resolves this.)
+**(b) Branch = `<type>/<task id>`.** Use a conventional-commit type (`feat`, `fix`, `chore`,
+`docs`, `refactor`, `test`) and the tracker's task id, optionally followed by a kebab description.
+(`tracker-github` resolves this.)
 
-**(c) No commit SHA in the backlog `--notes`.** Done is marked before the squash exists, and no
-SHA is appended afterwards. The commit scope and the `Refs task-NNN` footer are the link
+**(c) No commit SHA in the tracker's notes.** Done is marked before the squash exists, and no SHA
+is appended afterwards. The commit scope and the `Refs <task id>` footer are the link
 (`git log --grep`). (`tracker-github` resolves this.)
 
 **(d) No PRs: review locally, and push `main` only on per-branch diff approval.**
@@ -67,10 +68,6 @@ SHA is appended afterwards. The commit scope and the `Refs task-NNN` footer are 
 - Report the ready branch in chat: what's on it, what's verified, and what deserves a close look.
   Approval of the **diff** authorises exactly one squash-merge and the push of `main` that goes
   with it, nothing more.
-- **Board-grooming-only pushes are pre-authorised**: `chore(backlog): …` commits and nothing else.
-  Prove it before pushing, with `git log origin/main..main` and a `--stat` that touches only
-  `backlog/`. If anything else rides along, the ordinary gate applies.
-  (`tracker-github` resolves this.)
 - **Before the push, `git log origin/main..main` must list only your squash commit.** Anything
   else, such as another session's unpushed work, would ride on your approval. Stop and ask; never
   reset or rebase it out of the way.

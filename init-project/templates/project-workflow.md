@@ -11,9 +11,24 @@ Dev-process rules are not here either: they come from the shared Chunk library, 
 `~/.claude/chunks` and `~/.codex/chunks` — edit a rule THERE, not here, and the edit reaches every
 project. The knob blocks below are what those Chunks read out of this file, by marker.
 
-**Every session on both hosts loads this file whole. Before adding to it, read
-[`ADDING.md`](ADDING.md)** — the reader test, the 16,384-byte cap, and what to do when a ticket's
-acceptance criterion says to record something here.
+**Every session on both hosts loads this file whole.**
+
+Before a line enters the contract, answer three questions, one sentence each, on the record:
+
+1. **Who reads it?** The coordinator, an implementer seat, the gate-runner, a host adapter, a
+   human.
+2. **At what moment — and is the contract the narrowest carrier guaranteed loaded then?** A rule
+   that fires only inside a slash-only Skill belongs in that Skill, which is always explicitly
+   loaded. A rule that fires on a commit or a branch start belongs in a Chunk. A rule true of one
+   host belongs in that host's adapter. The contract earns a rule only when the moment it fires
+   can arrive in any session, unannounced.
+3. **Would they act differently without it?** Where the tool already prints it, refuses it or
+   enforces it, the sentence is a second copy of a verdict the reader already holds.
+
+Question 3 is the one that deletes rather than shortens, and it has a precondition: **read the
+tool's source before writing prose about how the tool behaves.** A procedure someone performed
+once can outlive its reason, or never have had one. A doc instructing a reader to redo what the
+tool already did is worse than bloat: it is a false premise they will act on.
 
 {{KNOB_BLOCKS}}
 

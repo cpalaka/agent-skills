@@ -103,7 +103,7 @@ The default git-flow fork: integration is a local **squash-merge** to `main`, no
 commit. That last part is why the rest of it exists — with no merge commit to inspect afterwards,
 the pause at the staged squash is the only review surface the change will ever get, so the Skill
 spells out what has to be true at that moment. The three rules that ride the fork together —
-squash-merge, the typed `<type>/task-NNN` branch prefix, no commit SHA in the tracker notes — are
+squash-merge, the typed `<type>/<task id>` branch prefix, no commit SHA in the tracker notes — are
 coupled by [ADR 0002](docs/adr/0002-git-flow-structural-fork.md) and must not be taken apart; a
 fourth covers local review and the `main` push gate. Around them sit the measured footguns: the
 squash carries the branch's final tree and nothing else, a sign-off approves a tree rather than a
@@ -163,7 +163,7 @@ taking the review, writing the run record.
 
 ### init-project
 
-The single engine that scaffolds (or migrates) a project onto the Chunk library. Every project type
+The single engine that scaffolds a project onto the Chunk library. Every project type
 gets the same four files: `docs/agents/project-workflow.md`, the shared contract holding the
 project's rules and the engine-written knob blocks, two thin host adapters over it — `CLAUDE.md`
 carrying the chunk `@import`s and Claude Code mechanics, `AGENTS.md` naming the same chunks for
@@ -172,8 +172,8 @@ Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adap
 not write the diff ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). It also
 stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
 recipe. Adding a project type means adding a `profiles/<type>.md`; the engine never changes
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `backlog`, `github`, `godot`, and
-`web` Profiles.
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `github`, `godot`, and `web`
+Profiles.
 
 **When to use:** setting up a new project, adopting the Chunk library in an existing one, or
 adding a new project type.
@@ -351,8 +351,8 @@ delivery? No → Chunk. Yes → Template.
 | `git-commit-format.md` | Commit format and hygiene. |
 | `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
 | `verify-gate.md` | The gate to run before any commit or handoff. |
-| `backlog-core.md` | Task tracking with backlog.md (the Backlog-CLI alternative to `tracker-github.md`). |
-| `tracker-github.md` | Task tracking with GitHub Issues — gate and origin labels, no board (the alternative to `backlog-core.md`). |
+| `backlog-core.md` | Frozen: task tracking with backlog.md, kept for its existing importers; stamped by nothing, takes no edits. |
+| `tracker-github.md` | Task tracking with GitHub Issues — gate and origin labels, no board. |
 
 Per-project variation belongs in **knobs** (an engine-written tagged block in the project's
 `CLAUDE.md`) or an **inline-leaf** (hand-authored, project-specific prose) — never in a Chunk.
@@ -367,9 +367,9 @@ row per third-party Skill, because a body may name some of a repo's Skills and n
 | Skill | Named by | Install from |
 |---|---|---|
 | `to-spec` | `spec-review`, `multi-agent-policy`, the `AGENTS.md` Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `to-tickets` | `spec-review`, `multi-agent-policy`, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `to-tickets` | `spec-review`, `multi-agent-policy`, the `github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `implement` | `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, the `backlog`/`github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, the `github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grilling` | `refresh-context` (both hosts), `godot-architecture-review`, `tournament`, `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grill-with-docs` | `multi-agent-policy`, `tournament` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `domain-modeling` | `refresh-context` (both hosts), `godot-architecture-review`, the `godot` Profile's domain Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
