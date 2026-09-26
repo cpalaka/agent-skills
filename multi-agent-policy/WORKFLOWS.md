@@ -168,6 +168,5 @@ a top-of-file `const` edit does not.
 - **After editing a `.claude/workflows/` script, launch by `scriptPath`, never by `name`**: by-name
   can serve a session-start copy. Verify the configuration by grepping `agent-*.jsonl` for
   `"model"`, not from a line the script prints.
-- **Codex agent definitions and skill metadata are session inputs.** After changing
-  `~/.codex/agents/*.toml`, `~/.agents/skills/` or an `agents/openai.yaml`, validate discovery in a
-  new Codex task.
+- **Codex skill metadata is a session input.** After changing `~/.agents/skills/` or an
+  `agents/openai.yaml`, validate discovery in a new Codex task.

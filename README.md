@@ -62,13 +62,13 @@ on first launch, and the session must be restarted before they load.
 ### The seat definitions
 
 A third install surface, and the only one the verifier never sees. `agents/` holds one pinned agent
-definition per seat and effort value per host — `implementer`, `advisor`, `code-reviewer` and
-`coordinator` for Claude Code, plus a `-medium` or `-xhigh` suffix where a seat reaches another
-value, and `implementer` and `code-reviewer` for Codex. They install as one symlink each, exactly
-like a Skill; [`agents/README.md`](agents/README.md) carries the seat table and the loop.
+definition per seat and effort value, all for Claude Code — `implementer`, `advisor`,
+`code-reviewer` and `coordinator`, plus a `-medium` or `-xhigh` suffix where a seat reaches another
+value. Codex has no named seats; [`agents/README.md`](agents/README.md) says why. The definitions
+install as one symlink each, exactly like a Skill; that README carries the seat table and the loop.
 
 They matter more than their size suggests: a seat whose definition the host cannot resolve does
-not fail, it dispatches on whoever spawned it. Check with `ls -l ~/.claude/agents ~/.codex/agents`.
+not fail, it dispatches on whoever spawned it. Check with `ls -l ~/.claude/agents`.
 
 ### Setting up a clone
 

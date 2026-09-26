@@ -126,9 +126,8 @@ the Standards axis found 10 of its 11 measured findings on such diffs.
 
 **Effort** is dispatched as a definition name (§ Seats). A light plan's `medium` sits below the
 default and fires no stop, since speed is preferred where no gate loads the diff. The Codex lens
-takes no effort, and on a Codex host the role files keep `high`, so a seat there dispatches its role
-file bare: the block posts each `fixed by host`. Expected implementer calls turns no dial: it
-sizes phases and sets the `scope` cap.
+takes no effort. Expected implementer calls turns no dial: it sizes phases and sets the `scope`
+cap.
 
 **Pins.** The ticket author pins a dial on its own line directly above the acceptance heading, or
 anywhere in the body where the tracker's ticket has none, `Pins: <token>: <value>`, several

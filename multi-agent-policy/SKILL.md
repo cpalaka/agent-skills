@@ -32,9 +32,9 @@ Builder main session — the **delegate** — which dispatches one `coordinator`
 ## Spawning
 
 - **No bare spawn.** Fill each seat from a pinned definition (this repo's `agents/`; confirm
-  `ls -l ~/.claude/agents ~/.codex/agents` resolves). A bare spawn silently inherits the parent's
-  model: review seats leaked onto a Planner parent in three of four sessions (2026-09-14). Where no
-  definition fits, pin the role on the dispatch.
+  `ls -l ~/.claude/agents` resolves). A bare spawn silently inherits the parent's model: review
+  seats leaked onto a Planner parent in three of four sessions (2026-09-14). Where no definition
+  fits, pin the role on the dispatch.
 - **From a Planner session, pin Builder and say so before dispatching** — one sub-agent or a
   fan-out. Only a judgment-shaped question (ambiguous, not merely unwritten) pins Planner, said
   aloud; research qualifies only when its question does.
@@ -60,10 +60,9 @@ Builder main session — the **delegate** — which dispatches one `coordinator`
 No durable rule — Skill, Chunk, contract, ADR, either host's global file — names a model. A run
 artifact does: a seat definition or workflow script pins a family alias (`opus`, `fable`), which
 follows its family's latest release, never a versioned ID, which stays behind until someone
-re-probes it ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)). Codex role files keep a
-concrete ID; whether Codex resolves an alias is unmeasured. A new version needs no edit. When the
-meter moves a role to another family, `context-hygiene`'s reverse pass (where installed) re-audits
-the seats' model fields; nothing else reads them.
+re-probes it ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)). A new version needs no
+edit. When the meter moves a role to another family, `context-hygiene`'s reverse pass (where
+installed) re-audits the seats' model fields; nothing else reads them.
 
 ## Elsewhere
 

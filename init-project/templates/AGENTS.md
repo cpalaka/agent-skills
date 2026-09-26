@@ -61,7 +61,9 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
   `parallel-work` knob); the coordinator is the only seat that merges and runs the gates.
 - **A child may not merge or run the gates**, whatever its sandbox permits. Role-file mechanics —
   inheritance, disabling a server, when a role file is read — are in the
-  `codex-sandbox-and-approvals` Skill; personal roles live in `~/.codex/agents/`.
+  `codex-sandbox-and-approvals` Skill; a role file in `~/.codex/agents/` registers nothing on its
+  own; a role needs an `[agents.<name>]` table in `~/.codex/config.toml` whose `config_file` names
+  it (measured at user scope only).
 
 <!-- profile:codex-mechanics -->
 
