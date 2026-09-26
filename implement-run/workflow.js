@@ -1,11 +1,11 @@
 export const meta = {
   name: 'implement-run',
-  description: 'implement-run workflow shape: implementer, certifying gate, the review calls the profile turns on, at most one fix round',
+  description: 'implement-run workflow shape: implementer, the review calls the profile turns on, at most one fix round, the certifying gate after the review\'s fixes',
   phases: [
     { title: 'Implement', detail: 'the implementer seat, committing on the checked-out branch' },
-    { title: 'Gate', detail: 'the gate-runner seat, certifying round' },
     { title: 'Review', detail: 'the review calls the profile turns on: Spec always, Standards where on, the Correctness charter where bug hunter is correctness' },
-    { title: 'Fix', detail: 'at most one round: implementer, then the gate again' },
+    { title: 'Fix', detail: 'at most one round: the implementer on the hard findings, or, where there were none, on a red gate, then the gate again' },
+    { title: 'Gate', detail: 'the gate-runner seat, certifying round, after the review\'s fixes land' },
   ],
 }
 
@@ -80,7 +80,7 @@ const IMPL_SCHEMA = {
   properties: {
     report: { type: 'string', description: 'your whole handoff report' },
     commits: { type: 'array', items: { type: 'string' }, description: 'short SHA and subject of each commit you made, oldest first; empty if you stopped without committing' },
-    porcelain: { type: 'string', description: 'git status --porcelain verbatim, run after your last commit' },
+    porcelain: { type: 'string', description: 'git status --porcelain --untracked-files=all verbatim, run after your last commit' },
   },
   required: ['report', 'commits', 'porcelain'],
 }
@@ -103,8 +103,9 @@ const GATE_SCHEMA = {
     overall: { type: 'string' },
     report: { type: 'string' },
     porcelain: { type: 'string' },
+    outputs: { type: 'array', items: { type: 'string' }, description: 'each path your ## Commands names as added by a gate, repository-relative: a file, or an outermost directory' },
   },
-  required: ['gates', 'overall', 'report', 'porcelain'],
+  required: ['gates', 'overall', 'report', 'porcelain', 'outputs'],
 }
 const REVIEW_SCHEMA = {
   type: 'object',
@@ -132,7 +133,7 @@ const RULES = `Constraints, each with its reason:
 - Commit all your work on the checked-out branch before you return: the coordinator's Codex lens reviews \`--base ${fixedPoint}\`, which sees commits only, so uncommitted work is invisible to it.
 - Never push, never merge, never write the tracker: the coordinator owns all three.
 - Never ask a question: no human turn reaches an agent inside a workflow. Where the spec is ambiguous or contradicts the source, take the smallest defensible reading and surface it in your report.
-- After your last commit, run \`git -C ${checkout} status --porcelain\` and return its output verbatim as \`porcelain\`.`
+- After your last commit, run \`git -C ${checkout} status --porcelain --untracked-files=all\` and return its output verbatim as \`porcelain\`.`
 
 function gatePrompt(afterFix) {
   return `Run the verify gate in the checkout ${checkout}, from its root.
@@ -143,7 +144,8 @@ Return your report through the schema:
 - \`report\`: your whole text report, verbatim, every part of it (CONTROL lines, Matches, Inspections, Commands, OVERALL, and the OWNED ELSEWHERE, DECLARED ABSENT, UNCLASSIFIED KEY and OUTSTANDING JUDGMENT lines below it): they have no other home.
 - \`overall\`: the value on your OVERALL line.
 - \`gates\`: one entry per GATE line, in order. \`kind\` is \`gate\` for a plain \`GATE <name>:\` line, \`judgment\` for a \`GATE <name> (judgment):\` line, \`tier\` for a \`GATE <name> (tier):\` line; \`log\` is the log file or directory that line names.
-- \`porcelain\`: after your gates, run \`git -C ${checkout} status --porcelain\` (read-only) and return its output verbatim. This is the script's requirement beside your report shape, not a gate: it gets no GATE line and does not move OVERALL.`
+- \`porcelain\`: after your gates, run \`git -C ${checkout} status --porcelain --untracked-files=all\` (read-only) and return its output verbatim. This is the script's requirement beside your report shape, not a gate: it gets no GATE line and does not move OVERALL.
+- \`outputs\`: every path your \`## Commands\` names as a line the second status capture adds — each file, or each outermost directory where you named one — repository-relative, without a status prefix. Empty where no gate wrote anything. The script subtracts the untracked files your \`porcelain\` lists under these, so a gate's own output never reads as uncommitted work.`
 }
 
 function reviewPrompt(axis) {
@@ -191,32 +193,43 @@ if (impl.porcelain && impl.porcelain.trim()) {
   return result
 }
 
+// A gate's own output is an untracked path its own porcelain lists, under a path its report names
+// (a file, or a directory it wrote into): only those exact paths are subtracted, never a named
+// directory as a whole, since a gate may name `src` for a cache and a seat's forgotten `src/x.py`
+// must still read dirty. Every gate follows a tree its seat reported clean, so what its porcelain
+// adds is taken as its own; a stale seat report is outside what the script can read. Porcelain is read with --untracked-files=all, one line per file. A quoted path with escapes
+// never matches and stays in: a false dirty reading costs a run, a false clean one certifies what
+// nobody committed. The Skill's § At return subtracts the same set.
+const gateOwned = new Set()
+const untracked = porcelain => (porcelain || '').split('\n')
+  .filter(l => l.startsWith('?? ')).map(l => l.slice(3).replace(/^"(.*)"$/, '$1'))
+function owned(g) {
+  const named = (g.outputs || []).map(o => o.replace(/^\.\//, '').replace(/\/+$/, '')).filter(Boolean)
+  return untracked(g.porcelain).filter(path => named.some(o => path === o || path.startsWith(o + '/')))
+}
+function uncommitted(porcelain) {
+  return (porcelain || '').split('\n').filter(l => l.trim()).filter(l =>
+    !(l.startsWith('?? ') && gateOwned.has(l.slice(3).replace(/^"(.*)"$/, '$1')))).join('\n')
+}
+
 async function gateRound(label, phaseTitle, afterFix) {
   const g = await call(label, phaseTitle, GATE_SEAT, gatePrompt(afterFix), GATE_SCHEMA)
+  const mine = g ? owned(g) : []
+  mine.forEach(path => gateOwned.add(path))
   result.gateReports.push(g
-    ? { label, overall: g.overall, report: g.report, porcelain: g.porcelain }
-    : { label, overall: null, report: null, porcelain: null })
+    ? { label, overall: g.overall, report: g.report, porcelain: g.porcelain, outputs: mine }
+    : { label, overall: null, report: null, porcelain: null, outputs: [] })
   return g
 }
 
-phase('Gate')
-const gate = await gateRound('gate', 'Gate', false)
-result.gates = gate ? gate.gates : []
-const failed = result.gates.filter(g => g.verdict === 'FAIL')
-
-// The Skill's ratchet: a red gate raises the Correctness charter to xhigh, applied before its
-// dispatch as under subagents. Spec and Standards are not raised; the critic is outside the script.
-let correctness = seat['bug hunter']
-if (correctness && failed.length && correctness.agentType !== 'code-reviewer-xhigh') {
-  correctness = { agentType: 'code-reviewer-xhigh', effort: 'xhigh' }
-  log(`red certifying gate: review:correctness raised from ${seat['bug hunter'].agentType} to code-reviewer-xhigh (a ratchet: goes under Deviations)`)
-}
-
+// The gate runs after the review's fixes land, as under subagents (the Skill's § Review): a fix
+// invalidates a gate round that ran before it. A red gate raises no review here — the Correctness
+// call has already returned, and the critic, which the ratchet raises, is the coordinator's.
 phase('Review')
 const reviewCalls = [
   ...(seat.standards ? [['Standards', seat.standards]] : []),
   ['Spec', seat.spec],
-  ...(correctness ? [['Correctness', correctness]] : []),
+  ...(seat['bug hunter'] ? [['Correctness', seat['bug hunter']]] : []),
 ]
 // The Codex lens reads commits, and this script's fix round precedes it.
 if (p['bug hunter'] === 'codex') log('bug hunter is codex: the Codex lens is the coordinator\'s after return, not a stage here')
@@ -227,39 +240,62 @@ reviewCalls.forEach(([axis], i) => {
   if (r && r.findings) result.findings.push(...r.findings.map(f => ({ ...f, axis })))
 })
 
-const hard = result.findings.filter(f => f.hard)
-// NOT RUN alone never triggers a fix: it is usually a person's step.
-if (failed.length || hard.length) {
+// One fix round at most, on the hard findings or, where there were none, on a red gate; either
+// way a gate follows it. The coordinator's critic reviews its commits after return. True when the
+// tree is ready to gate.
+async function fixRound(items, outputs) {
   phase('Fix')
   result.fixRound.ran = true
-  const items = [
-    ...failed.map(g => `- GATE ${g.name}: FAIL — log: ${g.log}`),
-    ...hard.map(f => `- [${f.axis}] ${f.file}${f.line === null ? '' : `:${f.line}`} — ${f.summary}`),
-  ].join('\n')
+  const leave = outputs.length
+    ? `\n\nThese untracked paths are a gate's own output, not your work: leave them uncommitted and in place, since a committed build output ships in the squash:\n${outputs.map(o => `- ${o}`).join('\n')}`
+    : ''
   result.fixRound.implementerReport = await call('fix:implementer', 'Fix', seat.implementer, `Fix round for ticket ${ticket} in the checkout ${checkout}; execution spec at ${specPath}.
 
-These gate failures and hard review findings are UNADJUDICATED — nobody has checked them against source:
+These items (hard review findings, or where there were none, gate failures) are UNADJUDICATED — nobody has checked them against source:
 ${items}
 
-Verify each against source first. Fix what source confirms; refuse what source refutes and report the refutation with its evidence. One round only: reviews are not re-run after it.
+Verify each against source first. Fix what source confirms; refuse what source refutes and report the refutation with its evidence. One round only: no review runs inside this script after it; the coordinator's critic reviews these commits after return.${leave}
 
 ${RULES}
 
 Report through the schema: \`report\` covers every item above (fixed or refused, and why), \`commits\` your commits this round, \`porcelain\` as above.`, IMPL_SCHEMA)
   const fix = result.fixRound.implementerReport
+  const dirty = fix && uncommitted(fix.porcelain)
   if (!fix) {
     log('fix:implementer dropped: fix:gate skipped')
-  } else if (fix.porcelain && fix.porcelain.trim()) {
-    log(`fix:implementer left the tree dirty: fix:gate skipped. porcelain: ${fix.porcelain.trim()}`)
-  } else {
+    return false
+  }
+  if (dirty) {
+    log(`fix:implementer left the tree dirty: fix:gate skipped. porcelain, less a gate's own output: ${dirty}`)
+    return false
+  }
+  return true
+}
+
+const hard = result.findings.filter(f => f.hard)
+if (hard.length) {
+  // No gate has run yet, so no gate output is subtracted from the fix seat's porcelain.
+  if (await fixRound(hard.map(f => `- [${f.axis}] ${f.file}${f.line === null ? '' : `:${f.line}`} — ${f.summary}`).join('\n'), [])) {
+    phase('Gate')
+    const after = await gateRound('fix:gate', 'Gate', true)
+    result.fixRound.gatesAfter = after ? after.gates : []
+  }
+} else {
+  phase('Gate')
+  const gate = await gateRound('gate', 'Gate', false)
+  result.gates = gate ? gate.gates : []
+  const failed = result.gates.filter(g => g.verdict === 'FAIL')
+  // NOT RUN alone never triggers a fix: it is usually a person's step.
+  if (failed.length && await fixRound(failed.map(g => `- GATE ${g.name}: FAIL — log: ${g.log}`).join('\n'), [...gateOwned])) {
     const after = await gateRound('fix:gate', 'Fix', true)
     result.fixRound.gatesAfter = after ? after.gates : []
   }
 }
 
 const last = result.gateReports[result.gateReports.length - 1]
-if (last && last.porcelain && last.porcelain.trim()) {
-  log(`WARNING: tree not clean at the last gate round (${last.label}): ${last.porcelain.trim()}`)
+const lastDirty = last && uncommitted(last.porcelain)
+if (lastDirty) {
+  log(`WARNING: tree not clean at the last gate round (${last.label}), less a gate's own output: ${lastDirty}`)
 }
 
 return result

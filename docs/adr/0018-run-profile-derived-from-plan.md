@@ -9,6 +9,7 @@ rows and its floor paragraph, § 4, § 5, § 6 and § 8, each marked. The glossa
 floor a **light plan** and a pin a **lower bound**; this record keeps its own words.
 **Amended 2026-09-24 on #87**, the model-and-effort pin question: § 7, one Considered option and
 one Consequence, each marked.
+**Amended 2026-09-26 on #112**, the gate's place in the run: § 7's `xhigh` trigger, marked.
 
 ## Context
 
@@ -95,8 +96,12 @@ higher path on a premise #73 shows no longer holds: the critic is now a fresh se
    heuristics as decided: `medium` where speed is preferred, so the implementer and Spec axis at
    the floor; the gate-runner runs Builder `medium` always, since its minutes are command time;
    `xhigh` where a review should go deeper, reserved to the critic and the Correctness fallback
-   until measured, on an instruction file in the diff or a red gate in the run; slot 1 never
-   `medium`. **The dial has two carriers** (amended on #87). On the Agent tool, which pins only
+   until measured, on an instruction file in the diff, or for the critic alone a red gate in the
+   run; slot 1 never `medium`. (Amended on #112; the clause read "or a red gate in the run" for
+   both seats: the certifying gate now runs after the review's fixes land, so the Correctness
+   charter goes out before any gate reads, and raising it would take a second dispatch and a second
+   reading of the one bug hunter; the Codex lens's fallback, dispatched later, is that one reading
+   too.) **The dial has two carriers** (amended on #87). On the Agent tool, which pins only
    `model`, **an effort dial's value is a definition name**: each reachable seat-and-effort pair is
    its own pinned definition, the bare seat name carrying the default and every other value a
    suffix (`implementer-medium`, `code-reviewer-medium`, `code-reviewer-xhigh`; `gate-runner`
