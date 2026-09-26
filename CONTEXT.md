@@ -153,6 +153,15 @@ a host adds regardless, which this repo cannot cut and which a seat-token probe 
 the floor, never inside it.
 _Avoid_: always-on set, baseline, preamble; overhead (the host's part, not this one).
 
+**Standards source**:
+The rules a project states for how its code and prose are written, which the Standards axis
+checks a diff against. It is read from the project's **floor**, global instruction file excluded,
+plus the docs the floor points at for a surface the diff touches. It is not a file of its own: a
+rule stated anywhere on the floor counts, and the contract's conventions section is only the
+default home for a new one. What makes a rule checkable is the axis brief's business, not this
+entry's.
+_Avoid_: coding-standards document, style guide, `CODING_STANDARDS.md`.
+
 **dev-base**:
 The bundle Chunk every dev Profile imports: a single `chunks/dev-base.md` that recursively
 includes the four floor Chunks (git-sync-branch-start, git-commit-format,
