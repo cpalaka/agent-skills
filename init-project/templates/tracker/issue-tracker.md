@@ -1,6 +1,6 @@
 # Issue tracker
 
-<!-- Stamped by init-project (profiles/github/templates/issue-tracker.md). This file is the
+<!-- Stamped by init-project (templates/tracker/issue-tracker.md). This file is the
      canonical tracker pointer for skills that look up docs/agents/issue-tracker.md
      (code-review's Spec axis reads it by that path; triage, to-tickets and wayfinder expect it by
      description). Conventions stay authoritative in the tracker-github chunk, which your host
@@ -22,17 +22,26 @@ disagree with it.
 **Multi-line bodies and comments go through a UTF-8 file and `--body-file`**, never `--body` with
 an embedded newline (the chunk's § Task tracking says why).
 
-**That file goes at the repository root** — not the session scratchpad, and not a gitignored path
-such as `.scratch/`. **This rule is unconditional**, and it holds whether or not this project runs
-a leak guard: a scratchpad path is invisible to every tree-walking check the project will ever add,
-and a gitignored one is skipped by a scan that then returns clean on anything inside it whatever it
-contains. Delete the file after the write.
+**Where that file goes depends on how this project's leak guard reads the tree.** Never the
+session scratchpad, under any guard or none: a scratchpad path is invisible to every tree-walking
+check the project will ever add. Beyond that:
+
+- **A guard that walks the working tree and honours `.gitignore`**: the repository root, not a
+  gitignored path such as `.scratch/` — such a scan skips a gitignored path and returns clean on
+  anything inside it, whatever it contains.
+- **A guard that reads tracked files only** (a `git grep` with no `--untracked`): a gitignored path
+  is allowed. The body file is written, passed to `gh` and deleted without ever being tracked, so
+  that guard never sees it wherever it sits, and ignoring the path keeps `git status` clear.
+
+Delete the file after the write.
 
 **Where this project runs a leak guard**, one step is added on top: screen each body through the
 guard before the write, because a guard scans the git object store and **never sees a `gh` write**.
 Plant a known-bad beside the body in the same scan and read the match **count** rather than the
-exit status. Where this project runs no leak guard, that screening step does not apply and nothing
-replaces it — the location rule above is unaffected either way.
+exit status. The screen needs a path the guard reads, so under a tracked-only guard point its
+pattern check at the body file directly (or stage the file intent-to-add for the screen and unstage
+it after). Where this project runs no leak guard, that screening step does not apply and nothing
+replaces it — the scratchpad ban above holds either way.
 
 ## When a skill says "publish to the issue tracker"
 

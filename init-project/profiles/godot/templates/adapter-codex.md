@@ -6,8 +6,9 @@
   project's guide carries it — copy it in at the clone root and replace the placeholder with this
   clone's absolute path. A wrong or unreplaced path fails silently, because the entries are
   `required = false`.
-- **godot-ai is not in that file.** It is registered at USER scope in `~/.codex/config.toml`, with
-  its ports hardcoded there — see the contract's godot-ai section, including the rule that a port fix
+- **godot-ai is not in that file.** Where the project vendors it (the contract's godot-ai section
+  names the tag, or `none`), it is registered at USER scope in `~/.codex/config.toml`, with its
+  ports hardcoded there — see the contract's godot-ai section, including the rule that a port fix
   is applied to every host's user-scope config.
 - Which server writes and which only read is in the contract, § Working in this repo — not
   host-specific; only the tool-name prefix you see is.

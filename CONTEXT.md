@@ -95,17 +95,22 @@ _Avoid_: sync (implies bidirectional — it is not), merge, backport.
 **Template**:
 A Skill-owned file **copied** into a *new* project at init time — the *copied-and-customized*
 delivery mechanism, contrast **Chunk** (referenced, single-source). Reserved for artifacts a
-project genuinely edits after the copy. Two owners: `init-project/templates/` holds the four
-**engine-owned** ones every Profile emits (`CLAUDE.md`, `AGENTS.md`,
-`docs/agents/project-workflow.md`, `.claude/agents/gate-runner.md`), and
-`init-project/profiles/<type>/templates/` holds a Profile's own assets — its `docs/` files plus the
-four `adapters:` fragments the engine inserts into those four at their markers. Realignment after
-the copy is partial and Profile-side only: godot's parity check diffs some of its `docs/` assets
-and the `claude` and `codex` fragments, while the `contract` and `gate_runner` fragments and all
-four engine-owned Templates are checked by nothing and drift unwatched in every stamped project
+project genuinely edits after the copy. Two owners. `init-project/templates/` holds the
+**engine-owned** ones: a stamp emits six files plus one fragment, two of the files and the fragment
+conditional — always `CLAUDE.md`, `AGENTS.md`, `docs/agents/project-workflow.md` and
+`.claude/agents/gate-runner.md`, and where the tracker is `github` the two pointers
+`docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` plus the contract's
+`## Issue tracker` fragment, those three under `templates/tracker/`
+([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)). `init-project/profiles/<type>/templates/`
+holds a Profile's own assets — its `docs/` files plus the four `adapters:` fragments the engine
+inserts into the four always-emitted files as engine zones. Realignment after the copy is partial:
+`check` compares each engine zone of those four files, the fragments included, against a fresh
+render ([ADR 0021](docs/adr/0021-mechanical-stamping-is-a-script.md)); text outside a zone, the two
+tracker pointers and a Profile's `docs/` assets are compared by nothing in the engine, though the
+private companion's godot parity check diffs some of godot's `docs/` assets
 ([issue #17](https://github.com/cpalaka/agent-skills/issues/17)). One pair is unchecked by
-decision rather than by omission: the `github` Profile's `issue-tracker.md` and `triage-labels.md`
-Templates mirror this repository's hand-written `docs/agents/` pair and are deliberately divergent —
+decision rather than by omission: the engine's `issue-tracker.md` and `triage-labels.md` Templates
+mirror this repository's hand-written `docs/agents/` pair and are deliberately divergent —
 both sides are pointers plus one table over the single-sourced `tracker-github` Chunk, so there is no
 second source for a convention to drift from, and a check would cost more than it saves
 ([issue #43](https://github.com/cpalaka/agent-skills/issues/43)).
@@ -176,23 +181,30 @@ includes the four floor Chunks (git-sync-branch-start, git-commit-format,
 git-confirm-destructive, verify-gate). Claude Code expands its `@import` lines; Codex follows the
 bundle's explicit read directive. Its membership *is* the always-on list — the engine derives the
 Codex read list from it, and no other manifest or header field routes a Chunk (ADR 0014). The
-tracker chunk is deliberately NOT in it — the Profile imports it explicitly, because `@import`
-cannot be undone; the git-flow fork is a Skill the Profile names, not a Chunk it imports.
+tracker chunk is deliberately NOT in it — the engine writes its import where the tracker is
+`github` ([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)), because `@import` cannot be
+undone; the git-flow fork is a Skill the adapters name, not a Chunk imported, and
+`init-project/defaults.md` carries it.
 _Avoid_: base chunk (it is a *bundle* of Chunks), boilerplate.
 
 **Profile**:
-The declarative recipe for a project TYPE — which Chunks it imports (always **dev-base** plus its
-extras), which git-flow fork it selects (a Skill named in both adapters since ADR 0014), which
-Templates it stamps, and its per-project knob and inline-leaf prompts. Data consumed by the single `init-project` engine, not a Skill itself. Adding
-a new project type = adding a Profile; the engine never changes
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)).
+The declarative recipe for a project TYPE — the Chunks it imports beyond **dev-base**, the
+Templates and four `adapters:` fragments it stamps, its settings delta, its overrides of the engine
+defaults by key (`init-project/defaults.md` carries the git-flow fork and every knob block), and its
+bespoke setup recipe. A Profile no longer selects a tracker: the tracker is the engine's step,
+`github` or `none`, settled before the first write
+([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)). `none` is the named empty Profile, for a
+project no Profile fits: it runs on the engine defaults alone. Data consumed by the single
+`init-project` engine, not a Skill itself. Adding a new project type = adding a Profile; the engine
+never changes ([ADR 0003](docs/adr/0003-single-init-project-engine.md)).
 _Avoid_: project type (a Profile is the *recipe* for a type), generator (that is `init-project`;
 the Profile is its input), Template.
 
 **knob**:
-A per-project value for a *value-variant* Chunk (backlog version, plans directory, acceptance-
-criteria verify examples, definition-of-done items), written by the `init-project` engine into a
-tagged inline block (`<!-- knobs:<chunk> --> … <!-- /knobs:<chunk> -->`) in the project contract,
+A per-project value a *value-variant* Chunk or Skill reads by marker (`verify-gate`'s `test`,
+`build` and `smoke` commands; `parallel-work`'s `worktree_path_prefix` and `install`), written by
+the `init-project` engine into a tagged inline block (`<!-- knobs:<id> --> … <!-- /knobs:<id> -->`)
+in the project contract,
 `docs/agents/project-workflow.md` — never into a **Host adapter**, and never into the Chunk itself.
 Tagged so a re-run updates just that block idempotently. Pure-invariant Chunks have no knob block.
 _Avoid_: placeholder (`{{…}}` is the copied-Template substitution; a knob is an engine-written
@@ -401,13 +413,15 @@ and get it wrong silently if the two are confused.
 
 **Write-side server**:
 The one MCP server that performs all writes to a running Godot editor — `godot-ai`
-(scene/node/script/property writes, `project_run`, `logs_read`). There is exactly **one writer per
+(scene/node/script/property writes, `project_run`, `logs_read`) where the project vendors it, else
+`godot-mcp`, whose property-write gap is then a known one. There is exactly **one writer per
 editor instance**: both servers drive the same `EditorInterface`, so a second editor — on a
 worktree, say — is a second independent writer.
-_Avoid_: `godot-mcp` / Read-side server (its write path silently no-ops some property types and
-still reports success).
+_Avoid_: `godot-mcp` / Read-side server where `godot-ai` is vendored (its write path silently no-ops
+some property types and still reports success).
 
 **Read-side server**:
 The MCP server used only for reads and tests against a running editor — `godot-mcp`
-(runtime-state probes, `godot_docs`, editor log and stack reads). Never write through it.
+(runtime-state probes, `godot_docs`, editor log and stack reads). Never write through it where
+`godot-ai` is vendored; without it, it is the **Write-side server** too.
 _Avoid_: `godot-ai` / Write-side server.

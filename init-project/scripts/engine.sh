@@ -12,15 +12,15 @@ SELF=$SCRIPT_DIR/$(basename "$0")
 TEMPLATE_DIR=$SKILL_DIR/templates
 PROFILE_DIR=${INIT_PROJECT_PROFILE_DIR:-$SKILL_DIR/profiles}
 FIXTURE_DIR=$SCRIPT_DIR/fixtures
-# The tracker's assets. Ticket 3 moves these; keep them in this one block.
-TRACKER_PROFILE=$PROFILE_DIR/github.md
-TRACKER_ASSETS=$PROFILE_DIR/github/templates
-TRACKER_CONTRACT=$TRACKER_ASSETS/contract.md
+# The engine's defaults (the fork and every knob block, overlaid by the Profile's by key) and the
+# tracker's assets, the engine's own since #127: stamped only when the tracker outcome is github.
+DEFAULTS=${INIT_PROJECT_DEFAULTS:-$SKILL_DIR/defaults.md}
+TRACKER_DIR=${INIT_PROJECT_TRACKER_DIR:-$TEMPLATE_DIR/tracker}
+TRACKER_CONTRACT=$TRACKER_DIR/contract.md
 TRACKER_POINTERS='issue-tracker.md=docs/agents/issue-tracker.md triage-labels.md=docs/agents/triage-labels.md'
 # Target-relative engine files.
 CONTRACT=docs/agents/project-workflow.md
 GATE_RUNNER=.claude/agents/gate-runner.md
-FORK_DEFAULT=git-flow-squash
 KNOB_CHANGES=${INIT_PROJECT_KNOB_CHANGES:-$SCRIPT_DIR/knob-changes}
 
 TAB=$(printf '\t')
@@ -62,12 +62,17 @@ help() {
 'temp file beside its destination renamed over it; an interrupt (INT, TERM, HUP) removes the temp in' \
 'flight, while a SIGKILL, which no script can trap, can leave one <dest>.tmp.<pid> behind).' \
 '' \
+'Temp space: every subcommand needs it. Where a sandbox'"'"'s mktemp -d returns nothing, the run stops' \
+'naming that (STOP: mktemp -d returned no directory); run it unsandboxed there.' \
+'' \
 'Subcommands' \
 '  selftest    run the fixture cases; prints one line per wrong verdict, then' \
 '              "selftest: <k>/<N> verdicts correct". Exit 0 only when k = N.' \
 '  stamp       write the four engine files (contract, CLAUDE.md, AGENTS.md, the gate-runner seat),' \
-'              the Profile templates and, for tracker github, the two pointer files, into --target.' \
-'              --after-freeze writes only the Profile entries marked after_freeze: true.' \
+'              the Profile templates and, for tracker github, the two pointer files (the engine'"'"'s own,' \
+'              under templates/tracker/, with the ## Issue tracker contract fragment), into --target.' \
+'              A Profile templates entry marked after_freeze: true is SKIPPED by a plain stamp;' \
+'              --after-freeze writes only those entries.' \
 '              A fresh stamp (no contract) takes the tracker from the answers file: github or none,' \
 '              anything else (held included) a stop. A RE-RUN (the' \
 '              contract exists) reads it from the contract: knobs:tracker-github -> github,' \
@@ -77,6 +82,14 @@ help() {
 '              reads absent and is not inserted; a file with no zone tag (a v1 stamp) has no zone' \
 '              refreshed, but a v1 contract still takes the knob-block rewrite below (a v1 stamp tags' \
 '              its knob blocks), and every file takes the outside fill.' \
+'              The type: stamp records it in the contract as <!-- init-project:type <t> -->, the first' \
+'              line of the contract-sections zone (an HTML comment line, which Claude strips from what' \
+'              it injects). A re-run (stamp or check) reads it back: recorded and the answers file' \
+'              silent -> the recorded type; both given and different -> a stop before any write naming' \
+'              both; none recorded (a v1 or pre-#127 stamp) -> the answers file'"'"'s type, required, and a' \
+'              NOTE (a plain stamp re-run over a v2 contract then records it; a v1 contract has no zone' \
+'              to hold it, so each run over one names the type). verify resolves it the same way,' \
+'              read-only; host-setup has no target, so it reads the answers file'"'"'s type alone.' \
 '              The one write outside a zone: a *<Fill at init ...>* prompt that survives outside every' \
 '              zone of a file already in the target (an engine file, a Profile template, a pointer)' \
 '              and whose fill:<dest>#<heading> the answers file gives is replaced by it, exactly that' \
@@ -88,15 +101,30 @@ help() {
 '              Tags inside fenced code are prose, never read as tags: a fence opens on three or' \
 '              more ` or ~ and closes only on a run of the same character at least as long, alone on' \
 '              its line (CommonMark), so ~~~ inside a ``` block is content.' \
-'              A refreshed zone that would gain a *<Fill at init ...>* prompt it does not carry is a' \
-'              stop naming the fill:<dest>#<heading> to give. Knob blocks keep every existing value' \
+'              Fill markers (limit 7): stamp writes each fill that lands inside a zone between two' \
+'              engine markers, inline on the prompt'"'"'s own line, so no line moves:' \
+'              <!-- fill:<heading> -->X<!-- /fill:<heading> -->. On a stamp or check re-run, a prompt' \
+'              in a zone the target tags that the answers file does not fill takes X from the' \
+'              target'"'"'s marker pair for its heading in that zone, byte for byte (NOTE fill' \
+'              <dest>#<heading> read back from the target), so the refresh keeps the owner'"'"'s fill and' \
+'              still lands every Template edit around it. Each prompt is read on its own; a fill the' \
+'              answers file gives replaces X. No pair, a pair twice, or an X that still holds a' \
+'              *<Fill at init ...>* prompt is no fill, and the prompt stays. Why markers: a boundary' \
+'              inferred from the new render cannot tell the owner'"'"'s text from Template text a later' \
+'              Template deleted beside the prompt, so such a deletion was swallowed into the fill;' \
+'              the markers make the boundary a fact the engine wrote, never a guess. A fill outside' \
+'              every zone is written once, with no markers. A fill inside a zone written before the' \
+'              markers (an earlier v2 stamp) has none: give it once more. A refreshed zone that would' \
+'              still gain a *<Fill at init ...>* prompt under a heading where the target zone carries' \
+'              none (a Template'"'"'s rewording of an unfilled prompt is no gain)' \
+'              is a stop naming the fill:<dest>#<heading> to give. Knob blocks keep every existing value' \
 '              (an answers-file value that differs from it is not used, and a NOTE says so):' \
 '              keys are respelled to the Profile (-, _ and space match), renamed or retired per the' \
 '              knob-changes file, added per the value rule below; a key the Profile does not list and' \
 '              no retire row names is the project'"'"'s own and is kept. A listed block the contract' \
 '              lacks is inserted after its last knob block. A block is deleted only where knob-changes' \
 '              has a retire-block <id> row; any other unlisted block (a hand-imported Chunk'"'"'s, or one' \
-'              a type-none answers file does not repeat) is kept verbatim and reported. A listed block' \
+'              neither the defaults nor the Profile lists) is kept verbatim and reported. A listed block' \
 '              with a line that is not "- <key>: <value>" or an indented continuation is a stop.' \
 '              A destination that is a symlink is a stop before the first write wherever a write would' \
 '              change its bytes: the engine never replaces a link with a file (an unchanged one reads' \
@@ -109,7 +137,8 @@ help() {
 '              added to enabledMcpjsonServers; every other key is kept. The file is rewritten only when' \
 '              an entry or server is added, never for formatting; malformed JSON is a stop.' \
 '              A second stamp with the same inputs changes no byte.' \
-'  host-setup  the machine-wide pieces, kept out of stamp so stamp and verify run sandboxed: the ignore' \
+'  host-setup  the machine-wide pieces, kept apart so stamp and verify write nothing outside the' \
+'              target. host-setup writes the ignore' \
 '              lines **/.codex/config.toml and **/.claude/settings.local.json into the git global' \
 '              excludes file (core.excludesFile, else $XDG_CONFIG_HOME or ~/.config, /git/ignore), and' \
 '              the Profile templates whose dest starts ~/ (copied verbatim; executable where the source' \
@@ -131,7 +160,8 @@ help() {
 '              (five hops, each physical file once); Codex = AGENTS.md, CONTEXT.md, the contract and' \
 '              the read list'"'"'s names under ~/.codex/chunks/. The verify-gate Chunk'"'"'s own gates are' \
 '              not run here (the VERIFY-GATE line). Exit 1 on any CHECK or GATE FAIL, else 0.' \
-'  check       read-only: renders what stamp would write (with the answers file'"'"'s fills) and' \
+'  check       read-only: renders what stamp would write (with the answers file'"'"'s fills and the' \
+'              in-zone fills read back from the target'"'"'s fill markers, as stamp does) and' \
 '              compares each zone of the four engine files: same | differs | absent (untagged, or' \
 '              the file is missing; a v1 stamp reads absent throughout) | orphan (tagged, not' \
 '              rendered; kept, not drift). Knob blocks compare by key set and scalar/list shape,' \
@@ -142,6 +172,8 @@ help() {
 '              differs; backlog-core reads held; a listed block with a line that' \
 '              is not "- <key>: <value>" or an indented continuation reads unparsed. A NOTE says why' \
 '              each block differs. Exit 1 on any differs or unparsed, else 0.' \
+'              A pre-#127 v2 target has no type line, so it reads ZONE <contract> contract-sections' \
+'              differs until a stamp re-run records one.' \
 '' \
 'A run: write the answers file; stamp; verify (a fill-prompt FAIL names each prompt still to' \
 'answer: add its fill: block and stamp again); check; host-setup once per machine.' \
@@ -149,7 +181,9 @@ help() {
 'Answers file (markdown; only these tagged blocks are read, each tag alone on its line):' \
 '  <!-- answers:meta -->' \
 '  - project_name: Demo' \
-'  - type: web                (a Profile name under profiles/, or none)' \
+'  - type: web                (a Profile name under profiles/; none is the empty one. Optional on' \
+'                               a stamp, check or verify run over a contract that records a type;' \
+'                               host-setup, which has no target, always needs it)' \
 '  - tracker: github          (github | none; read on a fresh stamp only)' \
 '  <!-- /answers:meta -->' \
 '  <!-- answers:tokens -->' \
@@ -167,13 +201,26 @@ help() {
 '  dropped (fill:AGENTS.md#Skills). Text before *< and after >* on its line is kept. A fill for a' \
 '  file the run does not write is a NOTE; one that matches no prompt in a file it writes stops' \
 '  (a re-run over a file already in the target follows the fill-key rule under stamp).' \
+'  Inside a zone the fill lands between fill markers (stamp, Fill markers); outside, bare.' \
 '  CLAUDE.md'"'"'s fork slot is filled by the engine, never from the answers file.' \
 '  <!-- /fill:<dest>#<heading> -->' \
 '  The parenthesised notes above are illustration: a value is everything after "<key>: ".' \
 '' \
-'Knob values, per key: the answers value; else the Profile value when it is a literal; else a' \
-'stop naming <id>.<key>. A Profile value that is wholly "<...>" is a shape, not a literal. An answers' \
-'key or block the Profile does not list is a stop. For type none the answers blocks are the key sets.' \
+'Profiles and the engine defaults: defaults.md (beside profiles/) carries the fork and every knob' \
+'block, in the Profile frontmatter syntax; a Profile overrides by key. The key sets a stamp writes' \
+'are the defaults overlaid by the Profile: the defaults'"'"' blocks in their order, then each block only' \
+'the Profile names, in its order; within a block the defaults'"'"' keys in their order, the Profile'"'"'s' \
+'value (scalar or list) replacing the default'"'"'s, then the keys only the Profile names, in its order.' \
+'The tracker-github block is written only for tracker github, and first. The fork: the Profile'"'"'s' \
+'fork:, else the defaults'"'"'. Type none is profiles/none.md, an empty Profile: every block and value' \
+'is the defaults'"'"', so its answers file answers each shape (defaults.md glosses each). Profile keys read:' \
+'imports, fork, templates (entry keys src, dest, after_freeze), adapters, settings, knobs; any' \
+'other top-level key is a NOTE (profile key <k> is not read), any other templates entry key a stop' \
+'(templates entry key <k> is not read).' \
+'' \
+'Knob values, per key: the answers value; else the merged value when it is a literal; else a' \
+'stop naming <id>.<key>. A value that is wholly "<...>" is a shape, not a literal. An answers' \
+'key or block the merged key sets do not list is a stop.' \
 '' \
 'Fragments: each <!-- profile:<m> --> marker becomes a <!-- zone:<m> --> pair holding the Profile' \
 'fragment (empty where it has none). A contract fragment ## heading that prefix-matches a Template' \
@@ -183,6 +230,7 @@ help() {
 'Output lines (stdout, fixed; paths target-relative, ~/-relative under $HOME):' \
 '  WROTE <path> | UNCHANGED <path> | SKIPPED <path> — <reason> | NOTE <text> | STOP: <reason>' \
 '  FILLED <path>#<heading>                             (stamp re-run: a fill applied outside a zone)' \
+'  NOTE fill <path>#<heading> read back from the target  (stamp or check re-run: an in-zone fill kept from its markers)' \
 '  ZONE <path> <zone> <same|refreshed|absent|orphan>     (stamp re-run; printed before any write)' \
 '  ZONE <path> <zone> <same|differs|absent|orphan|held|unparsed>   (check; a knob block'"'"'s zone is' \
 '                                                        knobs:<id>)' \
@@ -200,6 +248,9 @@ help() {
 '' \
 'Test seams (selftest and calibration only):' \
 '  INIT_PROJECT_PROFILE_DIR    read Profiles from this directory instead of profiles/' \
+'  INIT_PROJECT_DEFAULTS       read the engine defaults from this file instead of defaults.md' \
+'  INIT_PROJECT_TRACKER_DIR    read the tracker'"'"'s contract fragment and pointer Templates from this' \
+'                              directory instead of templates/tracker/' \
 '  INIT_PROJECT_KNOB_CHANGES   the knob-changes file a re-run reads (default scripts/knob-changes; rows:' \
 '                              rename <id> <old> <new> | retire <id> <key> | retire-block <id>)' \
 '  INIT_PROJECT_NO_LOCALE_PIN=1  skip the UTF-8 locale pin'
@@ -391,7 +442,7 @@ parse_profile() { # <profile.md> → stdout
         if (k == "src") src = x
         else if (k == "dest") dest = x
         else if (k == "after_freeze") { if (x == "true") af = 1; else if (x != "false") perr("after_freeze must be true or false") }
-        else if (k != "refresh") { perr("templates entry key " k " is not read"); return }
+        else { perr("templates entry key " k " is not read"); return }
       }
       if (src == "" || dest == "") { perr("templates entry needs src and dest"); return }
       printf "TPL\t%s\t%s\t%d\n", tabfree(src), tabfree(dest), af
@@ -408,7 +459,6 @@ parse_profile() { # <profile.md> → stdout
       if (ind == 0) {
         if (c !~ /^[A-Za-z_][A-Za-z0-9_-]*:/) { perr("not a key: " c); next }
         kv(); top = k; kid = ""; kkey = ""; sub2 = ""
-        if (k == "type") next
         if (k == "imports") { if (v != "") flowlist(v, "IMP"); next }
         if (k == "templates") { if (v != "" && v != "[]") perr("templates: expected [] or a block list"); next }
         if (k == "fork") { printf "FORK\t%s\n", tabfree(unq(v)); next }
@@ -526,28 +576,63 @@ tok_pass() { # <in> <out>
 
 # Fork slot and fill prompts. Keys are <dest>#<nearest preceding heading>.
 # Render mode records each used key with the zone it sits in (empty outside one) in fills.used.
+# Inside a zone it writes each fill between engine fill markers, inline, <!-- fill:<heading> -->X
+# <!-- /fill:<heading> --> with no space or newline added, and a prompt the answers file does not
+# fill takes X from the target's pair for that heading in the same zone, byte for byte (limit 7):
+# the boundary is one the engine wrote, never inferred from the render. No pair, a pair twice, or an
+# X still carrying a prompt → the prompt stays and D8 decides.
 # Outside mode (a re-run over a file already in the target, O2) replaces only the prompts outside
 # every zone, leaves the fork slot alone, and writes one FILLED line per key used to filled.now.
 fill_pass() { # <in> <out> <dest> [outside]
   : > "$ST/err"; : > "$ST/filled.now"
-  DEST=$3 OUTSIDE=${4:-} FILLIDX=$ST/fills.idx FILLDIR=$ST/fills FORK=$FORK USEDF=$ST/fills.used FILLEDF=$ST/filled.now ERRF=$ST/err awk "$FENCEFN$CODESPANFN"'
+  _rbf=; case ${4:-}$SUB in stamp|check) [ ! -f "$TARGET/$3" ] || _rbf=$TARGET/$3 ;; esac
+  DEST=$3 OUTSIDE=${4:-} RBF=$_rbf LOGF=$ST/log FILLIDX=$ST/fills.idx FILLDIR=$ST/fills FORK=$FORK USEDF=$ST/fills.used FILLEDF=$ST/filled.now ERRF=$ST/err awk "$FENCEFN$CODESPANFN"'
+    function marks(zn, s,   i, r, j, h, c, e, k) { # each <!-- fill:H -->X<!-- /fill:H --> pair in zone zn
+      while ((i = index(s, "<!-- fill:")) > 0) {
+        r = substr(s, i + 10); j = index(r, " -->"); if (!j) return
+        h = substr(r, 1, j - 1); r = substr(r, j + 4); c = "<!-- /fill:" h " -->"; e = index(r, c)
+        if (!e) { s = r; continue }
+        k = zn SUBSEP h; if (k in rbx) twice[k] = 1; else rbx[k] = substr(r, 1, e - 1)
+        s = substr(r, e + length(c))
+      }
+    }
     BEGIN {
       f = ENVIRON["FILLIDX"]; while ((getline l < f) > 0) { i = index(l, "\t"); fn[substr(l, i + 1)] = substr(l, 1, i - 1) } close(f)
       dest = ENVIRON["DEST"]; fork = ENVIRON["FORK"]; heading = ""; outside = (ENVIRON["OUTSIDE"] != ""); z = ""
+      rbf = ENVIRON["RBF"]; cz = ""
+      if (rbf != "") {
+        while ((getline l < rbf) > 0) {
+          t = l; sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t); lf = (fence_line(l) || fch != "")
+          if (!lf && t ~ /^<!-- zone:[^ ]+ -->$/) { cz = t; sub(/^<!-- zone:/, "", cz); sub(/ -->$/, "", cz); tz[cz] = ""; continue }
+          if (!lf && t ~ /^<!-- \/zone:[^ ]+ -->$/) { cz = ""; continue }
+          if (cz != "") tz[cz] = tz[cz] l "\n"
+        }
+        close(rbf); fch = ""
+        for (cz in tz) marks(cz, tz[cz])
+      }
     }
     function norm(s) { gsub(/[ \t\n]+/, " ", s); return s }
     function filltext(n,   p, l, t, first) {
       p = ENVIRON["FILLDIR"] "/" n; t = ""; first = 1
       while ((getline l < p) > 0) { t = first ? l : t "\n" l; first = 0 } close(p); return t
     }
-    function span(body,   nb, k) {
+    function marked(x,   c) { # the engine fill markers around x, for a fill written inside a zone
+      c = "<!-- /fill:" heading " -->"
+      if (index(x, c)) print "the fill for " dest "#" heading " contains its own close marker " c ", so a re-run could not read it back" > ENVIRON["ERRF"]
+      return "<!-- fill:" heading " -->" x c
+    }
+    function span(body,   nb, k, rk) {
       nb = norm(body)
       if (nb == "`/name`, filled at init") return outside ? "*<" body ">*" : "`/" fork "`"
       if (substr(nb, 1, 12) == "Fill at init") {
         k = dest "#" heading; cnt[k]++
         if (cnt[k] == 2 && (!outside || (k in fn))) print "more than one fill prompt under heading \"" heading "\" in " dest " — fill:" k " is ambiguous" > ENVIRON["ERRF"]
         if (outside && z != "") return "*<" body ">*"
-        if (k in fn) { used[k] = outside ? "-outside" : z; return filltext(fn[k]) }
+        if (k in fn) { used[k] = outside ? "-outside" : z; return (z == "" || outside) ? filltext(fn[k]) : marked(filltext(fn[k])) }
+        rk = z SUBSEP heading
+        if (z != "" && (rk in rbx) && !(rk in twice) && !index(rbx[rk], "*<Fill at init")) {
+          print "NOTE fill " k " read back from the target" >> ENVIRON["LOGF"]; return marked(rbx[rk])
+        }
       }
       return "*<" body ">*"
     }
@@ -598,10 +683,11 @@ fill_pass() { # <in> <out> <dest> [outside]
 }
 
 # Structural pass over a token-substituted engine Template: knob blocks, imports zone, read-list
-# zone, marker zones (D5 stub replacement for the contract), canary zone, gate-runner seat zones.
+# zone, marker zones (D5 stub replacement for the contract; the contract-sections zone opens on the
+# stamped type's line), canary zone, gate-runner seat zones.
 struct_pass() { # <kind> <in> <out>
   : > "$ST/err"
-  KIND=$1 ERRF=$ST/err KNOBS=$ST/knobs.md IMPORTS=$ST/imports.md READLIST=$ST/readlist.md \
+  KIND=$1 STYPE=$TYPE ERRF=$ST/err KNOBS=$ST/knobs.md IMPORTS=$ST/imports.md READLIST=$ST/readlist.md \
   FRAG_CONTRACT=$FRAG_CONTRACT FRAG_CLAUDE=$FRAG_CLAUDE FRAG_CODEX=$FRAG_CODEX FRAG_GATE=$FRAG_GATE \
   TRACKER_FRAG=$TRACKER_FRAG awk "$FENCEFN"'
     function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
@@ -643,7 +729,7 @@ struct_pass() { # <kind> <in> <out>
           for (s = first; s <= ns; s++) if (!rep[s]) { fail("the contract fragment replaces a stub before \"" sh[s] "\" but not that stub — a fragment shape this engine does not support"); exit }
         }
         for (i = 1; i < zs; i++) out(i)
-        zone("contract-sections", fp)
+        print "<!-- zone:contract-sections -->"; print "<!-- init-project:type " ENVIRON["STYPE"] " -->"; cat(fp); print "<!-- /zone:contract-sections -->"
         for (i = mi + 1; i <= n; i++) out(i)
         if (ENVIRON["TRACKER_FRAG"] != "") { print ""; zone("issue-tracker", ENVIRON["TRACKER_FRAG"]) }
       } else if (kind == "agents") {
@@ -672,11 +758,39 @@ struct_pass() { # <kind> <in> <out>
   return 0
 }
 
+# The knob records every knob pass reads (render_knobs, rewrite_knobs, check_knobs): the engine
+# defaults overlaid by the Profile, by key. Block order is the defaults', then each Profile-only block
+# in the Profile's order; within a block, the defaults' keys in their order, the Profile's value
+# (scalar or list) replacing the default's, then Profile-only keys in the Profile's order.
+overlay_knobs() { # $DREC $PREC → $KREC (KB, K and I records only)
+  DREC=$DREC PREC=$PREC awk '
+    function load(p, s,   l, f, id, k) {
+      while ((getline l < p) > 0) {
+        split(l, f, "\t"); id = f[2]; k = f[3]
+        if (f[1] == "KB") { if (!((s, id) in hb)) { nb[s]++; bid[s, nb[s]] = id; hb[s, id] = 1 } }
+        else if (f[1] == "K") { if (!((s, id, k) in hk)) { nk[s, id]++; kid[s, id, nk[s, id]] = k; hk[s, id, k] = 1 } rec[s, id, k] = l; its[s, id, k] = "" }
+        else if (f[1] == "I") its[s, id, k] = its[s, id, k] l "\n"
+      }
+      close(p)
+    }
+    function emit(s, id, k) { print rec[s, id, k]; printf "%s", its[s, id, k] }
+    function block(id,   j, k) {
+      print "KB\t" id
+      if ((1, id) in hb) for (j = 1; j <= nk[1, id]; j++) { k = kid[1, id, j]; emit(((2, id, k) in hk) ? 2 : 1, id, k) }
+      if ((2, id) in hb) for (j = 1; j <= nk[2, id]; j++) { k = kid[2, id, j]; if (!((1, id, k) in hk)) emit(2, id, k) }
+    }
+    BEGIN {
+      load(ENVIRON["DREC"], 1); load(ENVIRON["PREC"], 2)
+      for (b = 1; b <= nb[1]; b++) block(bid[1, b])
+      for (b = 1; b <= nb[2]; b++) if (!((1, bid[2, b]) in hb)) block(bid[2, b])
+    }' > "$KREC" || stop "awk failed overlaying Profile $TYPE on the engine defaults"
+}
+
 # Knob blocks, D1 precedence, into $ST/knobs.md.
 render_knobs() {
   : > "$ST/err"; : > "$ST/knobs.md"
   _len=$RERUN; [ "$SUB" = check ] && _len=1
-  LENIENT=$_len TYPE=$TYPE TRACKER=$TRACKER PREC=$PREC GREC=$GREC AREC=$ST/answers.rec OUT=$ST/knobs.md ERRF=$ST/err awk '
+  LENIENT=$_len TRACKER=$TRACKER PREC=$KREC GREC=$KREC AREC=$ST/answers.rec OUT=$ST/knobs.md ERRF=$ST/err awk '
     function rest(l, n,   k) { for (k = 0; k < n; k++) l = substr(l, index(l, "\t") + 1); return l }
     function fail(m) { if (!failed) print m > ENVIRON["ERRF"]; failed = 1 }
     function isshape(v) { return v ~ /^<.*>$/ }
@@ -693,7 +807,7 @@ render_knobs() {
     }
     function add(id) { if (id in inset) return; nb++; blk[nb] = id; inset[id] = 1 }
     BEGIN {
-      type = ENVIRON["TYPE"]; tracker = ENVIRON["TRACKER"]; o = ENVIRON["OUT"]
+      tracker = ENVIRON["TRACKER"]; o = ENVIRON["OUT"]
       lenient = (ENVIRON["LENIENT"] == "1")   # a re-run: the contract keeps its values; rewrite_knobs applies D1
       load(ENVIRON["PREC"], "", 0)
       if (tracker == "github") load(ENVIRON["GREC"], "", 1)
@@ -711,24 +825,20 @@ render_knobs() {
         else fail("answers knobs:" id ": a line that is neither \"- <key>: <value>\" nor an indented continuation")
       }
       close(a)
-      if (tracker == "github" && (type == "none" || !("tracker-github" in plisted))) add("tracker-github")
-      if (type != "none") { for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) } }
-      else for (i = 1; i <= an; i++) if (aid[i] != "tracker-github") add(aid[i])
+      if (tracker == "github") add("tracker-github")
+      for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) }
       for (i = 1; i <= an; i++) if (!(aid[i] in inset)) fail("answers block knobs:" aid[i] " names no knob block this stamp writes")
       for (b = 1; b <= nb; b++) {
-        id = blk[b]; fromans = (type == "none" && id != "tracker-github")
-        if (!fromans) {
-          for (j = 1; j <= nk[id]; j++) listed[id, key[id, j]] = 1
-          for (j = 1; j <= ank[id]; j++) if (!((id, akey[id, j]) in listed)) fail("answers key " id "." akey[id, j] " is not in the Profile block knobs:" id)
-        }
+        id = blk[b]
+        for (j = 1; j <= nk[id]; j++) listed[id, key[id, j]] = 1
+        for (j = 1; j <= ank[id]; j++) if (!((id, akey[id, j]) in listed)) fail("answers key " id "." akey[id, j] " is not in the knob block knobs:" id " (the engine defaults and the Profile)")
         if (b > 1) print "" > o
         print "<!-- knobs:" id " -->" > o
-        cnt = fromans ? ank[id] : nk[id]
-        for (j = 1; j <= cnt; j++) {
-          k = fromans ? akey[id, j] : key[id, j]
+        for (j = 1; j <= nk[id]; j++) {
+          k = key[id, j]
           if ((id, k) in araw) { print araw[id, k] > o; continue }
           if (shp[id, k] == "S") {
-            if (isshape(val[id, k]) && !lenient) { fail("knob " id "." k " has no value — the Profile gives the shape " val[id, k] "; answer it in the answers file block knobs:" id); continue }
+            if (isshape(val[id, k]) && !lenient) { fail("knob " id "." k " has no value — its shape is " val[id, k] "; answer it in the answers file block knobs:" id); continue }
             print "- " k ": " val[id, k] > o; continue
           }
           for (m = 1; m <= ni[id, k]; m++) if (isshape(item[id, k, m]) && !lenient) fail("knob " id "." k " has no value — a Profile list item is the shape " item[id, k, m])
@@ -866,7 +976,10 @@ prompts_of() { # <file>
     }' "$1"
 }
 
-# D8: a refreshed zone must not gain a Fill-at-init prompt its target zone does not carry.
+# D8: a refreshed zone must not gain a Fill-at-init prompt under a heading where its target zone
+# carries none — there the target holds an answer the render would drop (a fill written before the
+# engine's fill markers, or a pair edited away). A prompt the Template reworded replaces its
+# unfilled predecessor under the same heading, which loses nothing.
 d8_guard() { # <dest>
   [ "$SUB" = stamp ] || return 0
   prompts_of "$ST/render/$1" > "$ST/p.r" || stop "awk failed reading the staged render of $1"
@@ -875,10 +988,10 @@ d8_guard() { # <dest>
   _g=$(PR=$ST/p.r PT=$ST/p.t PZ=$ST/p.z awk 'BEGIN {
       FS = "\t"
       while ((getline l < ENVIRON["PZ"]) > 0) inz[l] = 1
-      while ((getline l < ENVIRON["PT"]) > 0) { split(l, f, "\t"); have[f[1] "\t" f[3]] = 1 }
+      while ((getline l < ENVIRON["PT"]) > 0) { split(l, f, "\t"); have[f[1] "\t" f[2]] = 1 }
       while ((getline l < ENVIRON["PR"]) > 0) {
         split(l, f, "\t")
-        if ((f[1] in inz) && !((f[1] "\t" f[3]) in have)) { print f[1] "\t" f[2]; exit }
+        if ((f[1] in inz) && !((f[1] "\t" f[2]) in have)) { print f[1] "\t" f[2]; exit }
       }
     }') || stop "awk failed comparing the fill prompts of $1"
   [ -z "$_g" ] || stop "zone ${_g%%"$TAB"*} of $1 would gain a Fill at init prompt its target zone does not carry, and the answers file has no fill:$1#${_g#*"$TAB"} — give that fill (nothing written)"
@@ -888,7 +1001,7 @@ d8_guard() { # <dest>
 rewrite_knobs() { # <in> <out>
   [ -f "$KNOB_CHANGES" ] || stop "the knob-changes file $KNOB_CHANGES is not found"
   : > "$ST/err"
-  IN=$1 OUT=$2 TYPE=$TYPE TRACKER=$TRACKER PREC=$PREC GREC=$GREC AREC=$ST/answers.rec KCH=$KNOB_CHANGES \
+  IN=$1 OUT=$2 TRACKER=$TRACKER PREC=$KREC GREC=$KREC AREC=$ST/answers.rec KCH=$KNOB_CHANGES \
   LOGF=$ST/log ERRF=$ST/err awk "$FENCEFN"'
     function rest(l, n,   k) { for (k = 0; k < n; k++) l = substr(l, index(l, "\t") + 1); return l }
     function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
@@ -911,7 +1024,7 @@ rewrite_knobs() { # <in> <out>
     function d1(id, p,   m, s) { # the value of a key being written fresh: answers, else a Profile literal
       if ((id, p) in araw) return araw[id, p]
       if (shp[id, p] == "S") {
-        if (isshape(val[id, p])) { fail("knob " id "." p " has no value — the Profile gives the shape " val[id, p] "; answer it in the answers file block knobs:" id " (nothing written)"); return "" }
+        if (isshape(val[id, p])) { fail("knob " id "." p " has no value — its shape is " val[id, p] "; answer it in the answers file block knobs:" id " (nothing written)"); return "" }
         return "- " p ": " val[id, p]
       }
       if (shp[id, p] != "L") { fail("knob " id "." p " has no value — answer it in the answers file block knobs:" id " (nothing written)"); return "" }
@@ -923,14 +1036,13 @@ rewrite_knobs() { # <in> <out>
       return s
     }
     function pkeys(b, id,   j, p) { # the listed keys of block b, in order, into pk[b, j]; count into pc[b]
-      fromans = (type == "none" && id != "tracker-github")
-      pc[b] = fromans ? ank[id] : kc[id]
-      for (j = 1; j <= pc[b]; j++) { p = fromans ? akey[id, j] : key[id, j]; pk[b, j] = p; pmap[b, normk(p)] = p }
+      pc[b] = kc[id]
+      for (j = 1; j <= pc[b]; j++) { p = key[id, j]; pk[b, j] = p; pmap[b, normk(p)] = p }
     }
     function blocktext(id,   i, t) { t = ""; for (i = bs[id]; i <= be[id]; i++) t = t L[i] "\n"; return t }
     function firstval(b, j,   v) { v = trim(substr(eh[b, j], 2)); if (v == "" && ec[b, j] != "") { v = substr(ec[b, j], 2); if (index(v, "\n")) v = substr(v, 1, index(v, "\n") - 1); v = trim(v) } return v }
     BEGIN {
-      type = ENVIRON["TYPE"]; tracker = ENVIRON["TRACKER"]; o = ENVIRON["OUT"]
+      tracker = ENVIRON["TRACKER"]; o = ENVIRON["OUT"]
       load(ENVIRON["PREC"], 0)
       if (tracker == "github") load(ENVIRON["GREC"], 1)
       a = ENVIRON["AREC"]
@@ -954,10 +1066,9 @@ rewrite_knobs() { # <in> <out>
         fail("knob-changes line " cn ": expected \"rename <chunk-id> <old-key> <new-key>\", \"retire <chunk-id> <key>\" or \"retire-block <chunk-id>\""); exit
       }
       close(c)
-      if (tracker == "github" && (type == "none" || !("tracker-github" in plisted))) add("tracker-github")
-      if (type != "none") { for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) } }
-      else for (i = 1; i <= an; i++) if (aid[i] != "tracker-github") add(aid[i])
-      for (x = 1; x <= nw; x++) if (want[x] in retblk) { fail("knob-changes retires knobs:" want[x] " (retire-block), which " (type == "none" ? "the answers file" : "the Profile") " still lists — resolve it by hand (nothing written)"); exit }
+      if (tracker == "github") add("tracker-github")
+      for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) }
+      for (x = 1; x <= nw; x++) if (want[x] in retblk) { fail("knob-changes retires knobs:" want[x] " (retire-block), which the engine defaults or the Profile still list — resolve it by hand (nothing written)"); exit }
     }
     { L[++n] = $0 }
     END {
@@ -1092,24 +1203,57 @@ load_inputs() {
   TYPE=$(rec_get "$ST/answers.rec" M type) || stop "awk failed reading the answers records"
   TRACKER=$(rec_get "$ST/answers.rec" M tracker) || stop "awk failed reading the answers records"
   [ -n "$PROJECT_NAME" ] || stop "answers:meta has no project_name"
-  [ -n "$TYPE" ] || stop "answers:meta has no type"
+  resolve_type # host-setup has no target, so no contract to read one from: its answers file names the type
 
-  # Profile
-  PREC=; GREC=
+  # Profile (none included: a named, empty Profile), then the engine defaults it overlays
   case $TYPE in
     github) stop "github is the tracker, not a type (spec #124): stamp type none with tracker github" ;;
-    none) ;;
     *[!A-Za-z0-9_-]*) stop "type $TYPE is not a Profile name" ;;
-    *)
-      [ -f "$PROFILE_DIR/$TYPE.md" ] || stop "no Profile $TYPE (profiles: $(cd "$PROFILE_DIR" && ls *.md 2>/dev/null | sed 's/\.md$//' | tr '\n' ' ')none)"
-      PREC=$ST/profile.rec
-      parse_profile "$PROFILE_DIR/$TYPE.md" > "$PREC" || stop "awk failed reading Profile $TYPE"
-      _e=$(rec_field2 "$PREC" E | head -n 1); [ -z "$_e" ] || stop "Profile $_e"
-      rec_field2 "$PREC" NOTE | while IFS= read -r _n; do note "$_n"; done ;;
   esac
-  FORK=$FORK_DEFAULT
-  if [ -n "$PREC" ]; then _f=$(rec_field2 "$PREC" FORK | head -n 1); [ -z "$_f" ] || FORK=$_f; fi
+  [ -f "$PROFILE_DIR/$TYPE.md" ] || stop "no Profile $TYPE (profiles: $(cd "$PROFILE_DIR" && ls *.md 2>/dev/null | sed 's/\.md$//' | tr '\n' ' ' | sed 's/ *$//'))"
+  PREC=$ST/profile.rec
+  parse_profile "$PROFILE_DIR/$TYPE.md" > "$PREC" || stop "awk failed reading Profile $TYPE"
+  _e=$(rec_field2 "$PREC" E | head -n 1); [ -z "$_e" ] || stop "Profile $_e"
+  rec_field2 "$PREC" NOTE | while IFS= read -r _n; do note "$_n"; done
+  [ -f "$DEFAULTS" ] || stop "the engine defaults file $DEFAULTS is not found"
+  DREC=$ST/defaults.rec
+  parse_profile "$DEFAULTS" > "$DREC" || stop "awk failed reading the engine defaults"
+  _e=$(rec_field2 "$DREC" E | head -n 1); [ -z "$_e" ] || stop "engine defaults $_e"
+  rec_field2 "$DREC" NOTE | while IFS= read -r _n; do note "engine defaults: $_n"; done
+  KREC=$ST/knobs.rec; GREC=$KREC
+  overlay_knobs
+  FORK=$(rec_field2 "$PREC" FORK | head -n 1)
+  [ -n "$FORK" ] || FORK=$(rec_field2 "$DREC" FORK | head -n 1)
+  [ -n "$FORK" ] || stop "no fork: neither Profile $TYPE nor the engine defaults name one"
   case $FORK in *[!A-Za-z0-9_-]*) stop "fork $FORK is not a Skill name" ;; esac
+}
+
+# The type a contract was stamped with: stamp writes it as the first line of the contract-sections
+# zone, <!-- init-project:type <t> -->, so any v2 stamp gains it by zone refresh (ADR 0021 limit 8).
+recorded_type() { # <contract> → the type of each such line inside that zone, outside fenced code
+  awk "$FENCE"'{ t = $0; sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t) }
+    !fz && t == "<!-- zone:contract-sections -->" { z = 1; next }
+    !fz && t == "<!-- /zone:contract-sections -->" { z = 0; next }
+    z && !fz && $0 ~ /^<!-- init-project:type [^ ]+ -->$/ { s = $0; sub(/^<!-- init-project:type /, "", s); sub(/ -->$/, "", s); print s }' "$1"
+}
+# stamp, check and verify: a contract that records a type hands it to the run; an answers type that
+# differs stops before any write. host-setup has no target, so it reads the answers file's type alone.
+resolve_type() {
+  _rty=
+  if [ "$SUB" != host-setup ] && [ -f "$TARGET/$CONTRACT" ]; then
+    recorded_type "$TARGET/$CONTRACT" > "$ST/rtype" || stop "awk failed reading $CONTRACT"
+    _rty=$(sort -u "$ST/rtype") || stop "cannot read the recorded type"
+    case $_rty in *"$NL"*) stop "$CONTRACT records more than one type ($(printf '%s' "$_rty" | tr '\n' ' ')) — keep the one it was stamped with, by hand (nothing written)" ;; esac
+  fi
+  if [ -n "$_rty" ]; then
+    [ -z "$TYPE" ] || [ "$TYPE" = "$_rty" ] || stop "type: $CONTRACT records $_rty, the answers file names $TYPE — a re-run keeps the stamped type; drop the answers file's type line, or make it $_rty if host-setup reads this file (it has no target, so it needs the type) (nothing written)"
+    TYPE=$_rty
+  elif [ "$SUB" != host-setup ] && [ -f "$TARGET/$CONTRACT" ]; then
+    [ -n "$TYPE" ] || stop "answers:meta has no type, and $CONTRACT records none — give the type the target was stamped with"
+    note "type: $CONTRACT records none (a v1 or pre-#127 stamp); the answers file's $TYPE is used"
+  else
+    [ -n "$TYPE" ] || stop "answers:meta has no type"
+  fi
 }
 
 prep_target() {
@@ -1134,12 +1278,7 @@ prep_target() {
     case $TRACKER in github|none) ;; *) stop "tracker $TRACKER on a fresh stamp — the answers file takes github or none (held is read from an existing contract only)" ;; esac
   fi
   case $TRACKER in
-    github)
-      [ -f "$TRACKER_PROFILE" ] || stop "tracker github: $TRACKER_PROFILE not found"
-      GREC=$ST/github.rec
-      parse_profile "$TRACKER_PROFILE" > "$GREC" || stop "awk failed reading the tracker Profile"
-      _e=$(rec_field2 "$GREC" E | head -n 1); [ -z "$_e" ] || stop "tracker Profile $_e"
-      [ -f "$TRACKER_CONTRACT" ] || stop "tracker github: $TRACKER_CONTRACT not found" ;;
+    github) [ -f "$TRACKER_CONTRACT" ] || stop "tracker github: $TRACKER_CONTRACT not found" ;;
     none|held) ;;
     *) stop "tracker $TRACKER is neither github nor none" ;;
   esac
@@ -1292,7 +1431,7 @@ plan_settings() {
   fi
 }
 
-# ---- host-setup: the machine-wide pieces, outside any target (so stamp and verify stay sandboxable) --
+# ---- host-setup: the machine-wide pieces, outside any target (so stamp and verify write only there) -
 hrel() { case $1 in "$HOME"/*) printf '~/%s' "${1#"$HOME"/}" ;; *) printf '%s' "$1" ;; esac; }
 host_write() { # <staged> <absolute dest> [exec] — atomic, in the destination's own directory
   _hd=$1; _hp=$2
@@ -1464,9 +1603,9 @@ plan_templates() {
 plan_pointers() {
   for _p in $TRACKER_POINTERS; do
     _src=${_p%%=*}; _dest=${_p#*=}
-    if [ -e "$TARGET/$_dest" ] && [ ! -d "$TARGET/$_dest" ]; then plan_existing "$_dest" "$TRACKER_ASSETS/$_src"; continue; fi
-    [ -f "$TRACKER_ASSETS/$_src" ] || stop "tracker github: $TRACKER_ASSETS/$_src not found"
-    render_plain "$TRACKER_ASSETS/$_src" "$_dest"
+    if [ -e "$TARGET/$_dest" ] && [ ! -d "$TARGET/$_dest" ]; then plan_existing "$_dest" "$TRACKER_DIR/$_src"; continue; fi
+    [ -f "$TRACKER_DIR/$_src" ] || stop "tracker github: $TRACKER_DIR/$_src not found"
+    render_plain "$TRACKER_DIR/$_src" "$_dest"
   done
 }
 
@@ -1536,7 +1675,7 @@ check_knobs() { # → ZONE and NOTE lines on stdout
   [ -f "$KNOB_CHANGES" ] || stop "the knob-changes file $KNOB_CHANGES is not found"
   _ct=$TARGET/$CONTRACT; [ -f "$_ct" ] || _ct=/dev/null
   : > "$ST/err"
-  DEST=$CONTRACT TYPE=$TYPE TRACKER=$TRACKER PREC=$PREC GREC=$GREC AREC=$ST/answers.rec KCH=$KNOB_CHANGES ERRF=$ST/err awk "$FENCEFN"'
+  DEST=$CONTRACT TRACKER=$TRACKER PREC=$KREC GREC=$KREC AREC=$ST/answers.rec KCH=$KNOB_CHANGES ERRF=$ST/err awk "$FENCEFN"'
     function rest(l, n,   k) { for (k = 0; k < n; k++) l = substr(l, index(l, "\t") + 1); return l }
     function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
     function normk(s) { gsub(/[-_ ]/, "_", s); return s }
@@ -1554,7 +1693,7 @@ check_knobs() { # → ZONE and NOTE lines on stdout
     }
     function add(id) { if (id in inset) return; nw++; want[nw] = id; inset[id] = 1 }
     BEGIN {
-      dest = ENVIRON["DEST"]; type = ENVIRON["TYPE"]; tracker = ENVIRON["TRACKER"]
+      dest = ENVIRON["DEST"]; tracker = ENVIRON["TRACKER"]
       load(ENVIRON["PREC"], 0)
       if (tracker == "github") load(ENVIRON["GREC"], 1)
       a = ENVIRON["AREC"]
@@ -1563,7 +1702,7 @@ check_knobs() { # → ZONE and NOTE lines on stdout
         if (f[1] == "KA") { an++; aid[an] = f[2]; cur = ""; continue }
         if (f[1] != "KL") continue
         id = f[2]; line = rest(l, 2)
-        if (line ~ /^- [^:]+:( |$)/) { k = substr(line, 3, index(line, ":") - 3); ank[id]++; akey[id, ank[id]] = k; ashp[id, k] = (trim(substr(line, index(line, ":") + 1)) == "") ? "L" : "S" }
+        if (line ~ /^- [^:]+:( |$)/) { k = substr(line, 3, index(line, ":") - 3); ank[id]++; akey[id, ank[id]] = k }
       }
       close(a)
       c = ENVIRON["KCH"]; cn = 0
@@ -1577,10 +1716,9 @@ check_knobs() { # → ZONE and NOTE lines on stdout
         fail("knob-changes line " cn ": expected \"rename <chunk-id> <old-key> <new-key>\", \"retire <chunk-id> <key>\" or \"retire-block <chunk-id>\""); exit
       }
       close(c)
-      if (tracker == "github" && (type == "none" || !("tracker-github" in plisted))) add("tracker-github")
-      if (type != "none") { for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) } }
-      else for (i = 1; i <= an; i++) if (aid[i] != "tracker-github") add(aid[i])
-      for (x = 1; x <= nw; x++) if (want[x] in retblk) { fail("knob-changes retires knobs:" want[x] " (retire-block), which " (type == "none" ? "the answers file" : "the Profile") " still lists — resolve it by hand (nothing written)"); exit }
+      if (tracker == "github") add("tracker-github")
+      for (i = 1; i <= pn; i++) { id = pid[i]; if (id == "tracker-github" && tracker != "github") continue; add(id) }
+      for (x = 1; x <= nw; x++) if (want[x] in retblk) { fail("knob-changes retires knobs:" want[x] " (retire-block), which the engine defaults or the Profile still list — resolve it by hand (nothing written)"); exit }
     }
     { L[++n] = $0 }
     END {
@@ -1614,9 +1752,9 @@ check_knobs() { # → ZONE and NOTE lines on stdout
           bad = 1; break
         }
         if (bad) { z(id, "unparsed"); print "NOTE knobs:" id ": contract line " i " is neither \"- <key>: <value>\" nor an indented continuation"; continue }
-        fromans = (type == "none" && id != "tracker-github"); pc = fromans ? ank[id] : kc[id]
+        pc = kc[id]
         split("", pmap); split("", took); dif = 0
-        for (j = 1; j <= pc; j++) { p = fromans ? akey[id, j] : key[id, j]; pmap[normk(p)] = p; psh[p] = fromans ? ashp[id, p] : shp[id, p] }
+        for (j = 1; j <= pc; j++) { p = key[id, j]; pmap[normk(p)] = p; psh[p] = shp[id, p] }
         for (j = 1; j <= ne; j++) {
           nk = normk(ek[b, j]); p = ""
           if (nk in pmap) p = pmap[nk]
@@ -1627,7 +1765,7 @@ check_knobs() { # → ZONE and NOTE lines on stdout
           took[p] = 1
           if (es[b, j] != psh[p]) { dif = 1; print "NOTE knobs:" id " " p ": " (es[b, j] == "L" ? "a list" : "a scalar") " in the contract, " (psh[p] == "L" ? "a list" : "a scalar") " in the Profile" }
         }
-        for (j = 1; j <= pc; j++) { p = fromans ? akey[id, j] : key[id, j]; if (!(p in took)) { dif = 1; print "NOTE knobs:" id " " p ": missing" } }
+        for (j = 1; j <= pc; j++) { p = key[id, j]; if (!(p in took)) { dif = 1; print "NOTE knobs:" id " " p ": missing" } }
         z(id, dif ? "differs" : "same")
       }
       for (x = 1; x <= nw; x++) if (!(want[x] in bs)) z(want[x], "absent")
@@ -1673,7 +1811,9 @@ detect() { # <check> <file>...
     com { if (index(t, "-->")) com = 0; next }
     fence_line($0) || fch != "" { pend = ""; next }
     t == "" { next }
-    substr(t, 1, 4) == "<!--" { if (!index(t, "-->")) com = 1; else if (t !~ /-->$/) pend = ""; next }
+    substr(t, 1, 4) == "<!--" { # comments alone are empty; text after one (an inline fill marker'"'"'s X) is not
+      while (substr(t, 1, 4) == "<!--" && (j = index(t, "-->"))) { t = substr(t, j + 3); sub(/^[ \t]+/, "", t) }
+      if (substr(t, 1, 4) == "<!--") com = 1; else if (t != "") pend = ""; next }
     /^#+[ \t]/ { match($0, /[^#]/); lv = RSTART - 1; if (pend != "" && lv <= plv) print pend; pend = FILENAME ":" FNR; plv = lv; next }
     { pend = "" }
     END { flush() }' "$@"
@@ -1822,7 +1962,7 @@ cmd_verify() {
   done < "$ST/q.codex"
   printf 'LOAD codex TOTAL %s — reported, not gated\n' "$_tot" >> "$ST/load"
   cat "$ST/load"
-  printf 'VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk'"'"'s gates from the contract'"'"'s knob block, as step 7 does\n'
+  printf 'VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk'"'"'s gates from the contract'"'"'s knob block, as step 5 does\n'
   [ "$FAILED" = 0 ] || result failed 1
   result clean 0
 }
@@ -1834,10 +1974,11 @@ st_env() { # build a fixture home + target; sets H and T
   cp "$FIXTURE_DIR"/chunks/*.md "$H/.claude/chunks/" && cp "$FIXTURE_DIR"/chunks/*.md "$H/.codex/chunks/" ||
     stop "selftest: cannot build the fixture home"
 }
-# ST_KC / ST_PD override the knob-changes file / Profile directory; ST_LOC sets the child's LC_ALL and
-# LANG (else the parent's pinned ones are inherited); ST_NOPIN=1 turns the child's pin off.
+# ST_KC / ST_PD / ST_DF override the knob-changes file / Profile directory / engine defaults; ST_LOC
+# sets the child's LC_ALL and LANG (else the parent's pinned ones are inherited); ST_NOPIN=1 turns
+# the child's pin off.
 st_run() { # <subcommand args...> → OUT, RC
-  OUT=$(HOME=$H XDG_CONFIG_HOME=$H/.config GIT_CONFIG_GLOBAL=$H/.gitconfig INIT_PROJECT_PROFILE_DIR=${ST_PD:-$FIXTURE_DIR/profiles} INIT_PROJECT_KNOB_CHANGES=${ST_KC:-$FIXTURE_DIR/knob-changes/none} \
+  OUT=$(HOME=$H XDG_CONFIG_HOME=$H/.config GIT_CONFIG_GLOBAL=$H/.gitconfig INIT_PROJECT_PROFILE_DIR=${ST_PD:-$FIXTURE_DIR/profiles} INIT_PROJECT_DEFAULTS=${ST_DF:-$FIXTURE_DIR/defaults.md} INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=${ST_KC:-$FIXTURE_DIR/knob-changes/none} \
     LC_ALL=${ST_LOC:-${LC_ALL:-}} LANG=${ST_LOC:-${LANG:-}} INIT_PROJECT_NO_LOCALE_PIN=${ST_NOPIN:-${INIT_PROJECT_NO_LOCALE_PIN:-}} \
     "$SELF_SH" "$SELF" "$@" < /dev/null 2>&1)
   RC=$?
@@ -1869,6 +2010,10 @@ case_fragment_each_marker() {
             "codex-mechanics:AGENTS.md:adapter-codex.md" "gate-runner-mechanics:$GATE_RUNNER:adapter-gate-runner.md"; do
     _zn=${_z%%:*}; _r=${_z#*:}; _file=${_r%%:*}; _frag=${_r#*:}
     zone_extract "$T/$_file" "$_zn" > "$H/zone"
+    if [ "$_zn" = contract-sections ]; then # the zone opens on the stamped type, then the fragment
+      [ "$(head -n 1 "$H/zone")" = '<!-- init-project:type four-fragments -->' ] || { GOT=no-type-line; return; }
+      sed 1d "$H/zone" > "$H/zone.f" && mv "$H/zone.f" "$H/zone" || { GOT=fixture-edit; return; }
+    fi
     cmp -s "$H/zone" "$_fd/$_frag" || { GOT=bad-$_zn; return; }
   done
   for _file in "$CONTRACT" CLAUDE.md AGENTS.md "$GATE_RUNNER"; do
@@ -1914,6 +2059,9 @@ st_replace_block() { # <file> <id> <replacement file> — the block, open throug
     skip { if ($0 == c) skip = 0; next } { print }' "$1" > "$1.new" && mv "$1.new" "$1"
 }
 st_has() { printf '%s\n' "$OUT" | grep -qxF -e "$1"; }
+st_untype() { # drop the contract's recorded type, as a pre-#127 stamp has none: a re-run then takes the answers file's
+  grep -v '^<!-- init-project:type ' "$T/$CONTRACT" > "$H/untyped" && cp "$H/untyped" "$T/$CONTRACT"
+}
 
 case_tracker_github_fresh() {
   st_env
@@ -1955,7 +2103,7 @@ case_knob_added_renamed_retired() {
   [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
   printf '%s\n' '<!-- knobs:verify-gate -->' '- dir: repo root' '- light-set:' '  1. docs/**' '- old_flag: yes' \
     '- custom_gate:' '  1. make lint' '<!-- /knobs:verify-gate -->' '' '<!-- knobs:stale -->' '- a: b' '<!-- /knobs:stale -->' > "$H/blk"
-  st_replace_block "$T/$CONTRACT" verify-gate "$H/blk" || { GOT=fixture-edit; return; }
+  st_replace_block "$T/$CONTRACT" verify-gate "$H/blk" && st_untype || { GOT=fixture-edit; return; } # the knobs-v2 key sets apply
   ST_KC=$FIXTURE_DIR/knob-changes/v2
   st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/knobs-v2.md"
   [ "$RC" = 0 ] || { GOT=exit$RC; return; }
@@ -2025,7 +2173,7 @@ case_v1_absent() {
   GOT=absent-untouched
 }
 
-case_fill_guard() {
+case_fill_guard() { # (g) a fill the target holds without the engine's markers is never guessed at: D8 stops
   st_env # control: a zone whose prompt was never filled refreshes without a stop
   st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
   st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
@@ -2033,10 +2181,11 @@ case_fill_guard() {
   st_env
   st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-filled.md"
   [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
-  grep -qxF 'Guarded by the owner.' "$T/$CONTRACT" || { GOT=fill-missing; return; }
+  grep -qxF '<!-- fill:Guarded -->Guarded by the owner.<!-- /fill:Guarded -->' "$T/$CONTRACT" || { GOT=fill-not-marked; return; }
+  st_unmark || { GOT=fixture-edit; return; } # as a fill written before the markers, or a pair edited away
   st_stop_case "$FIXTURE_DIR/answers/fill-guard-bare.md" 'zone contract-sections of docs/agents/project-workflow.md would gain'
   [ "$GOT" = stopped-untouched ] || return
-  printf '%s\n' "$OUT" | grep -qF 'fill:docs/agents/project-workflow.md#Guarded' || GOT=key-not-named
+  printf '%s\n' "$OUT" | grep -qF "fill:$FG_KEY" || GOT=key-not-named
 }
 
 case_dest_is_directory() {
@@ -2134,11 +2283,11 @@ case_jq_absent() { # a PATH of symlinks to every tool the script uses, minus jq 
     ln -s "$_w" "$H/bin/$_t" && ln -s "$_w" "$H/binjq/$_t" || { GOT=fixture-edit; return; }
   done
   ln -s "$(command -v jq)" "$H/binjq/jq" || { GOT=fixture-edit; return; }
-  OUT=$(PATH=$H/binjq HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
+  OUT=$(PATH=$H/binjq HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_DEFAULTS=$FIXTURE_DIR/defaults.md INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
     "$SELF_SH" "$SELF" stamp --target "$T" --answers "$FIXTURE_DIR/answers/settings.md" < /dev/null 2>&1); RC=$?
   [ "$RC" = 0 ] || { GOT=control-exit$RC; return; } # the same PATH with jq: every other tool is there
   mk_tmpdir; T=$MKD
-  OUT=$(PATH=$H/bin HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
+  OUT=$(PATH=$H/bin HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_DEFAULTS=$FIXTURE_DIR/defaults.md INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
     "$SELF_SH" "$SELF" stamp --target "$T" --answers "$FIXTURE_DIR/answers/settings.md" < /dev/null 2>&1); RC=$?
   [ "$RC" = 2 ] || { GOT=exit$RC; return; }
   [ -z "$(ls -A "$T")" ] || { GOT=target-written; return; }
@@ -2200,7 +2349,7 @@ case_verify_clean() {
     printf '%s\n' "$OUT" | grep -q "^CHECK $_c: PASS — " || { GOT=check-$_c; return; }
   done
   st_has 'GATE imports-resolve: PASS — 8 import(s) resolve' || { GOT=imports; return; }
-  st_has "VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk's gates from the contract's knob block, as step 7 does" || { GOT=verify-gate-line; return; }
+  st_has "VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk's gates from the contract's knob block, as step 5 does" || { GOT=verify-gate-line; return; }
   GOT=clean
 }
 
@@ -2337,7 +2486,7 @@ case_interrupt_no_temp() { # a TERM between the temp's cp and its mv leaves no <
   done
   printf '%s\n' '#!/bin/sh' 'for a; do case $a in *.tmp.*) [ -f "$a" ] && : > "$0.saw-temp" ;; esac; done' 'kill -TERM $PPID' 'exit 1' > "$H/bin/mv"
   chmod +x "$H/bin/mv" || { GOT=fixture-edit; return; }
-  OUT=$(PATH=$H/bin HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
+  OUT=$(PATH=$H/bin HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_DEFAULTS=$FIXTURE_DIR/defaults.md INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
     "$SELF_SH" "$SELF" stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md" < /dev/null 2>&1); RC=$?
   [ -f "$H/bin/mv.saw-temp" ] || { GOT=never-interrupted; return; } # the control: a temp existed when the signal came
   [ "$RC" = 2 ] || { GOT=exit$RC; return; }
@@ -2406,7 +2555,7 @@ case_symlink_dest_stop() { # a link a write would land on stops before any write
 
 case_cdpath_unset() { # an exported CDPATH must not move a relative --target
   st_env; mk_tmpdir; _w=$MKD; mkdir -p "$_w/proj" "$_w/decoy/proj" || { GOT=fixture-edit; return; }
-  OUT=$(cd "$_w" && CDPATH=$_w/decoy HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
+  OUT=$(cd "$_w" && CDPATH=$_w/decoy HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_DEFAULTS=$FIXTURE_DIR/defaults.md INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
     "$SELF_SH" "$SELF" stamp --target proj --answers "$FIXTURE_DIR/answers/four-fragments.md" < /dev/null 2>&1); RC=$?
   [ "$RC" = 0 ] || { GOT=exit$RC; return; }
   [ -f "$_w/proj/CLAUDE.md" ] && [ -z "$(ls -A "$_w/decoy/proj")" ] || { GOT=wrong-target; return; }
@@ -2437,9 +2586,9 @@ case_unlisted_block_kept() { # O1: a block is deleted only on a declared retire-
   st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
   [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
   awk '{ print } $0 == "<!-- /knobs:verify-gate -->" { print ""; print "<!-- knobs:hand-chunk -->"; print "Hand-written prose no rewrite parses."; print "<!-- /knobs:hand-chunk -->" }' \
-    "$T/$CONTRACT" > "$H/c" && cp "$H/c" "$T/$CONTRACT" || { GOT=fixture-edit; return; }
+    "$T/$CONTRACT" > "$H/c" && cp "$H/c" "$T/$CONTRACT" && st_untype || { GOT=fixture-edit; return; } # type none's key sets apply
   st_knob "$T/$CONTRACT" verify-gate > "$H/vg"; st_knob "$T/$CONTRACT" hand-chunk > "$H/hc"
-  st_answers "$H/meta.md" none none # a meta-only type-none answers file lists no block
+  st_answers "$H/meta.md" none none # type none over the fixture defaults, tracker none: no block listed
   st_run stamp --target "$T" --answers "$H/meta.md"
   [ "$RC" = 0 ] || { GOT=exit$RC; return; }
   st_has 'KNOB verify-gate kept — not a block this stamp lists, and no retire-block row names it' &&
@@ -2584,6 +2733,257 @@ case_fill_prompt_skips_code() { # verify reads a prompt in fenced code or a clos
   GOT=quoted-skipped
 }
 
+case_overlay_by_key() { # the defaults' block and key order; the Profile's scalar and list replace by key, its own keys and block follow
+  st_env; st_answers "$H/a.md" overlay none
+  ST_DF=$FIXTURE_DIR/defaults-overlay.md; st_run stamp --target "$T" --answers "$H/a.md"; ST_DF=
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  printf '%s\n' '<!-- knobs:alpha -->' '- one: d1' '- two: p2' '- lst:' '  1. p-item' '- extra: pe' '- zeta: pz' '<!-- /knobs:alpha -->' '' \
+    '<!-- knobs:beta -->' '- b1: db1' '- b2: pb2' '<!-- /knobs:beta -->' '' '<!-- knobs:gamma -->' '- g: pg' '<!-- /knobs:gamma -->' '' \
+    '<!-- knobs:delta -->' '- d: pd' '<!-- /knobs:delta -->' > "$H/want"
+  awk '/^<!-- knobs:/ { f = 1 } f { a[++n] = $0 } /^<!-- \/knobs:/ { e = n } END { for (i = 1; i <= e; i++) print a[i] }' "$T/$CONTRACT" > "$H/got"
+  cmp -s "$H/want" "$H/got" || { GOT=knob-blocks; return; }
+  grep -q 'tracker-github' "$T/$CONTRACT" && { GOT=tracker-block-for-none; return; }
+  GOT=overlaid
+}
+st_none_answers() { # <file> [<key to leave out>] — type none, tracker none, the shipped defaults' shapes answered
+  st_answers "$1" none none 'docs/agents/project-workflow.md#Project' 'A fixture project.' \
+    'docs/agents/project-workflow.md#Working in this repo' 'Nothing beyond the Chunks.' \
+    'docs/agents/project-workflow.md#Running' 'make test; read its summary line.' 'AGENTS.md#Skills' '`$git-flow-squash` only.'
+  { printf '%s\n' '' '<!-- knobs:verify-gate -->'
+    for _kv in 'dir: repo root' 'typecheck: none — the project has no type checker' 'test: make test' 'build: make' \
+               'build_check: ls build/app' 'smoke: none — a library, nothing to bring up' 'secret_scan: git grep -n SECRET' 'env: none'; do
+      [ "${_kv%%:*}" = "${2:-}" ] || printf -- '- %s\n' "$_kv"
+    done
+    printf '%s\n' '<!-- /knobs:verify-gate -->' '' '<!-- knobs:parallel-work -->' '- worktree_path_prefix: ../fixture-<n>-<slug>' \
+      '- install: none' '<!-- /knobs:parallel-work -->'; } >> "$1"
+}
+case_none_missing_key() { # type none over the shipped defaults.md and profiles/none.md: an unanswered verify-gate key stops
+  st_env; st_none_answers "$H/a.md" env
+  ST_PD=$SKILL_DIR/profiles; ST_DF=$SKILL_DIR/defaults.md
+  st_stop_case "$H/a.md" 'knob verify-gate.env has no value'
+  ST_PD=; ST_DF=
+}
+case_none_all_answered() { # the same with all eight (two `none — <why>`, a value no check reads): written, fork filled, residue clean
+  st_env; st_none_answers "$H/a.md"
+  ST_PD=$SKILL_DIR/profiles; ST_DF=$SKILL_DIR/defaults.md
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] || { ST_PD=; ST_DF=; GOT=exit$RC; return; }
+  st_run verify --target "$T" --answers "$H/a.md"; ST_PD=; ST_DF=
+  grep -qF 'fork is `/git-flow-squash`.' "$T/CLAUDE.md" || { GOT=fork-unfilled; return; }
+  grep -qxF -e '- typecheck: none — the project has no type checker' "$T/$CONTRACT" || { GOT=none-value-missing; return; }
+  grep -qxF -e '- shape: subagents' "$T/$CONTRACT" || { GOT=default-literal-missing; return; }
+  for _c in braces marker fill-prompt fork-slot empty-heading; do
+    printf '%s\n' "$OUT" | grep -q "^CHECK $_c: PASS — " || { GOT=check-$_c; return; }
+  done
+  GOT=stamped-clean
+}
+case_tracker_without_profile() { # the tracker's assets come from the engine's tracker dir; no Profile directory holds any
+  st_env; mkdir -p "$H/profiles" || { GOT=fixture-edit; return; }
+  cp "$FIXTURE_DIR/profiles/none.md" "$H/profiles/none.md" || { GOT=fixture-edit; return; }
+  st_answers "$H/a.md" none github; printf '%s\n' '<!-- knobs:tracker-github -->' '- REPO: owner/fixture' '<!-- /knobs:tracker-github -->' >> "$H/a.md"
+  ST_PD=$H/profiles; st_run stamp --target "$T" --answers "$H/a.md"; ST_PD=
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  [ -z "$(find "$H/profiles" -name 'github*' -print)" ] || { GOT=fixture-has-github; return; }
+  grep -qxF '# Issue tracker — Fixture' "$T/docs/agents/issue-tracker.md" && grep -qxF 'FIXTURE-POINTER triage labels.' "$T/docs/agents/triage-labels.md" || { GOT=pointers; return; }
+  [ "$(tail -n 1 "$T/$CONTRACT")" = '<!-- /zone:issue-tracker -->' ] || { GOT=tracker-zone-not-last; return; }
+  [ "$(awk '/^<!-- knobs:/ { print; exit }' "$T/$CONTRACT")" = '<!-- knobs:tracker-github -->' ] || { GOT=knob-not-first; return; }
+  GOT=tracker-stamped
+}
+case_profile_unread_keys() { # a top-level type: is a NOTE (unread); a refresh templates entry key is a stop
+  st_env; mkdir -p "$H/profiles" || { GOT=fixture-edit; return; }
+  printf '%s\n' '---' 'type: typed' 'imports: []' 'templates: []' '---' > "$H/profiles/typed.md"
+  printf '%s\n' '---' 'imports: []' 'templates:' '  - { src: a.md, dest: a.md, refresh: true }' '---' > "$H/profiles/refreshed.md"
+  st_answers "$H/a.md" typed none; ST_PD=$H/profiles; st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] && st_has 'NOTE profile key type is not read' || { ST_PD=; GOT=type-exit$RC; return; }
+  mk_tmpdir; T=$MKD; st_answers "$H/b.md" refreshed none
+  st_run stamp --target "$T" --answers "$H/b.md"; ST_PD=
+  [ "$RC" = 2 ] && [ -z "$(ls -A "$T")" ] || { GOT=refresh-exit$RC; return; }
+  printf '%s\n' "$OUT" | grep -q '^STOP: Profile .*: templates entry key refresh is not read$' || { GOT=refresh-wrong-stop; return; }
+  GOT=note-and-stop
+}
+
+st_ff_notype() { grep -v '^- type:' "$FIXTURE_DIR/answers/four-fragments.md" > "$H/notype.md"; } # four-fragments' answers, no type line
+case_type_mismatch_stop() { # (h) a re-run whose answers file names another type stops before any write, naming both
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  sed 's/^- type: four-fragments$/- type: fill-guard/' "$FIXTURE_DIR/answers/four-fragments.md" > "$H/other.md" || { GOT=fixture-edit; return; }
+  st_run check --target "$T" --answers "$H/other.md"
+  [ "$RC" = 2 ] || { GOT=check-exit$RC; return; }
+  st_run verify --target "$T" --answers "$H/other.md" # C4: verify resolves the type as stamp does
+  [ "$RC" = 2 ] && st_has "STOP: type: $CONTRACT records four-fragments, the answers file names fill-guard — a re-run keeps the stamped type; drop the answers file's type line, or make it four-fragments if host-setup reads this file (it has no target, so it needs the type) (nothing written)" || { GOT=verify-exit$RC; return; }
+  st_stop_case "$H/other.md" "type: $CONTRACT records four-fragments, the answers file names fill-guard"
+}
+case_type_read_from_contract() { # (i) a re-run with no type in its answers file takes the recorded one, verify too (C4); host-setup still needs it
+  st_env; st_ff_notype
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  _before=$(st_snapshot "$T")
+  st_run stamp --target "$T" --answers "$H/notype.md"
+  [ "$RC" = 0 ] && [ "$_before" = "$(st_snapshot "$T")" ] || { GOT=stamp-exit$RC; return; }
+  st_check "$H/notype.md"
+  [ "$RC" = 0 ] && ! printf '%s\n' "$OUT" | grep -q ' differs$' || { GOT=check-exit$RC; return; }
+  st_run verify --target "$T" --answers "$H/notype.md"
+  [ "$RC" != 2 ] && printf '%s\n' "$OUT" | grep -q '^GATE imports-resolve: PASS' || { GOT=verify-exit$RC; return; }
+  st_run host-setup --answers "$H/notype.md"
+  [ "$RC" = 2 ] && st_has 'STOP: answers:meta has no type' || { GOT=host-setup-exit$RC; return; }
+  GOT=recorded-used
+}
+case_type_unrecorded_note() { # (j) a contract with no type line: check reads contract-sections differs; stamp takes the answers type, says so, records it
+  st_env; st_ff_notype
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 0 ] && st_untype || { GOT=fresh-exit$RC; return; }
+  _note="NOTE type: $CONTRACT records none (a v1 or pre-#127 stamp); the answers file's four-fragments is used"
+  st_check "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 1 ] && st_has "ZONE $CONTRACT contract-sections differs" && st_has "$_note" || { GOT=check-exit$RC; return; }
+  st_stop_case "$H/notype.md" "answers:meta has no type, and $CONTRACT records none"
+  [ "$GOT" = stopped-untouched ] || { GOT=untyped-$GOT; return; }
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 0 ] && st_has "$_note" || { GOT=stamp-exit$RC; return; }
+  [ "$(zone_extract "$T/$CONTRACT" contract-sections | head -n 1)" = '<!-- init-project:type four-fragments -->' ] || { GOT=not-recorded; return; }
+  st_check "$H/notype.md"
+  [ "$RC" = 0 ] || { GOT=recheck-exit$RC; return; }
+  GOT=answers-type-noted
+}
+
+st_profiles() { mkdir -p "$H/profiles" && cp -R "$FIXTURE_DIR/profiles/." "$H/profiles/"; } # the fixture Profiles, editable
+st_unmark() { sed -e 's/<!-- fill:Guarded -->//' -e 's|<!-- /fill:Guarded -->||' "$T/$CONTRACT" > "$H/um" && cp "$H/um" "$T/$CONTRACT"; }
+st_guard_tpl() { printf '%s\n' "$@" > "$H/profiles/fill-guard/templates/contract.md"; } # the fill-guard fragment, rewritten
+st_two_prompts() { # a Profile two-prompts: prompts under ## First and ## Second in one zone; sets ST_PD, K1, K2
+  st_profiles && grep -v '^type:' "$H/profiles/fill-guard.md" > "$H/profiles/two-prompts.md" && mkdir -p "$H/profiles/two-prompts/templates" &&
+    printf '%s\n' '## First' '' '*<Fill at init: one.>*' '' '## Second' '' '*<Fill at init: two.>*' > "$H/profiles/two-prompts/templates/contract.md" || return 1
+  ST_PD=$H/profiles; K1=$CONTRACT#First; K2=$CONTRACT#Second
+}
+FG_KEY=docs/agents/project-workflow.md#Guarded
+case_fill_read_back() { # (f) an in-zone fill the answers file no longer gives is read back: no differs, no D8 stop, not a byte moved
+  st_env; st_answers "$H/a.md" fill-guard none "$FG_KEY" "Guarded by the owner.$NL${NL}A second paragraph, ending the zone."
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] && cp "$T/$CONTRACT" "$H/c0" || { GOT=fresh-exit$RC; return; }
+  st_run verify --target "$T" --answers "$H/a.md" # a heading whose text is an inline-marked fill is not empty
+  printf '%s\n' "$OUT" | grep -q '^CHECK empty-heading: PASS' || { GOT=empty-heading-fail; return; }
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return; }
+  st_has "NOTE fill $FG_KEY read back from the target" && st_has "ZONE $CONTRACT contract-sections same" || { GOT=not-noted; return; }
+  cmp -s "$H/c0" "$T/$CONTRACT" || { GOT=contract-changed; return; }
+  st_check "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] && ! printf '%s\n' "$OUT" | grep -q ' differs$' || { GOT=check-exit$RC; return; }
+  st_answers "$H/b.md" fill-guard none "$FG_KEY" 'Replaced by the answers file.' # a given fill still wins over the read-back
+  st_run stamp --target "$T" --answers "$H/b.md"
+  [ "$RC" = 0 ] && grep -qxF '<!-- fill:Guarded -->Replaced by the answers file.<!-- /fill:Guarded -->' "$T/$CONTRACT" &&
+    ! grep -qF 'Guarded by the owner.' "$T/$CONTRACT" && ! st_has "NOTE fill $FG_KEY read back from the target" || { GOT=given-lost$RC; return; }
+  GOT=read-back
+}
+case_fill_read_back_untyped() { # A2: a pre-#127 target has no type line; the marker read-back does not depend on it
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-filled.md"
+  [ "$RC" = 0 ] && cp "$T/$CONTRACT" "$H/c0" && st_untype || { GOT=fresh-exit$RC; return; }
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return; }
+  st_has "NOTE fill $FG_KEY read back from the target" && st_has "ZONE $CONTRACT contract-sections refreshed" || { GOT=not-noted; return; }
+  cmp -s "$H/c0" "$T/$CONTRACT" || { GOT=contract-not-restored; return; } # the fill byte-identical, the type line back
+  GOT=read-back-untyped
+}
+case_fill_read_back_ambiguous() { # A4: a fill holding the text between two prompts (a heading, even) is read back whole, never split
+  st_env; st_two_prompts || { GOT=fixture-edit; return; }
+  st_answers "$H/bare.md" two-prompts none
+  st_answers "$H/a.md" two-prompts none "$K1" "Alpha.$NL$NL## Second$NL${NL}Beta." "$K2" 'Gamma.'
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] && cp "$T/$CONTRACT" "$H/c0" || { GOT=fresh-exit$RC; return; }
+  st_run stamp --target "$T" --answers "$H/bare.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return; }
+  st_has "NOTE fill $K1 read back from the target" && st_has "NOTE fill $K2 read back from the target" || { GOT=not-noted; return; }
+  cmp -s "$H/c0" "$T/$CONTRACT" || { GOT=contract-changed; return; }
+  GOT=read-back-whole
+}
+case_fill_template_line_deleted() { # C1: a Template line deleted beside a filled prompt lands; the fill survives
+  st_env; st_profiles || { GOT=fixture-edit; return; }
+  st_guard_tpl '## Guarded' '' 'Before: *<Fill at init: the guarded answer.>* :after' 'A line a later Template deletes.' 'The last line.'
+  ST_PD=$H/profiles; st_answers "$H/a.md" fill-guard none "$FG_KEY" 'Owner text.'
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  _fl='Before: <!-- fill:Guarded -->Owner text.<!-- /fill:Guarded --> :after'
+  grep -qxF "$_fl" "$T/$CONTRACT" || { GOT=not-inline; return; }
+  st_guard_tpl '## Guarded' '' 'Before: *<Fill at init: the guarded answer.>* :after' 'The last line.'
+  st_check "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 1 ] && st_has "ZONE $CONTRACT contract-sections differs" || { GOT=check-before-exit$RC; return; }
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] && st_has "NOTE fill $FG_KEY read back from the target" && st_has "ZONE $CONTRACT contract-sections refreshed" || { GOT=rerun-exit$RC; return; }
+  grep -qxF "$_fl" "$T/$CONTRACT" || { GOT=fill-lost; return; }
+  grep -qF 'A line a later Template deletes.' "$T/$CONTRACT" && { GOT=deletion-swallowed; return; }
+  st_check "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] && st_has "ZONE $CONTRACT contract-sections same" || { GOT=check-after-exit$RC; return; }
+  GOT=deletion-landed
+}
+case_fill_prompt_reworded() { # C2: an unfilled prompt the Template rewords takes the new wording, with no read-back NOTE
+  st_env; st_profiles || { GOT=fixture-edit; return; }
+  ST_PD=$H/profiles
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  st_guard_tpl '## Guarded' '' '*<Fill at init: the reworded answer.>*'
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return; }
+  st_has "NOTE fill $FG_KEY read back from the target" && { GOT=false-note; return; }
+  grep -qxF '*<Fill at init: the reworded answer.>*' "$T/$CONTRACT" && ! grep -qF 'the guarded answer' "$T/$CONTRACT" || { GOT=old-wording-kept; return; }
+  # a marker pair whose X is still a prompt is not a fill either
+  sed 's|^\*<Fill at init: the reworded answer\.>\*$|<!-- fill:Guarded -->*<Fill at init: the guarded answer.>*<!-- /fill:Guarded -->|' "$T/$CONTRACT" > "$H/c" && cp "$H/c" "$T/$CONTRACT" || { GOT=fixture-edit; return; }
+  grep -qF '<!-- fill:Guarded -->*<Fill' "$T/$CONTRACT" || { GOT=fixture-edit; return; }
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  [ "$RC" = 0 ] && ! st_has "NOTE fill $FG_KEY read back from the target" || { GOT=marked-prompt-read-back$RC; return; }
+  grep -qxF '*<Fill at init: the reworded answer.>*' "$T/$CONTRACT" || { GOT=marked-prompt-kept; return; }
+  GOT=new-wording
+}
+case_fill_siblings_independent() { # C3: one sibling fill given, the other read back, no stop
+  st_env; st_two_prompts || { GOT=fixture-edit; return; }
+  st_answers "$H/a.md" two-prompts none "$K1" 'Alpha.' "$K2" 'Gamma.'
+  st_answers "$H/b.md" two-prompts none "$K2" 'Delta.'
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  st_run stamp --target "$T" --answers "$H/b.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return; }
+  st_has "NOTE fill $K1 read back from the target" && ! st_has "NOTE fill $K2 read back from the target" || { GOT=notes; return; }
+  grep -qxF '<!-- fill:First -->Alpha.<!-- /fill:First -->' "$T/$CONTRACT" || { GOT=sibling-lost; return; }
+  grep -qxF '<!-- fill:Second -->Delta.<!-- /fill:Second -->' "$T/$CONTRACT" && ! grep -qF 'Gamma.' "$T/$CONTRACT" || { GOT=given-lost; return; }
+  GOT=siblings-independent
+}
+case_check_read_back_differs() { # C5: check cannot read back a fill with no marker pair, so the zone differs
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/fill-guard-filled.md"
+  [ "$RC" = 0 ] && st_unmark || { GOT=fresh-exit$RC; return; }
+  st_check "$FIXTURE_DIR/answers/fill-guard-bare.md"
+  st_has "NOTE fill $FG_KEY read back from the target" && { GOT=guessed; return; }
+  [ "$RC" = 1 ] && st_has "ZONE $CONTRACT contract-sections differs" || { GOT=check-exit$RC; return; }
+  GOT=differs
+}
+case_fill_close_marker_stop() { # a fill holding its own close marker could not be read back whole: it stops, never truncates
+  st_env; st_answers "$H/a.md" fill-guard none "$FG_KEY" 'Before <!-- /fill:Guarded --> after.'
+  st_stop_case "$H/a.md" "the fill for $FG_KEY contains its own close marker <!-- /fill:Guarded -->"
+}
+case_type_recorded_twice_stop() { # C5
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/four-fragments.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  awk '{ print } /^<!-- init-project:type / { print "<!-- init-project:type fill-guard -->" }' "$T/$CONTRACT" > "$H/c" && cp "$H/c" "$T/$CONTRACT" || { GOT=fixture-edit; return; }
+  st_stop_case "$FIXTURE_DIR/answers/four-fragments.md" "$CONTRACT records more than one type"
+}
+case_defaults_missing_stop() { # C5
+  st_env; ST_DF=$H/no-defaults.md
+  st_stop_case "$FIXTURE_DIR/answers/four-fragments.md" "the engine defaults file $H/no-defaults.md is not found"
+}
+case_defaults_parse_stop() { # C5
+  st_env; printf '%s\n' 'fork: git-flow-squash' > "$H/bad-defaults.md"; ST_DF=$H/bad-defaults.md
+  st_stop_case "$FIXTURE_DIR/answers/four-fragments.md" "engine defaults $H/bad-defaults.md line 1: no YAML frontmatter"
+}
+case_no_fork_stop() { # C5
+  st_env; grep -v '^fork:' "$FIXTURE_DIR/defaults.md" > "$H/defaults.md" || { GOT=fixture-edit; return; }
+  ST_DF=$H/defaults.md; st_answers "$H/a.md" none none
+  st_stop_case "$H/a.md" 'no fork: neither Profile none nor the engine defaults name one'
+}
+case_fresh_no_type_stop() { # C5: a fresh stamp has no contract to read a type from
+  st_env; st_ff_notype
+  st_stop_case "$H/notype.md" 'answers:meta has no type'
+  [ "$GOT" = stopped-untouched ] && ! st_has 'STOP: answers:meta has no type' && GOT=wrong-stop
+}
+
 cmd_selftest() {
   _exp=$FIXTURE_DIR/expected
   [ -f "$_exp" ] || stop "selftest: $_exp not found"
@@ -2592,7 +2992,7 @@ cmd_selftest() {
   _k=0; _n=0
   while read -r _case _want; do
     case $_case in ''|'#'*) continue ;; esac
-    _n=$((_n + 1)); GOT=unknown-case; ST_KC=; ST_PD=; ST_LOC=; ST_NOPIN=
+    _n=$((_n + 1)); GOT=unknown-case; ST_KC=; ST_PD=; ST_DF=; ST_LOC=; ST_NOPIN=
     _fn=case_$(printf '%s' "$_case" | tr '-' '_')
     case $_case in
       template-every-token|fragment-each-marker|pre-contract-stop|untagged-stop|tracker-github-fresh|\
@@ -2604,7 +3004,12 @@ cmd_selftest() {
       check-same|zone-differs|check-unparsed|after-freeze-fill|silent-stops|fill-prompt-names-all|check-not-run|\
       interrupt-no-temp|locale-pin|fenced-tags|symlink-dest-stop|cdpath-unset|fresh-held-stop|no-final-newline|\
       unlisted-block-kept|rerun-fill-outside|fill-key-typo-rerun|outside-fill-skips-code|fence-closing-rule|\
-      fill-heading-renamed-rerun|interrupt-in-staging|fill-prompt-skips-code) "$_fn" ;;
+      fill-heading-renamed-rerun|interrupt-in-staging|fill-prompt-skips-code|\
+      overlay-by-key|none-missing-key|none-all-answered|tracker-without-profile|profile-unread-keys|\
+      type-mismatch-stop|type-read-from-contract|type-unrecorded-note|\
+      fill-read-back|fill-read-back-untyped|fill-read-back-ambiguous|fill-template-line-deleted|\
+      fill-prompt-reworded|fill-siblings-independent|check-read-back-differs|type-recorded-twice-stop|\
+      defaults-missing-stop|defaults-parse-stop|no-fork-stop|fresh-no-type-stop|fill-close-marker-stop) "$_fn" ;;
     esac
     if [ "$GOT" = "$_want" ]; then _k=$((_k + 1)); else printf 'SELFTEST %s: expected %s, got %s\n' "$_case" "$_want" "$GOT"; fi
   done < "$_exp"

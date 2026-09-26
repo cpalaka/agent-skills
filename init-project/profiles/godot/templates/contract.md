@@ -6,25 +6,21 @@
   that has not run that skill yet has no glossary to read. `docs/agents/domain.md` is the short
   pointer to it and to `docs/adr/`.
 - **For any work involving the Godot MCP tools, read `docs/godot-mcp-guide.md` first.** Division of
-  labour: **godot-ai = primary WRITER** (scene/node/script/property creation, `project_run`,
-  `editor_screenshot`, `logs_read`); **godot-mcp = READ/TEST complement** (`godot_input`,
-  `godot_runtime_state`, `godot_docs`, `godot_editor get_log_messages` — **no `source` arg, it is a
-  phantom and silently stripped**; editor-only filtering is godot-ai `logs_read source="editor"`);
-  **minimal-godot = local diagnostics** (`get_diagnostics`). Never write through godot-mcp (it
-  silently no-ops `Rect2`); **one writer per editor instance**. **Project pins:**
+  labour: **godot-ai = primary WRITER** where the project vendors it (§ godot-ai addon) —
+  scene/node/script/property creation, `project_run`, `editor_screenshot`, `logs_read`;
+  **godot-mcp = READ/TEST complement** (`godot_input`, `godot_runtime_state`, `godot_docs`,
+  `godot_editor get_log_messages` — **no `source` arg, it is a phantom and silently stripped**;
+  editor-only filtering is godot-ai `logs_read source="editor"`); **minimal-godot = local
+  diagnostics** (`get_diagnostics`). godot-mcp silently no-ops `Rect2`: with godot-ai vendored, never
+  write through godot-mcp; without it, godot-mcp is the writer and that no-op is a known gap — a
+  `Rect2` is hand-edited in the `.tscn`/`.tres` and re-verified, and the guide's godot-ai-as-writer
+  matrix does not describe this project. **One writer per editor instance**. **Project pins:**
   *<Fill at init: the godot-mcp version pinned in `tools/mcp/package.json` — addon and server are
   bumped together — and, where the project vendors godot-ai, its version, which is the tag vendored
   below. A project that skips godot-ai names godot-mcp alone here.>*
 - **MCP servers connect at session start.** After any MCP config change, start a new session — your
   host adapter says which files hold that config and how a new session is started. The tool-name
   prefix a host shows you is a host detail; the roles above are not.
-- **For any work involving the Blender MCP tools, read `docs/blender-mcp-guide.md` first** — schema
-  inconsistencies (`name` vs `object_name`, `output_path` basename-only), the data-API-over-`bpy.ops`
-  rule, depsgraph staleness on derived reads, edit-mode bmesh discipline, the `glTF Material Output`
-  node group pattern for AO, and Blender 5.x API drift. **For Blender → Godot asset pipeline shape,
-  read `docs/asset-pipeline.md`** — the directory layout, the naming discipline that leaks from
-  Blender into Godot, and what crosses the boundary. Both docs are stamped only for a project with a
-  Blender source, so this bullet is dropped whole where they are absent.
 - **Four Godot skills, read when you touch the work they cover** — `godot-gdscript-patterns`
   (GDScript), `godot-animation-tree-mastery` (AnimationTree), `godot-gotchas` (engine/editor quirks —
   the single source for *universal* ones; `docs/godot-gotchas.md` holds only *project-local* ones),
@@ -44,11 +40,23 @@
 - `.godot/` is the editor's generated cache and is gitignored — never edit it directly; regenerate by
   opening the project in the editor.
 
-## godot-ai addon (vendored, TRACKED)
+## Blender pipeline
 
-`addons/godot_ai` is a vendored copy of upstream `hi-godot/godot-ai` at tag
-*<Fill at init: the tag checked out before vendoring.>*, **committed to git** — that tag pins both
-the addon and the Python MCP server the dock fetches from PyPI.
+*<Fill at init: with a Blender source, the reading rule — before any Blender MCP work read
+`docs/blender-mcp-guide.md` (schema inconsistencies such as `name` vs `object_name` and a
+basename-only `output_path`, the data-API-over-`bpy.ops` rule, depsgraph staleness on derived
+reads, edit-mode bmesh discipline, the `glTF Material Output` node group for AO, Blender 5.x API
+drift), and for the pipeline's shape `docs/asset-pipeline.md` (the directory layout, the naming
+discipline that leaks from Blender into Godot, what crosses the boundary). With none, one line
+saying the project has no Blender source, so neither doc is stamped or looked for.>*
+
+## godot-ai addon
+
+**Vendored tag:** *<Fill at init: the `hi-godot/godot-ai` tag checked out before vendoring — or,
+where the project does not vendor godot-ai, `none`, and the rest of this section does not apply.>*
+
+Where vendored, `addons/godot_ai` is a copy of upstream `hi-godot/godot-ai` at that tag, **committed
+to git** — that tag pins both the addon and the Python MCP server the dock fetches from PyPI.
 
 **The dock registers each MCP client itself, at USER scope**, writing a generated `godot-ai attach`
 stdio entry into that host's own config — **your adapter names yours** — and deleting any
@@ -88,6 +96,7 @@ never `$?`. With no scope on a clean tree it prints `VERDICT: VACUOUS`, which is
 
 **Fresh-clone rehydrate:** `npm ci --prefix tools/mcp`, then import once
 (`godot --headless --path . --import` or open the editor) so the global class cache exists —
-otherwise `tests/run_tests.sh` false-FAILs `fixture_pass.gd`. `addons/godot_ai` is tracked, so there
-is no re-vendor step. Your host's project-scope MCP config may be a gitignored file you have to
-re-create as well; your host adapter names it, and the session-start rule above then applies.
+otherwise `tests/run_tests.sh` false-FAILs `fixture_pass.gd`. A vendored `addons/godot_ai` is
+tracked, so there is no re-vendor step. Your host's project-scope MCP config may be a gitignored
+file you have to re-create as well; your host adapter names it, and the session-start rule above
+then applies.

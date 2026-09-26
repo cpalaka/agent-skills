@@ -1,7 +1,7 @@
 # Triage labels
 
 <!-- HAND-WRITTEN, and authoritative for THIS repository; not stamped (project-workflow.md
-     § Hand-written, and it stays that way). init-project/profiles/github/templates/triage-labels.md
+     § Hand-written, and it stays that way). init-project/templates/tracker/triage-labels.md
      stamps the same file into a project that IS stamped; it is the shape this one mirrors, not its
      source, and neither is generated from the other. The vocabulary is defined once in
      chunks/tracker-github.md § Two label axes — this file maps, it does not define. -->

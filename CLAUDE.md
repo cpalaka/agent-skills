@@ -98,18 +98,21 @@ local edits that a manual upstream sync must re-apply. Today that is `unslop/` a
 
 **Chunk vs Template.** A **Chunk** (`chunks/`) is single-source and referenced — editing it
 updates every consuming project at next launch. A **Template** is *copied* into a project at init
-and thereafter drifts: `init-project/templates/` holds the four files every Profile emits, which
-no parity check reads at all, and `init-project/profiles/<type>/templates/` a Profile's own
-assets, only some of which one does. Know which you are editing; `CONTEXT.md` has the
-discriminator and the coverage.
+and thereafter drifts: `init-project/templates/` holds what the engine emits — six files plus one
+fragment, two of the files and the fragment conditional on the tracker being `github`, those three
+under `templates/tracker/` — whose engine zones `check` compares and nothing else does, and
+`init-project/profiles/<type>/templates/` a Profile's own assets. Know which you are editing;
+`CONTEXT.md` has the discriminator and the coverage.
 
 **The `init-project` engine is generic.** Adding a project type means adding a
 `profiles/<type>.md` Profile — plus, where the type has host specifics, its four `adapters:`
 fragments — never editing the engine
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Every Profile emits the same four
-files: the shared contract, two thin host adapters over it
-([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)), and the project's
-gate-runner seat ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)).
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). What every stamp emits, whatever its
+Profile, is `init-project/SKILL.md`'s header — decided in
+[ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md) (the contract and two
+thin host adapters), [ADR 0011](docs/adr/0011-roles-not-cost-tiers.md) (the gate-runner seat) and
+[ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md) (the tracker is the engine's step, never a
+Profile's).
 
 **No public artifact may hard-require a private one.** Where a body calls a Skill that may not be
 installed, the reference is existence-gated on the Skill's directory existing under *either*

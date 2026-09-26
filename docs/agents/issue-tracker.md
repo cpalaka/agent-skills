@@ -2,7 +2,7 @@
 
 <!-- HAND-WRITTEN, and authoritative for THIS repository. This repository stamps nothing
      (project-workflow.md § Hand-written, and it stays that way), so nothing generates this file.
-     init-project/profiles/github/templates/issue-tracker.md stamps the same file into a project
+     init-project/templates/tracker/issue-tracker.md stamps the same file into a project
      that IS stamped; it is the shape this one mirrors, not its source, and neither is generated
      from the other. Conventions are authoritative in chunks/tracker-github.md for both — a
      pointer, not a second copy. -->

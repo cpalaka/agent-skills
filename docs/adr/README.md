@@ -17,7 +17,7 @@ entry, not a quiet edit.
 | [0010](0010-fragment-bullets-declare-their-targets.md) | Fragment bullets declare their targets; migrate withholds a failing bullet whole, never rewrites it (superseded by 0020) |
 | [0011](0011-roles-not-cost-tiers.md) | Capability roles, not cost tiers, decide which model fills a seat (supersedes 0006) |
 | [0012](0012-issue-status-is-derived.md) | Issue status is derived from open state, gate label and blocked-by; never from a board or a body rewrite |
-| [0013](0013-retire-unused-chunks.md) | Three Chunks retire on a zero-importer measurement; the git-flow fork keeps one side (supersedes 0002 in part) |
+| [0013](0013-retire-unused-chunks.md) | Three Chunks retire on a zero-importer measurement; the git-flow fork keeps one side (supersedes 0002 in part; extended by 0022) |
 | [0014](0014-floor-is-a-location.md) | The floor is a location: `chunks/` holds always-on rules only, and a situational body is a Skill (amends 0001, 0009) |
 | [0015](0015-chunk-cap-250-ceiling-2900.md) | The condensed-Chunk cap is 250 words and the floor ceiling is 2,900 (amends 0014) |
 | [0016](0016-floor-ceiling-is-acceptance-time.md) | The floor ceiling is acceptance-time, and every standing number names its reader (amends 0014 § 7, 0015 § 2; amended by 0021) |
@@ -26,6 +26,7 @@ entry, not a quiet edit.
 | [0019](0019-delegated-batch-over-subagent-coordinators.md) | A delegated batch runs per-ticket coordinators as subagents from one main session |
 | [0020](0020-migrate-retired.md) | Migrate mode is retired; an engine Template asserts engine facts only (supersedes 0010, amends 0009) |
 | [0021](0021-mechanical-stamping-is-a-script.md) | Mechanical stamping is a script; prose keeps judgment (amends 0016 § 4) |
+| [0022](0022-tracker-is-an-engine-step.md) | The tracker is an engine step; a Chunk may be frozen with importers (extends 0013) |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

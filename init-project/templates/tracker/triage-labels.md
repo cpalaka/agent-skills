@@ -1,6 +1,6 @@
 # Triage labels
 
-<!-- Stamped by init-project (profiles/github/templates/triage-labels.md). The map from the triage
+<!-- Stamped by init-project (templates/tracker/triage-labels.md). The map from the triage
      roles skills speak in to this project's label strings; both host adapters reach it through the
      contract. The vocabulary is defined once in the tracker-github chunk § Two label axes, which
      your host adapter loads — this file maps, it does not define. -->

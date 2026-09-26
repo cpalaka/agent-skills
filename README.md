@@ -163,17 +163,18 @@ taking the review, writing the run record.
 
 ### init-project
 
-The single engine that scaffolds a project onto the Chunk library. Every project type
-gets the same four files: `docs/agents/project-workflow.md`, the shared contract holding the
-project's rules and the engine-written knob blocks, two thin host adapters over it — `CLAUDE.md`
-carrying the chunk `@import`s and Claude Code mechanics, `AGENTS.md` naming the same chunks for
-Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)) — and
+The single engine that scaffolds a project onto the Chunk library; what a stamp emits is listed
+once, in [`SKILL.md`](init-project/SKILL.md)'s header. Every project type gets
+`docs/agents/project-workflow.md`, the shared contract holding the project's rules and the
+engine-written knob blocks, two thin host adapters over it — `CLAUDE.md` carrying the chunk
+`@import`s and Claude Code mechanics, `AGENTS.md` naming the same chunks for Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)) — and
 `.claude/agents/gate-runner.md`, the seat that re-runs the verify gate for a coordinator that did
-not write the diff ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). It also
-stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
+not write the diff ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). Where the tracker is
+GitHub Issues, it also stamps the tracker's files — the tracker is an engine step, not a Profile
+([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)). It also stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
 recipe. Adding a project type means adding a `profiles/<type>.md`; the engine never changes
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `github`, `godot`, and `web`
-Profiles.
+([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `godot` and `web` Profiles,
+and the empty `none` Profile, which runs on the engine defaults alone.
 
 **When to use:** setting up a new project, adopting the Chunk library in an existing one, or
 adding a new project type.
@@ -339,7 +340,7 @@ A **Chunk** is a single-source dev-process instruction file in `chunks/`. Projec
 rather than copying it, so editing a Chunk here updates every consuming project at its next
 launch ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md),
 [ADR 0005](docs/adr/0005-codex-chunks-use-explicit-read-directives.md)). This is the opposite of a
-**Template** (`init-project/templates/` for the four files every Profile emits,
+**Template** (`init-project/templates/` for the files the engine emits,
 `init-project/profiles/<type>/templates/` for a Profile's own assets), which is *copied* into a
 project at init and thereafter diverges. The discriminator is one question: does the project edit the bytes after
 delivery? No → Chunk. Yes → Template.
@@ -367,9 +368,9 @@ row per third-party Skill, because a body may name some of a repo's Skills and n
 | Skill | Named by | Install from |
 |---|---|---|
 | `to-spec` | `spec-review`, `multi-agent-policy`, the `AGENTS.md` Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `to-tickets` | `spec-review`, `multi-agent-policy`, the `github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `to-tickets` | `spec-review`, `multi-agent-policy`, `init-project`'s tracker Templates (the contract fragment and the issue-tracker pointer) | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `implement` | `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, the `github`/`godot` Profiles and their contract + issue-tracker Templates | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, `init-project`'s tracker Templates (the contract fragment and the issue-tracker pointer) | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grilling` | `refresh-context` (both hosts), `godot-architecture-review`, `tournament`, `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `grill-with-docs` | `multi-agent-policy`, `tournament` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `domain-modeling` | `refresh-context` (both hosts), `godot-architecture-review`, the `godot` Profile's domain Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |

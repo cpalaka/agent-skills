@@ -4,7 +4,7 @@
 # pre-commit scan.
 #
 # The gotchas skill is installed per host under a different root, so no project rule can
-# name one of those roots and stay true on the other. The DoD and VERIFY_EXAMPLES name
+# name one of those roots and stay true on the other. The project contract's gotcha-scan rule names
 # THIS file; this file resolves the skill and hands off.
 #
 # Resolution order: ~/.agents/skills/godot-gotchas, then ~/.claude/skills/godot-gotchas.

@@ -7,8 +7,9 @@
   and the CA store and prints `ERROR:` for each, so a green suite reads as red (#88). Past either
   point, escalate **per command** with the Bash tool's sandbox-off option, never by changing the
   session's permission profile.
-- **`.mcp.json` lists godot-mcp and minimal-godot only.** The godot-ai stdio entry lives at USER
-  scope in `~/.claude.json`, with its ports hardcoded there — if the dock walks to another port,
+- **`.mcp.json` lists godot-mcp and minimal-godot only.** Where the project vendors godot-ai (the
+  contract's § godot-ai addon names the tag, or `none`), its stdio entry lives at USER scope in
+  `~/.claude.json`, with its ports hardcoded there — if the dock walks to another port,
   re-run the dock's client setup rather than editing that file by hand, and apply the same fix to
   every other host (contract, § godot-ai addon).
 - **`godot-export-verifier`** (`.claude/agents/`) is the export smoke-tester the contract's `build`

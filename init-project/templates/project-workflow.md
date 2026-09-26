@@ -13,22 +13,16 @@ project. The knob blocks below are what those Chunks read out of this file, by m
 
 **Every session on both hosts loads this file whole.**
 
-Before a line enters the contract, answer three questions, one sentence each, on the record:
+**Before you add a line here**, name its reader — a test for whoever edits this contract later,
+not something the stamp answered:
 
-1. **Who reads it?** The coordinator, an implementer seat, the gate-runner, a host adapter, a
-   human.
-2. **At what moment — and is the contract the narrowest carrier guaranteed loaded then?** A rule
-   that fires only inside a slash-only Skill belongs in that Skill, which is always explicitly
-   loaded. A rule that fires on a commit or a branch start belongs in a Chunk. A rule true of one
-   host belongs in that host's adapter. The contract earns a rule only when the moment it fires
-   can arrive in any session, unannounced.
-3. **Would they act differently without it?** Where the tool already prints it, refuses it or
-   enforces it, the sentence is a second copy of a verdict the reader already holds.
+1. **Who reads it?**
+2. **At what moment — and is this contract the narrowest carrier loaded then?**
+3. **Would they act differently without it?**
 
-Question 3 is the one that deletes rather than shortens, and it has a precondition: **read the
-tool's source before writing prose about how the tool behaves.** A procedure someone performed
-once can outlive its reason, or never have had one. A doc instructing a reader to redo what the
-tool already did is worse than bloat: it is a false premise they will act on.
+Where the `writing-for-agents` Skill is installed (its directory under `~/.claude/skills` or
+`~/.agents/skills`), it carries the longer treatment behind all three: context load, where
+material is disclosed, and the no-op test.
 
 {{KNOB_BLOCKS}}
 
