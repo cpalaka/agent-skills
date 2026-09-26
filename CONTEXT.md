@@ -162,6 +162,14 @@ default home for a new one. What makes a rule checkable is the axis brief's busi
 entry's.
 _Avoid_: coding-standards document, style guide, `CODING_STANDARDS.md`.
 
+**Smell baseline**:
+The heuristics the Standards axis applies to every diff whether or not the project documents a
+rule, each read one way in code and another in prose. The project's **standards source**
+overrides a smell by stating, in a line a reviewer can quote, the pattern it would flag. A smell
+finding is always a judgement, never a hard violation. Always written in full: a bare "baseline"
+is the **floor**'s avoided alias.
+_Avoid_: smell list, Fowler list.
+
 **dev-base**:
 The bundle Chunk every dev Profile imports: a single `chunks/dev-base.md` that recursively
 includes the four floor Chunks (git-sync-branch-start, git-commit-format,
