@@ -1,0 +1,3 @@
+name={{PROJECT_NAME}}
+root={{PROJECT_ROOT}}
+custom={{CUSTOM_ONE}}

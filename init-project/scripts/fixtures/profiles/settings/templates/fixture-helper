@@ -1,0 +1,3 @@
+#!/bin/sh
+# fixture-helper — a machine-wide helper host-setup copies; its parent directory is bin, so it lands executable.
+printf "fixture helper\n"

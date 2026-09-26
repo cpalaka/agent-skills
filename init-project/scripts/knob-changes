@@ -1,0 +1,8 @@
+# knob-changes — the declared knob-key changes a re-run of engine.sh applies to an existing contract.
+# One row per line; blank lines and lines starting with # are ignored. Rows:
+#   rename <chunk-id> <old-key> <new-key>   the value moves to <new-key>, which the Profile must list
+#   retire <chunk-id> <key>                 the key is removed; its first value line is printed
+#   retire-block <chunk-id>                 the whole knob block is deleted; the Profile must not list it
+# Keys match with -, _ and space treated as one character. An existing key the Profile does not list
+# and no retire row names is the project's own and is kept. A knob block is deleted only on a
+# retire-block row: any other block the Profile does not list is kept and reported. No rows today.

@@ -15,6 +15,11 @@ The engine and the `dev-base` bundle are stable; only Profiles grow. (ADR 0003.)
 the diff (ADR 0011). Knob blocks live in the contract, host mechanics live in the adapters, and
 neither adapter carries a project rule.
 
+**The mechanics have a script: `scripts/engine.sh`** in this Skill's directory, with five
+subcommands — `selftest`, `stamp`, `verify`, `check`, `host-setup` — and its `--help` for the
+answers file it reads and the output lines it prints (ADR 0021). The steps below still describe those mechanics by hand
+until the prose rework.
+
 ## What a Profile is (the manifest contract)
 
 A Profile is `profiles/<type>.md`: a YAML frontmatter **manifest** + an optional

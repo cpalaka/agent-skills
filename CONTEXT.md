@@ -194,10 +194,16 @@ lived in `CLAUDE.md` beside its imports).
 **engine zone**:
 The region of an emitted file that the `init-project` engine owns and may rewrite on a re-run:
 the tagged knob blocks, the import block and the derived read list, the `<!-- profile:… -->`
-markers and their inserted fragments, the canary line, and the gate-runner seat's body above its
-`## Project gates` heading. Everything outside an engine zone — the contract's **project
-sections**, every **inline-leaf**, a Profile asset the project has edited — is the project's, and
-the engine never compares or rewrites it. The discriminator is ownership, not position: a line the
+markers and their inserted fragments, the canary line, and the gate-runner seat's frontmatter and
+every section but its `## Project gates`. Each zone sits between a **zone tag** pair,
+`<!-- zone:<name> -->` … `<!-- /zone:<name> -->`, the knob block's tag pair being the existing
+instance of the pattern; the seat's frontmatter alone is bounded by its `---` fences instead. A
+**v1 stamp** — any stamp before the stamping script — tags its knob blocks only, so its other zones
+read `absent`, never refreshed or compared. Everything outside an engine zone — the contract's
+**project sections**, every **inline-leaf**, a Profile asset the project has edited — is the
+project's, and the engine never compares or rewrites it but for the one span it emitted there
+itself, an unanswered `*<Fill at init …>*` prompt, which a re-run replaces with the answers file's
+fill; and a knob block is deleted only where a `retire-block` row declares it. The discriminator is ownership, not position: a line the
 engine derived from Profile or Chunk data is in a zone; a line a person wrote for this project is
 not. A held tracker block the engine no longer knows how to write is a zone it holds verbatim
 rather than refreshes.
