@@ -24,6 +24,7 @@ gates and the merge.
    `scripts/lookup.sh <words>` on the phase's APIs and symptoms (`-h` if it touched none), read
    the bodies it names, and end your report with an Outcome line in a form its footer permits. A
    Godot report with no such line counts as never looked.
+   If the phase met a failure no body `lookup.sh` named explains, report it as a suspected gotcha.
 
 ## Hard limits
 
