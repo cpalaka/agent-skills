@@ -25,7 +25,7 @@ Three editor MCPs run side by side — use them by role, not interchangeably. go
 | **Local type/parse diagnostics** (line:col, no editor needed) | **minimal-godot** `get_diagnostics` | misses cross-script Variant inference — cross-check with godot-ai `logs_read source="editor"`. |
 | **Capture `print()`** | **minimal-godot** `get_console_output category="stdout"` | for MCP-launched sessions showing "No active debug session", use godot-ai `logs_read` or relaunch with F5. |
 
-**Never write through godot-mcp** — its node/scene write path still silently no-ops `Rect2`/`region_rect` (all formats; returns "Updated node", disk unchanged). Use godot-ai for all writes. **One writer per editor instance** (both drive the same `EditorInterface`; a second editor instance — e.g. on a worktree — is a second independent writer, see § Multi-editor / worktree sessions). Ports are disjoint (godot-mcp WS 6550; godot-ai HTTP 8000 + WS 9500); `godot-mcp-clean` does NOT reap godot-ai's server.
+**Never write through godot-mcp** — its node/scene write path still silently no-ops `Rect2`/`region_rect` (all formats; returns "Updated node", disk unchanged). Use godot-ai for all writes. **One writer per editor instance** (both drive the same `EditorInterface`; a second editor instance — e.g. on a worktree — is a second independent writer, see § Multi-editor / worktree sessions). The godot-mcp bridge accepts one client. A held bridge blocks this session's reads through it, which reads as a dead server and is not one: report it as held, not as failed. Ports are disjoint (godot-mcp WS 6550; godot-ai HTTP 8000 + WS 9500); `godot-mcp-clean` does NOT reap godot-ai's server.
 
 ## Critical gotchas
 

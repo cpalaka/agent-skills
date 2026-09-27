@@ -6,8 +6,8 @@ imports: []                 # No imports beyond dev-base. The tracker, the fork 
 # DEST (written by `stamp`, engine step 2; a dest already in the target is not overwritten).
 # The godot settings.local.json delta is NOT a template — it is the `settings:` field below,
 # merged into .claude/settings.local.json by `stamp`. blender-mcp-guide.md and
-# asset-pipeline.md are stamped CONDITIONALLY, together (only for Blender-pipeline projects) — see
-# the recipe, not this list.
+# asset-pipeline.md carry `opt_in: blender`, taken only for a Blender-pipeline project (see the
+# recipe); what `stamp` does with it is `--help`'s, under `stamp`.
 # The four `adapters:` fragments are NOT stamped from here either: they are the `adapters:`
 # field below, inserted into the engine's own Templates at their markers by `stamp`.
 # Three stamps point into tools/mcp/. package.json is the freeze's input, so it is stamped before
@@ -17,8 +17,11 @@ templates:
   # root
   - { src: mcp.json,              dest: .mcp.json, after_freeze: true }                    # launches the two npm servers from the frozen tools/mcp tree. No godot-ai entry: see recipe step 4.4
   - { src: codex/config.toml,     dest: .codex/config.toml, after_freeze: true }           # the Codex counterpart of .mcp.json; {{PROJECT_ROOT}} is DERIVED from pwd at the repo root, never asked. Gitignored machine-wide by `host-setup` (engine step 8)
-  # per-project reference docs (docs/) — always copy; one already in the target is kept
+  # per-project reference docs (docs/) — one already in the target is kept; the Blender pair only
+  # where opt_in blender is taken
   - { src: godot-mcp-guide.md,    dest: docs/godot-mcp-guide.md }
+  - { src: blender-mcp-guide.md,  dest: docs/blender-mcp-guide.md, opt_in: blender }
+  - { src: asset-pipeline.md,     dest: docs/asset-pipeline.md, opt_in: blender }    # carries {{WORKSPACE_ROOT}}, given in the answers file's tokens block
   - { src: domain.md,             dest: docs/agents/domain.md }        # host-neutral pointer to CONTEXT.md + docs/adr/; both adapters reach it through the contract
   - { src: godot-gotchas.md,      dest: docs/godot-gotchas.md }
   # headless test harness (tests/)
@@ -86,16 +89,16 @@ knobs:
   verify-gate:
     # Godot's commands for the verify-gate keys (defaults.md glosses the key set). For a Godot
     # project the test step is the headless runner, the "build" is a headless export, and the
-    # "smoke" is opening the project / F5 the affected scene.
+    # "smoke" is a headless run of one scene, output grepped, then F5 the affected scene by hand.
     dir: "the repo root (the runner cd's into tests/ itself)"
     # NOT `--check-only --quit`: measured 2026-09-03 on Godot 4.7.2.stable, that prints the banner
     # and never exits, because --check-only modifies --script and with no script the run never
     # reaches --quit. A gate step that hangs reads as a pass to anyone watching for a failure.
     typecheck: "godot --headless --path . --import --quit, output grepped for `SCRIPT ERROR` / `Parse Error` / `Error importing` — expect zero (a failed asset import prints `ERROR: Error importing` and matches neither of the first two; this step then runs unsandboxed, see env). **Not an exhaustive parse**; treat it as a smoke check, not project-wide parse coverage. Same editor-lifecycle pass the init recipe's Edit C runs; it returned in under 40 s on Godot 4.7.2.stable (measured 2026-09-03)"
     test: "tests/run_tests.sh — the headless runner; see **## Running** for its verdict-from-output / --selftest / never-trust-`$?` discipline"
-    build: "headless export via the project's export smoke-tester (`godot-export-verifier`; your host adapter says how to dispatch it) — pre-push / at milestone close, not per-merge"
+    build: "headless export via the project's export smoke-tester (`godot-export-verifier`; your host adapter says how to dispatch it) — not due unless the owner asks for the export: on any other close a coordinator leaves build out of the gate tier"
     build_check: "the smoke-tester's own PASS/FAIL line per platform preset, read from its output — an export that exits 0 having written nothing still reports FAIL there"
-    smoke: "open the project / F5 the affected scene (a green test run is not a played scene)"
+    smoke: "pick the scene: the one the dispatch prompt names as the affected scene (the coordinator names it), else the main scene (`run/main_scene` in project.godot). Where the prompt names none and project.godot has no `run/main_scene` (a day-zero tree), run nothing and report NOT RUN — no scene yet: with no main scene the headless run prints `Can't run project: no main scene defined` and never returns. Otherwise godot --headless --path . --quit-after 120 [<scene>], the argument only for a named scene — the main scene runs with none, since `run/main_scene` may be a `uid://` value — output grepped for `SCRIPT ERROR` / `Parse Error` / `Failed to load` / `Failed loading` — expect zero, never $? (a script parse error and a missing scene path both exit 0; with a scene, or with no argument and a `uid://` main scene, it returned in about 1 s, and with no main scene it was killed at 60 s still running; measured 2026-09-26 on Godot 4.7.2.stable). Then F5 the scene the headless run used (the named scene, else the main scene) — a person's step (a headless run is not a played scene); on the NOT RUN branch no F5 step is owed, since there is no scene to play"
     secret_scan: "git grep -niE -e '(api[_-]?key|secret|password|token)[[:space:]]*=([^=]|$)' --and --not -e 'do-not-print' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match. [[:space:]], not \\s (git grep -E on macOS matches \\s only as a literal, measured 2026-09-04); =([^=]|$) skips == comparisons while still catching an assignment whose value sits on the next line; -i catches API_KEY = …; 'do-not-print' is the reserved sentinel a fixture needing a secret-shaped literal must use, and nothing else in the tree may contain it. Re-calibrate against known-bad plus the benign shapes whenever this line changes (measured 2026-09-13: 4 benign matches before, 0 after)"
     env: "$GODOT → the editor binary (macOS app path → `godot` on PATH); run from the repo root. The runner writes its capture files under $TMPDIR, so the runner as scaffolded needs no sandbox bypass (measured 2026-09-03) — but that holds only while it greps `^SCRIPT ERROR` alone and the tree has no `.blend`. Sandboxed, Godot is denied `user://logs` and the CA store and prints `ERROR:` for each (godot-gotchas #88), and a `.blend` import crashes at GPU detection (#47). So the typecheck step above, and any runner tightened to grep `^ERROR:`, run with the sandbox off"
   parallel-work:
@@ -104,7 +107,8 @@ knobs:
 
 ## Bespoke setup
 
-The heavy Godot recipe, run at engine step 3 (`SKILL.md` § The run), steps 1–6 in order. The engine
+The heavy Godot recipe (`SKILL.md` § The run). Step 2 is a precondition, which engine step 0 runs
+before anything is written; the rest run at engine step 3, in order. The engine
 already owns the uniform work — the contract, the two adapters and the gate seat (the @imports, the
 tagged knob blocks above, and the four `adapters:` fragments), the `.claude/settings.local.json`
 merge, Template stamping, the lockfile-freeze MECHANIC, `verify` with its byte gates, and the
@@ -130,18 +134,20 @@ rule, which both hosts read, names the wrapper, and the wrapper does the resolvi
 **The contract fragment's three fill prompts are answered, never edited around.** The fragment sits
 in an engine zone, so the recipe changes no text inside it: what varies per project is a prompt,
 answered through the answers file, which a re-run keeps. Ask the owner
-`fill:docs/agents/project-workflow.md#Working in this repo` (the project pins) and
-`#Blender pipeline` (below) at the interview (engine step 1); `#godot-ai addon` (the vendored tag,
-or `none`) is decided by step 4, so ask it at engine step 5's fill loop.
+`fill:docs/agents/project-workflow.md#Blender pipeline` (below; its answer also decides
+`opt_in: blender`) at the interview (engine step 1). `#Working in this repo` (the project pins) and
+`#godot-ai addon` (the vendored tag, or `none`) are decided by step 4, whose no-godot-ai branch
+changes both, so ask them at engine step 5's fill loop.
 
 **Reference docs:** the manifest always stamps `docs/godot-mcp-guide.md`, `docs/godot-gotchas.md` and
-`docs/agents/domain.md`. **The Blender pair is opt-in, and the two travel together** — only if the
-project uses a Blender→Godot pipeline, also stamp `templates/blender-mcp-guide.md` →
-`docs/blender-mcp-guide.md` and `templates/asset-pipeline.md` → `docs/asset-pipeline.md` (that one
-carries a `{{WORKSPACE_ROOT}}` token to ask for). They document the same pipeline and the pipeline
-doc points at the MCP guide, so one without the other is a dangling reference, and the
-workspace-root question is meaningless with no Blender source. Either way, answer the fragment's
-`## Blender pipeline` prompt with the branch the project is on.
+`docs/agents/domain.md`. **The Blender pair is opt-in, and the two travel together** —
+`docs/blender-mcp-guide.md` and `docs/asset-pipeline.md` both carry `opt_in: blender`. They document
+the same pipeline and the pipeline doc points at the MCP guide, so one without the other is a
+dangling reference, and the workspace-root question is meaningless with no Blender source. The
+owner takes `blender` only for a Blender→Godot pipeline; then the interview (engine step 1) writes
+`- opt_in: blender` into the answers file's meta block and `WORKSPACE_ROOT` (the directory holding
+both trees) into its tokens block. What `stamp` does with an untaken or taken opt-in is `--help`'s,
+under `stamp`. Answer the fragment's `## Blender pipeline` prompt with the branch the project is on.
 
 **A leftover from an earlier run is reported, never deleted.** A project stamped before the pair
 went conditional can hold `docs/asset-pipeline.md` with no Blender source: the engine does not
@@ -180,10 +186,12 @@ out of git machine-wide, never the project's `.gitignore`.
   pre-installing is cheap):
   `test -d ~/.agents/skills/godot-animation-tree-mastery && echo installed || npx -y skills add thedivergentai/gd-agentic-skills@godot-animation-tree-mastery -g -y`
 
+<!-- precondition -->
 ### 2. Verify target is a Godot project
 
-`test -f project.godot` — if absent, STOP and ask the owner; do not create a Godot project
-from scratch (ask them to run Godot first).
+`test -f project.godot` — if absent, STOP and ask the owner; the STOP lands with nothing written,
+since engine step 0 runs this step before the first write. Do not create a Godot project from
+scratch (ask them to run Godot first).
 
 ### 3. Install the in-engine addon (version-pinned to the server)
 

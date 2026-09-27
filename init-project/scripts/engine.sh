@@ -73,6 +73,10 @@ help() {
 '              under templates/tracker/, with the ## Issue tracker contract fragment), into --target.' \
 '              A Profile templates entry marked after_freeze: true is SKIPPED by a plain stamp;' \
 '              --after-freeze writes only those entries.' \
+'              An entry marked opt_in: <name> is written only where the answers file'"'"'s opt_in names' \
+'              it, else SKIPPED (<dest> — opt_in <name> not taken) and never rendered, so a token only it' \
+'              carries is not asked for; after_freeze applies on top. An answers opt_in name that no' \
+'              templates entry carries is a stop before any write. host-setup reads it the same way.' \
 '              A fresh stamp (no contract) takes the tracker from the answers file: github or none,' \
 '              anything else (held included) a stop. A RE-RUN (the' \
 '              contract exists) reads it from the contract: knobs:tracker-github -> github,' \
@@ -185,6 +189,8 @@ help() {
 '                               a stamp, check or verify run over a contract that records a type;' \
 '                               host-setup, which has no target, always needs it)' \
 '  - tracker: github          (github | none; read on a fresh stamp only)' \
+'  - opt_in: blender          (optional; the templates entries'"'"' opt_in names taken, comma- or' \
+'                               space-separated; read by stamp, fresh or re-run, and host-setup)' \
 '  <!-- /answers:meta -->' \
 '  <!-- answers:tokens -->' \
 '  - SOME_TOKEN: its value    (any {{NAME}} a written file carries beyond PROJECT_NAME/PROJECT_ROOT)' \
@@ -214,7 +220,7 @@ help() {
 'The tracker-github block is written only for tracker github, and first. The fork: the Profile'"'"'s' \
 'fork:, else the defaults'"'"'. Type none is profiles/none.md, an empty Profile: every block and value' \
 'is the defaults'"'"', so its answers file answers each shape (defaults.md glosses each). Profile keys read:' \
-'imports, fork, templates (entry keys src, dest, after_freeze), adapters, settings, knobs; any' \
+'imports, fork, templates (entry keys src, dest, after_freeze, opt_in), adapters, settings, knobs; any' \
 'other top-level key is a NOTE (profile key <k> is not read), any other templates entry key a stop' \
 '(templates entry key <k> is not read).' \
 '' \
@@ -391,7 +397,7 @@ tag_count() { # <ERE> <file> → the number of lines outside fenced code matchin
 }
 
 # ---- parsers ---------------------------------------------------------------------------------------
-# Profile frontmatter subset → tab-separated records: IMP id | FORK f | TPL src dest after_freeze |
+# Profile frontmatter subset → tab-separated records: IMP id | FORK f | TPL src dest after_freeze opt_in |
 # ADP role file | ALLOW entry | MCP name | KB id | K id key S|L value | I id key item | NOTE text | E text
 parse_profile() { # <profile.md> → stdout
   awk '
@@ -432,8 +438,8 @@ parse_profile() { # <profile.md> → stdout
       n = split(inner, parts, ",")
       for (i = 1; i <= n; i++) printf "%s\t%s\n", kind, tabfree(unq(parts[i]))
     }
-    function flowmap(v,   inner, n, parts, i, k, x, src, dest, af) {
-      inner = substr(v, 2, length(v) - 2); src = ""; dest = ""; af = 0
+    function flowmap(v,   inner, n, parts, i, k, x, src, dest, af, oi) {
+      inner = substr(v, 2, length(v) - 2); src = ""; dest = ""; af = 0; oi = ""
       n = split(inner, parts, ",")
       for (i = 1; i <= n; i++) {
         x = trim(parts[i]); if (x == "") continue
@@ -442,10 +448,11 @@ parse_profile() { # <profile.md> → stdout
         if (k == "src") src = x
         else if (k == "dest") dest = x
         else if (k == "after_freeze") { if (x == "true") af = 1; else if (x != "false") perr("after_freeze must be true or false") }
+        else if (k == "opt_in") { if (x ~ /^[a-z0-9_-]+$/) oi = x; else { perr("opt_in must be one bare word [a-z0-9_-]+"); return } }
         else { perr("templates entry key " k " is not read"); return }
       }
       if (src == "" || dest == "") { perr("templates entry needs src and dest"); return }
-      printf "TPL\t%s\t%s\t%d\n", tabfree(src), tabfree(dest), af
+      printf "TPL\t%s\t%s\t%d\t%s\n", tabfree(src), tabfree(dest), af, oi
     }
     function kv() { k = trim(substr(c, 1, index(c, ":") - 1)); v = trim(substr(c, index(c, ":") + 1)) }
     NR == 1 { if ($0 != "---") perr("no YAML frontmatter (first line is not ---)"); started = 1; next }
@@ -1197,11 +1204,13 @@ load_inputs() {
   _e=$(rec_field2 "$ST/answers.rec" E | head -n 1); [ -z "$_e" ] || stop "$_e"
   awk -F "$TAB" '$1 == "F" { print $2 "\t" $3 }' "$ST/answers.rec" > "$ST/fills.idx"
   for _k in $(rec_field2 "$ST/answers.rec" M); do
-    case $_k in project_name|type|tracker) ;; *) note "answers meta key $_k is not read" ;; esac
+    case $_k in project_name|type|tracker|opt_in) ;; *) note "answers meta key $_k is not read" ;; esac
   done
   PROJECT_NAME=$(rec_get "$ST/answers.rec" M project_name) || stop "awk failed reading the answers records"
   TYPE=$(rec_get "$ST/answers.rec" M type) || stop "awk failed reading the answers records"
   TRACKER=$(rec_get "$ST/answers.rec" M tracker) || stop "awk failed reading the answers records"
+  OPT_IN=$(rec_get "$ST/answers.rec" M opt_in) || stop "awk failed reading the answers records"
+  OPT_IN=$(printf '%s' "$OPT_IN" | tr ',' ' ')
   [ -n "$PROJECT_NAME" ] || stop "answers:meta has no project_name"
   resolve_type # host-setup has no target, so no contract to read one from: its answers file names the type
 
@@ -1215,6 +1224,14 @@ load_inputs() {
   parse_profile "$PROFILE_DIR/$TYPE.md" > "$PREC" || stop "awk failed reading Profile $TYPE"
   _e=$(rec_field2 "$PREC" E | head -n 1); [ -z "$_e" ] || stop "Profile $_e"
   rec_field2 "$PREC" NOTE | while IFS= read -r _n; do note "$_n"; done
+  # stamp and host-setup: every answers opt_in name matches a templates entry, else a typo would
+  # silently skip the entry it meant to take
+  case $SUB in stamp|host-setup) ;; *) OPT_IN= ;; esac
+  case $OPT_IN in *[!a-z0-9_\ -]*) stop "answers opt_in $OPT_IN: names are bare words [a-z0-9_-]+, separated by commas or spaces" ;; esac
+  for _o in $OPT_IN; do
+    O=$_o awk -F "$TAB" '$1 == "TPL" && $5 == ENVIRON["O"] { f = 1 } END { exit !f }' "$PREC" ||
+      stop "answers opt_in $_o matches no templates entry of Profile $TYPE"
+  done
   [ -f "$DEFAULTS" ] || stop "the engine defaults file $DEFAULTS is not found"
   DREC=$ST/defaults.rec
   parse_profile "$DEFAULTS" > "$DREC" || stop "awk failed reading the engine defaults"
@@ -1482,9 +1499,10 @@ cmd_host_setup() {
   # the Profile's ~/ template entries: written when absent, never overwritten
   : > "$ST/tpl.w"
   if [ -n "$PREC" ]; then
-    awk -F "$TAB" '$1 == "TPL" { print $2 "\t" $3 }' "$PREC" > "$ST/tpl.list" || stop "awk failed reading the Profile records"
-    while IFS="$TAB" read -r _src _dest; do
+    awk -F "$TAB" '$1 == "TPL" { print $2 "\t" $3 "\t" $5 }' "$PREC" > "$ST/tpl.list" || stop "awk failed reading the Profile records"
+    while IFS="$TAB" read -r _src _dest _oi; do
       case $_dest in "~/"*) ;; *) continue ;; esac
+      opt_taken "$_oi" || continue
       case $_dest in *'/../'*|*/..) stop "Profile template dest $_dest leaves the home directory" ;; esac
       _s=$PROFILE_DIR/$TYPE/templates/$_src; _p=$HOME/${_dest#"~/"}
       [ -f "$_s" ] || stop "Profile $TYPE template $_src not found"
@@ -1586,10 +1604,19 @@ build_readlist() { # from the CLAUDE.md this run leaves on disk: the refreshed t
     awk 'BEGIN { ORS = "" } { printf "%s`%s`", (NR > 1 ? ", " : "   "), $0 } END { print ".\n" }' "$ST/readnames"; } > "$ST/readlist.md"
 }
 
+opt_taken() { # <entry opt_in> → 0 when the entry has none, or the answers file's opt_in names it
+  [ -n "$1" ] || return 0
+  case " $OPT_IN " in *" $1 "*) return 0 ;; esac
+  return 1
+}
 plan_templates() {
   [ -n "$PREC" ] || return 0
-  awk -F "$TAB" '$1 == "TPL" { print $2 "\t" $3 "\t" $4 }' "$PREC" > "$ST/tpl.list"
-  while IFS="$TAB" read -r _src _dest _af; do
+  awk -F "$TAB" '$1 == "TPL" { print $2 "\t" $3 "\t" $4 "\t" $5 }' "$PREC" > "$ST/tpl.list"
+  while IFS="$TAB" read -r _src _dest _af _oi; do
+    if ! opt_taken "$_oi"; then # not written, so not rendered: a token only it carries is never asked for
+      [ "$AFTER_FREEZE" != 1 ] || [ "$_af" = 1 ] || continue
+      printf 'S\t%s\topt_in %s not taken\n' "$_dest" "$_oi" >> "$ST/plan"; continue
+    fi
     case $_dest in "~/"*) printf 'S\t%s\thost-setup writes it\n' "$_dest" >> "$ST/plan"; continue ;; esac
     check_dest "$_dest"
     if [ "$AFTER_FREEZE" = 1 ]; then [ "$_af" = 1 ] || continue
@@ -2802,6 +2829,42 @@ case_profile_unread_keys() { # a top-level type: is a NOTE (unread); a refresh t
   GOT=note-and-stop
 }
 
+case_opt_in_skipped() { # an opt_in entry the answers file does not name is neither written nor rendered
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/opt-in-skipped.md"
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  st_has 'SKIPPED docs/pair.md — opt_in pair not taken' || { GOT=no-skipped-line; return; }
+  [ ! -e "$T/docs/pair.md" ] || { GOT=written; return; }
+  printf '%s\n' "$OUT" | grep -q 'WORKSPACE_ROOT' && { GOT=token-asked; return; }
+  GOT=skipped-unrendered
+}
+case_opt_in_taken() { # named, it is stamped like any entry, its token substituted
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/opt-in-taken.md"
+  [ "$RC" = 0 ] && st_has 'WROTE docs/pair.md' || { GOT=exit$RC; return; }
+  grep -qxF 'Workspace: /work/space' "$T/docs/pair.md" || { GOT=token-not-substituted; return; }
+  GOT=written-substituted
+}
+case_opt_in_unknown_stop() { # a name no templates entry carries (a typo) stops before any write
+  st_env
+  sed 's/^- opt_in: pair$/- opt_in: pair, blendr/' "$FIXTURE_DIR/answers/opt-in-taken.md" > "$H/typo.md" || { GOT=fixture-edit; return; }
+  st_stop_case "$H/typo.md" 'answers opt_in blendr matches no templates entry of Profile opt-in$'
+  [ "$GOT" = stopped-untouched ] && [ -n "$(ls -A "$T")" ] && GOT=target-not-empty
+}
+case_opt_in_verify_braces() { # verify scans an opt_in dest present in the target, named or not: residue there fails
+  st_env
+  st_run stamp --target "$T" --answers "$FIXTURE_DIR/answers/opt-in-taken.md"
+  [ "$RC" = 0 ] || { GOT=stamp-exit$RC; return; }
+  st_run verify --target "$T" --answers "$FIXTURE_DIR/answers/opt-in-taken.md"
+  [ "$RC" = 0 ] || { GOT=clean-exit$RC; return; } # control: the same target, nothing planted, is clean
+  printf '%s\n' 'Left: {{WORKSPACE_ROOT}}' >> "$T/docs/pair.md"
+  st_run verify --target "$T" --answers "$FIXTURE_DIR/answers/opt-in-skipped.md" # an answers file not naming it
+  [ "$RC" = 1 ] || { GOT=exit$RC; return; }
+  printf '%s\n' "$OUT" | grep -q '^CHECK braces: FAIL — 1 match(es): docs/pair.md:4$' || { GOT=no-braces-fail; return; }
+  [ "$(st_failset)" = braces ] || { GOT=fails-$(st_failset | tr ' ' '+'); return; }
+  GOT=fails-braces
+}
+
 st_ff_notype() { grep -v '^- type:' "$FIXTURE_DIR/answers/four-fragments.md" > "$H/notype.md"; } # four-fragments' answers, no type line
 case_type_mismatch_stop() { # (h) a re-run whose answers file names another type stops before any write, naming both
   st_env
@@ -3009,7 +3072,8 @@ cmd_selftest() {
       type-mismatch-stop|type-read-from-contract|type-unrecorded-note|\
       fill-read-back|fill-read-back-untyped|fill-read-back-ambiguous|fill-template-line-deleted|\
       fill-prompt-reworded|fill-siblings-independent|check-read-back-differs|type-recorded-twice-stop|\
-      defaults-missing-stop|defaults-parse-stop|no-fork-stop|fresh-no-type-stop|fill-close-marker-stop) "$_fn" ;;
+      defaults-missing-stop|defaults-parse-stop|no-fork-stop|fresh-no-type-stop|fill-close-marker-stop|\
+      opt-in-skipped|opt-in-taken|opt-in-unknown-stop|opt-in-verify-braces) "$_fn" ;;
     esac
     if [ "$GOT" = "$_want" ]; then _k=$((_k + 1)); else printf 'SELFTEST %s: expected %s, got %s\n' "$_case" "$_want" "$GOT"; fi
   done < "$_exp"

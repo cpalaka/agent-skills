@@ -39,11 +39,12 @@ reads exactly these keys:
   is never one: it is the engine's (step 0).
 - **`fork`** — the one git-flow Skill, imported nowhere; defaulted by the engine (ADR 0002,
   ADR 0013). Step 1 says where the adapters name it.
-- **`templates`** — the Profile's own assets, entries `{src, dest, after_freeze?}`. `src` is rooted
+- **`templates`** — the Profile's own assets, entries `{src, dest, after_freeze?, opt_in?}`. `src` is rooted
   at `profiles/<type>/templates/`, the declared root where the Profile ships Templates; `dest` is target-relative, or starts `~/` for
   a machine-wide write that `host-setup` makes (step 8). **`after_freeze: true`** marks an entry that
   points into a tree the recipe's lockfile-freeze creates: the plain stamp skips it, and step 3
-  writes it after the freeze.
+  writes it after the freeze. **`opt_in: <name>`** marks an entry stamped only where the answers
+  file's `opt_in` names it, the recipe saying when the owner takes it.
 - **`adapters`** — the four fragments, under the same root: `claude`, `codex`, `contract`,
   `gate_runner`, each inserted at its Template's `<!-- profile:… -->` marker as an engine zone.
 - **`settings`** — the `.claude/settings.local.json` delta: `allow` globs and
@@ -144,6 +145,7 @@ so sandboxed and unsandboxed shells read the same file, and never committed or s
 - **`type`** — step 0's pick; kept in `A` on a re-run too, since `host-setup` has no target to
   read the recorded one from;
 - **`tracker`** — step 0's outcome, on a fresh stamp;
+- **`opt_in`** — the opt-in names the owner takes (the recipe says which it offers);
 - **every knob the merged key set leaves a `<…>` shape**, and every key whose literal still carries
   a `<…>` inside it, which the script passes through as written;
 - **every other `{{TOKEN}}`** a written file carries (`{{PROJECT_ROOT}}` is derived, never asked);

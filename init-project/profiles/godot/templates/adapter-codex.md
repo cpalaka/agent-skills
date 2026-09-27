@@ -18,6 +18,3 @@
   any commit, `$godot-personal-preferences` at session start.
 - **The `build` step's export smoke-tester has no Codex dispatch yet.** Until one exists, run exports
   from a Claude Code session or by hand, and say which of the two you did.
-- **One writer per editor instance**, and the godot-mcp bridge accepts **one client**: a session
-  already holding the bridge blocks this session's reads through it, which reads as a dead server
-  and is not one. Report that it is held, not that it failed.

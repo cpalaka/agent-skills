@@ -72,3 +72,7 @@ defaults-parse-stop stopped-untouched
 no-fork-stop stopped-untouched
 fresh-no-type-stop stopped-untouched
 fill-close-marker-stop stopped-untouched
+opt-in-skipped skipped-unrendered
+opt-in-taken written-substituted
+opt-in-unknown-stop stopped-untouched
+opt-in-verify-braces fails-braces
