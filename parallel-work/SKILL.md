@@ -15,8 +15,10 @@ or watching, whoever writes the diff — not `implement-run`'s `solo`, which tur
 **Knobs** (`<!-- knobs:parallel-work -->` in the project contract your host adapter names, read
 from the file on disk — an injected copy has lost its marker lines; a contract that cannot be read
 is a stop that names the path):
-`worktree_path_prefix`, a path template whose last segment is the branch name (`<path>` below,
-filled in), and `install`, the command that makes a fresh tree buildable. Never bake in a literal.
+`worktree_path_prefix`, a path template (`<path>` below, filled in) whose last segment names the
+task — its id where the tracker has one, and its slug — never the branch name, whose `<type>/`
+prefix would add a path segment; and `install`, the command that makes a fresh tree buildable.
+Never bake in a literal.
 
 **One clone per interactive session.** Two sessions on one checkout is the failure both modes
 exist to avoid. The tell: `git status` shows changes you did not make, HEAD is on a branch you did

@@ -35,8 +35,8 @@ by default:
   `parallel-work.install` written for that directory (`npm ci --prefix <app>` or
   `cd <app> && npm ci`), since `parallel-work` has no directory key.
 - **Where the deployed secrets live**: `verify-gate.env`.
-- **Where task worktrees go**: `parallel-work.worktree_path_prefix` (the branch form is the tracker
-  Chunk's).
+- **Where task worktrees go**: `parallel-work.worktree_path_prefix` (its last segment names the
+  task, not the branch; `parallel-work` defines it).
 - **The secret-leak pattern**: `verify-gate.secret_scan`. The manifest's value is a literal carrying
   a `<secret-leak pattern>` shape the script passes through unanswered, so give the whole key.
 - **The deploy target** — not a knob: deploy is inline-leaf, so it is part of the
