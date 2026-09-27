@@ -13,7 +13,7 @@ material finding is a round under the caps; reopen the full review only where sc
 changed. Only a red certifying reading re-runs the gate: its fix is a round under the caps,
 re-checked by an aimed check, then certified once more. Hand reviewers the measurements a spec
 summarises, not just the spec. Re-check a refuted finding about safety or data loss. A finding
-proves the defect, not the remedy. Fix rounds, the wording-only round and the 60-call ceiling are
+proves the defect, not the remedy. Fix rounds, the wording-only round and `scope`'s call cap are
 § Run profile's caps.
 
 **Re-verify a fix, not the world.** A fix round re-verifies with a check aimed at it: the failing
@@ -24,7 +24,8 @@ command block in an instruction file is code**: it ships, and a fix-round remedy
 one is adopted, only after a fixture run in which a known-bad input turns it red, since a
 playthrough runs no embedded command against a known-bad and one that no-ops passes it.
 
-**Bug hunter.** `codex`, the default above the light plan, is the Codex lens below, and **any NOT
+**Bug hunter.** `codex` is the Codex lens below (the value a plan starts at is
+`dials.bug hunter` in `defaults.yaml`), and **any NOT
 RUN fires the Correctness charter** as its fallback, so the loop never lacks the bug hunter its
 profile names and never runs two. `correctness`, that fallback or the owner's choice in place of
 `codex` at the stop, is the Correctness charter, a Reviewer dispatch over the same diff: *for each
@@ -64,7 +65,7 @@ non-zero exit, or a failure before output (binary absent, not authenticated, reg
 no such key or element — quota, timeout at the longest budget) is `LENS codex: NOT RUN — <why>`. Its
 recommendations are hypotheses; adjudicate every finding against source.
 
-**Critic seat**, an add-on and the targeted review, in every shape wherever the `critic` dial is on
+**Critic seat**, the `critic` dial and the targeted review, in every shape wherever the dial is on
 — after every review, lens and fix round, and before the certifying gate where the Skill controls
 the order: a fresh Reviewer dispatch
 given the diff since the fixed point, the ticket, the execution spec and every review's output,

@@ -190,7 +190,8 @@ _Avoid_: base chunk (it is a *bundle* of Chunks), boilerplate.
 **Profile**:
 The declarative recipe for a project TYPE — the Chunks it imports beyond **dev-base**, the
 Templates and four `adapters:` fragments it stamps, its settings delta, its overrides of the engine
-defaults by key (`init-project/defaults.md` carries the git-flow fork and every knob block), and its
+defaults by key (`init-project/defaults.md` carries the git-flow fork and every knob block the
+engine stamps), and its
 bespoke setup recipe. A Profile no longer selects a tracker: the tracker is the engine's step,
 `github` or `none`, settled before the first write
 ([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)). `none` is the named empty Profile, for a
@@ -202,14 +203,15 @@ the Profile is its input), Template.
 
 **knob**:
 A per-project value a *value-variant* Chunk or Skill reads by marker (`verify-gate`'s `test`,
-`build` and `smoke` commands; `parallel-work`'s `worktree_path_prefix` and `install`), written by
-the `init-project` engine into a tagged inline block (`<!-- knobs:<id> --> … <!-- /knobs:<id> -->`)
-in the project contract,
-`docs/agents/project-workflow.md` — never into a **Host adapter**, and never into the Chunk itself.
-Tagged so a re-run updates just that block idempotently. Pure-invariant Chunks have no knob block.
-_Avoid_: placeholder (`{{…}}` is the copied-Template substitution; a knob is an engine-written
-inline block beside a *referenced* Chunk), variable, config, dial (a per-run value the coordinator
-posts from its plan; a knob is per-project and engine-written).
+`build` and `smoke` commands; `parallel-work`'s `worktree_path_prefix` and `install`) from a tagged
+inline block (`<!-- knobs:<id> --> … <!-- /knobs:<id> -->`) in the project contract,
+`docs/agents/project-workflow.md` — never from a **Host adapter**, and never from the Chunk itself.
+The `init-project` engine writes the blocks it stamps, tagged so a re-run updates just that block
+idempotently; a project writes a key by hand where a Skill's own **defaults file** supplies the
+default (`implement-run`). Pure-invariant Chunks have no knob block.
+_Avoid_: placeholder (`{{…}}` is the copied-Template substitution; a knob is an inline block in the
+contract beside a *referenced* Chunk), variable, config, dial (a per-run value the coordinator
+posts from its plan; a knob is per-project, in the project contract).
 
 **inline-leaf**:
 Free-form, hand-authored content in the project contract that is genuinely specific to that one
@@ -265,7 +267,8 @@ A named position in a run filled by a pinned agent definition — implementer, a
 the **Coordinator** inside a **batch** (a `coordinator` dispatch), and reviewer: the Standards and
 Spec axes, the Correctness charter and the **critic seat**, each a `code-reviewer` dispatch. A
 definition carries the model and effort, one definition per effort value the seat can reach: the
-`-medium` name is the default dispatch and the bare seat name the `high` **add-on**, while the
+`-medium` name is the `medium` dispatch and the bare seat name the `high` one, which one a run
+starts at being the **defaults file**'s `effort` value for the seat, while the
 gate-runner has one `medium` definition and the advisor and the batch `coordinator` one `high`
 each; the seat name says what the position does. A seat is never a bare spawn, because a bare
 spawn inherits the parent's model. The `codex` bug-hunter value is a
@@ -273,12 +276,20 @@ lens, not a seat: no agent definition fills it.
 _Avoid_: delegate (the session standing in for the owner across a **batch**, never a seat),
 subagent (the host mechanism that fills a seat, not the seat), agent type (the host's field name).
 
+**defaults file**:
+`implement-run/defaults.yaml`, the one owner-edited file holding every default value of the
+`implement-run` Skill's **knobs** and **dials**, keyed by knob name and dial token. A value change
+is an edit to it and needs no ADR
+([ADR 0024](docs/adr/0024-implement-run-outline-and-defaults-file.md)). When it is read and what a
+bad value does are the Skill's § Knobs.
+_Avoid_: config, settings, engine defaults (`init-project/defaults.md`, what the engine stamps into
+a project).
+
 **run profile**:
 The set of per-run values the **Coordinator** posts from its own plan before dispatch — which
 seats run, the bug hunter, the gate tier, each seat's effort, the fix-round and scope caps, and
-whether a reader stops the run — one **dial** each. Every dial sits at its default, light by
-design: the Spec axis at `medium` and the Codex lens (the Spec axis alone on a **light plan**), the
-advisor on, no critic, one fix round. Above that sit only the **add-ons** the owner approved and
+whether a reader stops the run — one **dial** each. Every dial starts at the **defaults file**'s
+value, light by design. Above that sit only the **add-ons** the owner approved and
 the pins the ticket set. Posted as a profile block in the run's first message, with one line per
 recommended add-on, and repeated in the run record
 ([ADR 0023](docs/adr/0023-light-default-run-profile.md), superseding ADR 0018's derived profile).
@@ -286,21 +297,22 @@ _Avoid_: seat tier (the retired declared form), posture (the retired ADR 0006 la
 (collides with the execution spec), level / tier (a profile has no named levels).
 
 **dial**:
-One member of a **run profile**: a range, a default read off the plan, and a value. A value above
+One member of a **run profile**: a range, a default (the **defaults file**'s value, derived for
+the plan where the `implement-run` Skill says so), and a value. A value above
 the default is an **add-on**. A ticket may **pin** a dial beside its acceptance criteria, a
 **lower bound** on the Coordinator. Only the owner lowers a dial, pinned or not and any but the
 Spec axis, at the plan stop or by interrupting after the posted profile, recorded as the owner's
 decision. Mid-run evidence re-derives a default and never turns an add-on on. An effort dial's
 value names a seat definition, or sets a workflow stage's effort where the stage fills a seat.
-_Avoid_: knob (per-project and engine-written, never per-run), lever, setting, strike (the retired
+_Avoid_: knob (per-project, in the project contract — engine-written or hand-written — never
+per-run), lever, setting, strike (the retired
 act of removing a seat from the roster line); floor, for a pin (the glossary's **floor** is the
 always-on context text).
 
 **add-on**:
-A dial value above its default that the **Coordinator** may recommend with a named reason, turned
-on only by the owner's approval or a pin: the Standards axis, the advisor, the critic seat, the
-Correctness charter in place of the Codex lens, the Codex lens on a light plan, `high` effort; a
-second fix round is no add-on but the fix-round cap stop. A recommended one fires the plan stop;
+Any dial value above the **defaults file**'s value for it, which the **Coordinator** may
+recommend with a named reason, turned on only by the owner's approval or a pin; which values those
+are follows from the file. A recommended add-on fires the plan stop;
 inside a **batch** the **delegate** declines every one and the record names it
 ([ADR 0023](docs/adr/0023-light-default-run-profile.md)).
 _Avoid_: raise (the retired ratchet's act, which turned a dial on unasked), escalation, optional
@@ -308,8 +320,8 @@ seat (an add-on may be an effort value, not only a seat).
 
 **light plan**:
 A plan whose every changed path is in the project's light set, is loaded by no gate, and is no
-**instruction file**; on one the bug hunter defaults to `off`, so the Spec axis is the only
-review unless an **add-on** is approved. The light set is a project **knob**
+**instruction file**; on one the bug hunter dial takes the **defaults file**'s `bug hunter`
+`light plan` value rather than its `above light plan` one. The light set is a project **knob**
 (cpalaka/agent-skills#86).
 _Avoid_: floor, "above the floor" (ADR 0018's words for this; the glossary's **floor** is the
 always-on context text), base profile, light tier (the retired seat tier's word), docs mode.
@@ -318,8 +330,8 @@ always-on context text), base profile, light tier (the retired seat tier's word)
 A file a session or seat follows as instructions: whatever a host injects (a **Host adapter**, the
 project contract, and every contract or **Chunk** they import), every file under a **Skill**'s
 directory, every seat definition, and every file one of those names as a read. One in a diff
-makes the **Coordinator** recommend the Standards axis as an **add-on** and turns nothing on by
-itself, and no light set makes one light (cpalaka/agent-skills#86, #101).
+makes the **Coordinator** recommend the Standards axis where the `standards` dial is off (an
+**add-on** then) and turns nothing on by itself, and no light set makes one light (cpalaka/agent-skills#86, #101).
 _Avoid_: instrument set (ADR 0019's name for the same set; ADR 0016's "instrument" is the tool that
 reads a number), prompt file, config.
 
@@ -343,15 +355,15 @@ with "solo"), main session (true but says nothing about the role), driver.
 One of three numbered positions for judgment within a ticket, numbered as the `implement-run`
 Skill numbers them. Slot 1, the pre-dispatch pass over the execution spec, and slot 3, floating for
 whatever the coordinator would otherwise put to the owner or decide silently, are the advisor's,
-filled by consulting the seat where the `advisor` dial is on (its default) and, where it is off or cannot be
-spawned, by holding the judgment yourself. Slot 2, pre-merge, is the **critic seat**'s where that
-add-on is on, never the advisor's. The `implement-run` Skill's § Advisor slots Fallback
+filled by consulting the seat where the `advisor` dial is on and, where it is off or cannot be
+spawned, by holding the judgment yourself. Slot 2, pre-merge, is the **critic seat**'s where the
+`critic` dial is on, never the advisor's. The `implement-run` Skill's § Advisor slots Fallback
 paragraph says what a tight meter funds. A fourth need goes to the owner.
 _Avoid_: trigger (the condition that may spend a slot, not the slot), consult (the act of
 spending one), call.
 
 **critic seat**:
-An **add-on**: the fresh Reviewer dispatch after every lens and fix round and, where the Skill
+The `critic` dial's seat (an **add-on** where the dial is off): the fresh Reviewer dispatch after every lens and fix round and, where the Skill
 controls the order, before the certifying gate, charged as completeness critic and counter-critic;
 where on, it is the targeted review, run whether or not a material fix round ran. The
 `implement-run` Skill's § Review carries the charter. A Builder seat, so it spends no Planner meter.
@@ -366,7 +378,7 @@ did not exist.
 
 **delegate**:
 The main session that stands in for the owner across a **batch**: it answers the delegated stops —
-the plan stop, the Close approval, the two cap stops (a second fix round, work past the
+the plan stop, the Close approval, the two cap stops (a round past `fix rounds`, work past the
 deliverable count), a slot-3 need the advisor cannot settle, and a false premise whose disposition
 leaves every criterion satisfied in form — declines every recommended **add-on**, reads every diff
 from git, and **parks** a ticket at any stop the owner keeps. Attributed `owner's delegate` in every

@@ -5,8 +5,9 @@ This section is the contract a `workflow` run takes.
 Before the script, you draft the execution spec, check out the run's branch in the checkout (the
 script commits on whatever branch is checked out and never switches), post the profile, take the
 stop where it fires and run slot 1 (§ Advisor slots); it runs the implementer, the native axes with
-the Correctness charter beside them where `bug hunter` is `correctness`, at most one fix round, and
-a gate after it, here before the targeted review. With hard findings, the fix round takes them and
+the Correctness charter beside them where `bug hunter` is `correctness`, at most one fix round — the
+script's mechanism, not a default, whatever `fix rounds` holds — and a gate after it, here before
+the targeted review. With hard findings, the fix round takes them and
 the gate follows it (`fixRound.gatesAfter`, `gates` empty); with none, the gate runs (`gates`), and
 where it is red the fix round takes its failures and the gate runs again (`fixRound.gatesAfter`).
 The script's certifying reading is `fixRound.gatesAfter` where `fixRound.ran`, else `gates`, until a
@@ -16,7 +17,7 @@ Correctness charter) are each dispatched by that definition name, their stage `e
 same name so the two carriers cannot disagree; the gate-runner is dispatched by the `gate_runner`
 knob at `medium`. The script raises nothing: a `FAIL` in either list is a red gate, which turns
 nothing on (§ Run profile's ratchet). On its return you run the Codex lens where `bug hunter` is
-`codex`, the default, adjudicate, fix, take the targeted review (the critic, where on), run the
+`codex` (its starting value `dials.bug hunter` in `defaults.yaml`), adjudicate, fix, take the targeted review (the critic, where on), run the
 certifying gate on the final tree where a fix of yours landed, merge and write the record. The
 script's fix round takes the hard findings unadjudicated, its seat checking each against source; you
 adjudicate every finding, the rest and the lens's included, before the targeted review. So here the
@@ -28,13 +29,14 @@ first token of the last `implementerReport.commits` entry. Ending at HEAD covers
 dropped or committed nothing, and your own fixes after return; where only your lens fixes form the
 round, the range runs from the commit before your first fix to HEAD. A Codex lens reading NOT RUN
 fires the Correctness charter after return too, yours (§ Review's fallback), at
-`code-reviewer-medium` unless the profile raised `effort bug hunter`. The script never merges,
+the definition the profile's `effort` line gives the bug hunter. The script never merges,
 writes the tracker or asks a question: none reaches a human turn from inside it. Its fix round
 precedes the lens, so it leaves its work committed (`--base` reads only commits); fixes for the
 lens's findings are yours (§ Review), and a lens after return departs from § Review's concurrent
 ordering, which the record notes under `Deviations`. The script's fix round and your lens fixes
-together are the run's one material round (§ Run profile's caps), since the lens cannot join a round
-that precedes it; a later one is the fix-round cap stop, and it and the wording round are yours.
+together are the run's first material round (§ Run profile's caps), since the lens cannot join a
+round that precedes it; any round up to `fix rounds` past it is yours after the script returns, a
+round past `fix rounds` is the fix-round cap stop, and it and the wording round are yours.
 Where a fix of yours lands, the script's gate no longer certifies, and the certifying gate runs once
 more on the final tree: a standing cost of this shape.
 
@@ -73,7 +75,7 @@ return value (the `started` records carry the label): the definition each stage 
 omitted `agentType` records), its model and effort are on its `agent-<id>.jsonl` assistant records,
 and an implementer's calls are the `tool_use` blocks in that transcript other than
 `StructuredOutput`, the schema return a `subagents` implementer never makes (the `scope` cap), one
-past 60 under `Deviations`. Check the diff's paths against the plan's changed-path set: a path
+past the cap under `Deviations`. Check the diff's paths against the plan's changed-path set: a path
 outside it ratchets (§ Run profile). Inside the script a dropped gate reads green and a dropped
 review clean, so at return you make up what they would have run: for a `gate` or `fix:gate` label in
 `dropped` you run the certifying gate last, and before the targeted review you
@@ -82,7 +84,8 @@ dispatch each review the profile now calls for that the script did not return, a
 `review:correctness` is never recorded as `FINDINGS: 0`, since the loop never lacks the bug hunter
 its profile names (§ Review).
 
-**Adoption**: `subagents` stays every project's default until three clean scripted runs —
+**Adoption**: `knobs.shape` in `defaults.yaml` does not change to `workflow` until three clean
+scripted runs —
 certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it) with
 each of the five gates on a `GATE` line or a line below `OVERALL`, and every `OWNED ELSEWHERE:` line
 closed by its seat's verdict or its not-due clause, quoted in the record,

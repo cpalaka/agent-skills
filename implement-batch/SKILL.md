@@ -224,7 +224,7 @@ Two closed sets.
   run record names each recommendation you declined. A pin is the owner's decision at filing, not a
   recommendation, and applies (`implement-run` § Run profile);
 - the Close approval;
-- the two cap stops: the fix-round cap stop (a second fix round), which you answer on its merits,
+- the two cap stops: the fix-round cap stop (a round past `fix rounds`), which you answer on its merits,
   the ask naming *land and file the residue* beside *one more round*, and work past the plan's
   deliverable count. Each hands back as `STOP plan`, since a cap raise is a plan pin, which fires
   the plan stop (`implement-run` § Run profile, Caps);

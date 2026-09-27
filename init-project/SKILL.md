@@ -54,8 +54,10 @@ reads exactly these keys:
 In the body, two markers: the `## Bespoke setup` heading, and `<!-- precondition -->` (below).
 `--help` says what the script does with any other key.
 
-**Engine defaults.** `defaults.md` carries the fork and every knob block, with the one gloss each
-key has; a Profile overrides by key and repeats no gloss. `godot` and `web` take the rest silently.
+**Engine defaults.** `defaults.md` carries the fork and every knob block the engine stamps, with
+the one gloss each key has. `implement-run`'s knobs are not stamped: their defaults are that
+Skill's `defaults.yaml` (precedence: its § Knobs). A Profile overrides by key
+and repeats no gloss. `godot` and `web` take the rest silently.
 **`none`** is the named empty Profile, for a project no Profile fits: every value is the defaults',
 so the owner answers each shape there, as `defaults.md` glosses it. **The manifest carries shape;
 the project carries values**: a `<…>` value is a shape step 1 answers, a literal is written as is.

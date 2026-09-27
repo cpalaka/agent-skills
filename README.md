@@ -150,9 +150,9 @@ How one ticket is actually run: the seats and what each one may not do (the coor
 diff, the gate-runner never wrote the diff it re-runs), the advisor's two slots, the review (native
 axes, the bug hunter, the critic seat), and the closing run record under four fixed
 headings. The seat boundaries are the point — a run where the writer also grades its own
-output has no measurement in it, only a claim. It reads the project contract's
-`knobs:implement-run` block by marker, so `shape`, `layout`, `gate_runner`, `advisor` and
-`light_set` vary per project without the body changing. Named `implement-run` rather than
+output has no measurement in it, only a claim. Every default value of its knobs and dials lives in
+[`implement-run/defaults.yaml`](implement-run/defaults.yaml); a project overrides a knob by writing
+its key into its contract's `knobs:implement-run` block, read by marker. Named `implement-run` rather than
 `implement` so it sits beside the third-party `/implement` stub instead of shadowing it
 ([ADR 0014](docs/adr/0014-floor-is-a-location.md)). Slash-only.
 
@@ -187,8 +187,8 @@ Which capability role fills which seat in a multi-agent run. Two roles — **Pla
 **Builder** — each defined by a property (does it draw on its own weekly meter?) rather than a
 model name, so a model release does not silently invalidate the routing. Carries the pin rule
 (every seat is a definition; a bare spawn inherits the parent), the meter check, effort by
-definition — Builder-role seats `medium | high` where their definitions reach, `medium` the
-default and `high` an add-on, the Planner-role advisor `high` only, and no seat dispatch passes
+definition — Builder-role seats `medium | high` where their definitions reach, which one a run
+starts at being `dials.effort` in `implement-run/defaults.yaml`, the Planner-role advisor `high` only, and no seat dispatch passes
 `model` — and the rule that model names live in run artifacts, as family aliases, and never in
 durable prose ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
 [ADR 0017](docs/adr/0017-seats-pin-family-aliases.md),

@@ -13,6 +13,7 @@ coordinator reads it by path).
 
 | File | Read when |
 |---|---|
+| `defaults.yaml` — every default value, knobs and dials | at Start, every run |
 | `profile.md` — § Run profile: the dial table, A light plan, An instruction file, Effort, Pins, The ratchet, Caps (the fix-round cap stop, A plan pin), The profile block, The stop | at the plan step, before posting the profile |
 | `review.md` — § Review: Re-verify a fix, A command block in an instruction file, Bug hunter (the Correctness charter), Codex lens, Critic seat | when the implementer returns, before its diff is committed or any review dispatched; under `workflow`, when the script returns |
 | `close.md` — § Close: steps 1–4 (the kickoff, step 4), the run record, the re-cost rule | before offering the Close approval |
@@ -24,14 +25,23 @@ coordinator reads it by path).
 from the file on disk, never from a copy injected into your context: Claude Code strips every
 HTML-comment line from what it injects, so the marker, and with it the block, reads absent there,
 though its value lines survive unmarked. A contract that cannot be read is a stop: name the path.
-One that reads with no block takes the defaults, and the knob statement § Start asks for says so:
-`no knobs:implement-run block in <path>; defaults`.
-`shape` (`subagents` | `coordinator-pane` | `workflow`; default `subagents`), `layout`
-(`parallel-when-disjoint` | `serial`; default `parallel-when-disjoint`), `gate_runner` (a seat or
-`coordinator`; default `gate-runner`), `advisor` (a seat or `none`; default `advisor`), `light_set`
+**Precedence**, stated here and nowhere else: a knob takes the project contract's key where
+present, else `defaults.yaml`'s — per key, so a contract with no block, or a block lacking a key,
+takes the file's value for each key it lacks; a `light_set` is one value either way, a numbered
+list in the contract and a YAML list in the file. A dial starts at `defaults.yaml`'s value, is
+derived for the plan where `profile.md` says so (the bug hunter's light-plan value, the gate tier,
+`scope`'s deliverable count), is raised by a pin, and is lowered only by the owner. **Reading
+`defaults.yaml`**: read it from disk at Start, every run, beside this file by the rule above. A file
+that cannot be read, a key the Skill expects that is missing, or a value outside the range its
+comment gives is a stop naming the file, the key and the value — never a guess and never a silent
+fallback, since no other file holds a value to fall back on. The knob statement § Start asks for
+names both sources per key: `knobs: <keys> from <contract path>; <keys> from
+implement-run/defaults.yaml`, every key from the file where the contract has no block.
+`shape` (`subagents` | `coordinator-pane` | `workflow`), `layout`
+(`parallel-when-disjoint` | `serial`), `gate_runner` (a seat or
+`coordinator`), `advisor` (a seat or `none`), `light_set`
 (repository-relative globs, `**` matching any depth and a bare filename matching at the repository
-root only, written as a numbered list under its bullet; default `docs/**`, `CONTEXT.md`,
-`README.md`). `subagents` is described in full in this Skill's files, and `workflow`'s hand-off
+root only, written as a numbered list under its bullet). `subagents` is described in full in this Skill's files, and `workflow`'s hand-off
 points in § Workflow shape; the other shapes and the heartbeat recipes are in `multi-agent-policy`'s
 `COORDINATOR-PANE.md` and `WORKFLOWS.md`, read only where that Skill's directory exists under
 `~/.claude/skills` or `~/.agents/skills`.
@@ -42,8 +52,9 @@ points in § Workflow shape; the other shapes and the heartbeat recipes are in `
 
 ## Seats
 
-Each from a pinned definition, dispatched by name: the `-medium` name is the default dispatch, the
-bare name the `high` add-on (§ Run profile). No dispatch of a definition that pins a model passes `model`: the
+Each from a pinned definition, dispatched by name: the `-medium` name is the `medium` dispatch and the
+bare name the `high`, which one a seat gets being `dials.effort` in `defaults.yaml`, raised by a pin
+or an add-on (§ Run profile). No dispatch of a definition that pins a model passes `model`: the
 model is pinned by role in the definition, and a second model family on a diff is the `codex`
 bug-hunter value, never an override. One whose definition pins none passes it (§ Cross-repo
 gate-runner).
@@ -57,7 +68,7 @@ gate-runner).
   `parallel-when-disjoint` when their files are disjoint, `serial` never. Worktrees are
   `parallel-work`'s decision: one phase in flight is its single-task case and takes none; a second
   is its explicit signal, each implementer in its own tree.
-- **Advisor** — `advisor`, `high` only, on by default and dialled as a whole; slot 1, one consult (ticket, spec, first question); slot 3
+- **Advisor** — `advisor`, `high` only, dialled as a whole by the `advisor` dial (`dials.advisor` in `defaults.yaml`); slot 1, one consult (ticket, spec, first question); slot 3
   continues it by message or spawns fresh.
 - **Reviewer** — `code-reviewer-medium` or `code-reviewer` (`high`), filling
   the Spec axis, the Standards axis, the Correctness charter and the critic (§ Review), each a
@@ -116,7 +127,7 @@ Announce each.
    gate: its observable is an independent reader given the source rows, not the writer's table,
    calibrated by one planted absent row whose count is read, beside a fresh agent's playthrough of
    it.
-2. **Pre-merge** — now the critic seat, an add-on Builder dispatch (§ Review); no advisor consult.
+2. **Pre-merge** — now the critic seat, a Builder dispatch under the `critic` dial (§ Review); no advisor consult.
 3. **Floating**, wherever the `advisor` dial is on — a reading you would otherwise decide silently
    or put to the owner: a review finding you want to reject, one that would change an acceptance
    criterion, a ticket premise reading false against source, a gate still red after one

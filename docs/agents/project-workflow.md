@@ -17,10 +17,10 @@ reached one at a time rather than through `dev-base`: the tracker Chunk by impor
 The `implement-run` **Skill** carries the procedure — it is slash-only, so a run loads it by name
 and reads the block below by marker — **from the file, never from context**, because the loader
 strips every HTML comment on its own line from every injected copy (`CLAUDE.md`, the paragraph
-beginning "So a seat need not"). This block carries what varies here.
+beginning "So a seat need not"). This block carries what varies here; the rest is the `implement-run` Skill's
+`defaults.yaml` (precedence: that Skill's § Knobs).
 
 <!-- knobs:implement-run -->
-- shape: subagents
 - layout: serial — one checkout, prose deliverables, no fan-out to keep disjoint. A worktree here is
   for ref surgery (`CLAUDE.md` § Load-bearing facts), not for an implementer — **except that a
   change editing many Chunks at once takes one, because the checkout is the install and a
@@ -49,11 +49,6 @@ beginning "So a seat need not"). This block carries what varies here.
   is **not** read here and is read nowhere else either: ADR 0016 § 1 makes it acceptance-time, and
   § 4 declines to install an adapter-plus-contract gate anywhere until one has a trigger that can
   go green. A red reading is a decision the closing record names, not a block.
-- advisor: advisor
-- light_set:
-  1. `docs/**`
-  2. `CONTEXT.md`
-  3. `README.md`
 <!-- /knobs:implement-run -->
 
 **Wrap-commit push carve-out.** An end-of-session close-out that commits a promotion here — a

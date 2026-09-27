@@ -31,8 +31,8 @@ Why rationing became pricing: ADR 0006, superseded by
 - **`agentType`** resolves from the same registry as the Agent tool, so an edited definition can
   serve stale (Skill § Spawning).
 - **Per-agent `effort`**: on a stage filling a seat it is that seat's dial — a Builder-role seat
-  `medium | high` where its definitions reach, `medium` the default and `high` an add-on, the
-  Planner-role advisor `high` only (Skill § Spawning). Set the stage's `effort` and its definition
+  `medium | high` where its definitions reach, the default per seat being the `implement-run` Skill's
+  `defaults.yaml` (`dials.effort`) and a raise above it an add-on, the Planner-role advisor `high` only (Skill § Spawning). Set the stage's `effort` and its definition
   name from one value. A stage filling no seat is not a dial: `high` by default, `low` for
   mechanical stages only, never a verify or critic slot.
 - **`workflow()` nesting** shares the parent's agent counter and token budget: a nested call counts

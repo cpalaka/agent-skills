@@ -1,6 +1,8 @@
 # A run posts a light default profile; the owner turns add-ons on; `xhigh` is retired
 
 **Status:** accepted — 2026-09-26. Supersedes [ADR 0018](0018-run-profile-derived-from-plan.md).
+Its values are history; the live ones are in `implement-run/defaults.yaml`
+([ADR 0024](0024-implement-run-outline-and-defaults-file.md)).
 0018's amendment of [ADR 0011](0011-roles-not-cost-tiers.md)'s effort clause stands as amended
 here: `medium` the default on every profile seat, `high` an add-on, `xhigh` retired. Decided on
 cpalaka/agent-skills#101 in a grill on 2026-09-26; the owner's replies are quoted in the ticket's

@@ -1,0 +1,32 @@
+# implement-run's default values: every one of them, and nowhere else. The owner changes a default
+# by editing its value here; no other live file states one, each names the key instead. Values
+# only: the reading rule and the precedence are in SKILL.md's Knobs paragraph, the judgment around each
+# dial (when to recommend an add-on, which plan is light) in profile.md. Each value's range is in
+# its comment; a value outside it stops the run.
+knobs:   # precedence: SKILL.md § Knobs
+  shape: subagents                  # subagents | coordinator-pane | workflow
+  layout: parallel-when-disjoint    # parallel-when-disjoint | serial
+  gate_runner: gate-runner          # a seat definition name, or coordinator
+  advisor: advisor                  # a seat definition name, or none; the advisor seat is a
+                                    # user-scope definition, never stamped into a project, so a
+                                    # machine without it writes none in the project's contract
+  light_set:                        # repository-relative globs; ** any depth, a bare filename the root only
+    - "docs/**"
+    - "CONTEXT.md"
+    - "README.md"
+dials:   # every project; precedence: SKILL.md § Knobs
+  standards: "off"                  # off | on
+  advisor: "on"                     # off | on — whether the seat runs; knobs.advisor names it
+  critic: "off"                     # off | on
+  bug hunter:
+    above light plan: codex         # off | codex | correctness
+    light plan: "off"               # off | codex | correctness
+  effort:                           # each: medium | high
+    implementer: medium
+    spec: medium
+    standards: medium
+    bug hunter: medium              # the Correctness charter's; the Codex lens takes no effort
+    critic: medium
+  fix rounds: 1                     # an integer, 1 or more
+  scope:
+    calls per implementer dispatch: 60   # a positive integer

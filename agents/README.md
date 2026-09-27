@@ -58,7 +58,8 @@ new release reaches them with no edit ([ADR 0017](../docs/adr/0017-seats-pin-fam
 Every Claude definition carries `effort:` explicitly
 ([ADR 0023](../docs/adr/0023-light-default-run-profile.md), superseding
 [ADR 0018](../docs/adr/0018-run-profile-derived-from-plan.md) § 7). A profile seat's `-medium` name
-is the default dispatch and its bare name, `high`, the add-on; the advisor and the `coordinator`
+is its `medium` dispatch and its bare name its `high`, which one a run starts at being the
+`implement-run` Skill's `defaults.yaml` (`dials.effort`); the advisor and the `coordinator`
 keep their one `high` definition, and the gate-runner runs `medium`. The table above shows which
 values each seat reaches. A suffixed file is its bare file with only
 `name:`, `effort:` and one leading sentence changed. Re-apply an edit to a bare body to its

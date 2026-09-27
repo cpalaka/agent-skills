@@ -35,20 +35,6 @@ knobs:
     # marker out of <!-- knobs:parallel-work --> in the project's contract (ADR 0014).
     worktree_path_prefix: "<the whole path template `git worktree add` puts each tree at, not a bare prefix, with <proj> filled in and the task's placeholders (<n> where the tracker has an id, and <slug>) left as placeholders, whose last segment names the task — its id where the tracker has one, and its slug — never the branch name, whose <type>/ prefix would add a path segment; e.g. ../<proj>-<n>-<slug> under tracker-github, ../<proj>-<slug> with no tracker>"
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
-  implement-run:
-    # implement-run is a Skill too, read by marker, and none of these is a shape: they are its OWN
-    # defaults, which apply wherever the block is absent, so a project stamped before this block
-    # existed runs on exactly them. Written out because they are then the project's saved pick: the
-    # coordinator states them at the start of a run and asks only where a ticket cannot fit them.
-    shape: "subagents"
-    layout: "parallel-when-disjoint"
-    gate_runner: "gate-runner"
-    advisor: "advisor"      # the advisor seat is a user-scope definition (~/.claude/agents/advisor.md),
-                            # never stamped into the project; on a machine without it, answer `none`.
-    light_set:
-      - "docs/**"
-      - "CONTEXT.md"
-      - "README.md"
 ---
 
 # The engine's defaults

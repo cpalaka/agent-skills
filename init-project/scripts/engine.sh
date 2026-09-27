@@ -2790,7 +2790,7 @@ case_none_missing_key() { # type none over the shipped defaults.md and profiles/
   st_stop_case "$H/a.md" 'knob verify-gate.env has no value'
   ST_PD=; ST_DF=
 }
-case_none_all_answered() { # the same with all eight (two `none — <why>`, a value no check reads): written, fork filled, residue clean
+case_none_all_answered() { # the same with all eight (two `none — <why>`, a value no check reads): written, fork filled, residue clean, no knobs:implement-run block stamped (projects inherit implement-run/defaults.yaml)
   st_env; st_none_answers "$H/a.md"
   ST_PD=$SKILL_DIR/profiles; ST_DF=$SKILL_DIR/defaults.md
   st_run stamp --target "$T" --answers "$H/a.md"
@@ -2798,7 +2798,7 @@ case_none_all_answered() { # the same with all eight (two `none — <why>`, a va
   st_run verify --target "$T" --answers "$H/a.md"; ST_PD=; ST_DF=
   grep -qF 'fork is `/git-flow-squash`.' "$T/CLAUDE.md" || { GOT=fork-unfilled; return; }
   grep -qxF -e '- typecheck: none — the project has no type checker' "$T/$CONTRACT" || { GOT=none-value-missing; return; }
-  grep -qxF -e '- shape: subagents' "$T/$CONTRACT" || { GOT=default-literal-missing; return; }
+  grep -qxF '<!-- knobs:implement-run -->' "$T/$CONTRACT" && { GOT=implement-run-block-stamped; return; }
   for _c in braces marker fill-prompt fork-slot empty-heading; do
     printf '%s\n' "$OUT" | grep -q "^CHECK $_c: PASS — " || { GOT=check-$_c; return; }
   done

@@ -12,7 +12,7 @@ fallback transport, is a main session instead: it reads its own role and meter a
 § Advisor slots say, and a Planner pane asks the delegate, which parks it, since a role switch is
 not among the delegate's stops. The delegate declines every recommended add-on, the ticket running
 the default and the record naming each; a pin, the owner's decision at filing, still applies. The
-delegate answers the plan stop; the Close approval; the two cap stops (a second fix round, no
+delegate answers the plan stop; the Close approval; the two cap stops (a round past `fix rounds`, no
 add-on, answered on its merits; work past the deliverable count), each handed back as `STOP plan`,
 since a cap raise is a plan pin, which fires the plan stop (§ Run profile); a slot-3 need, where an
 advisor runs, only after the advisor and only for what the advisor cannot settle; and a false

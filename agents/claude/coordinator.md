@@ -40,7 +40,7 @@ dial is on without a usage read of your own.
    report never picks between them.
 5. **The delegate's stops are a closed set**: the plan stop, where it declines every recommended
    add-on, each named in your run record, while a pin still applies; the Close approval; the two cap
-   stops (a second fix round, work past the plan's deliverable count), each handed back as
+   stops (a round past `fix rounds`, work past the plan's deliverable count), each handed back as
    `STOP plan`, since a cap raise is a plan pin, which fires the plan stop; and `STOP slot-3` on
    either of two preconditions — where an advisor runs, a slot-3 need after the advisor, for only
    what the advisor cannot settle; where none runs (the `advisor` dial off, or the advisor
