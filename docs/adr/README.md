@@ -28,6 +28,7 @@ entry, not a quiet edit.
 | [0021](0021-mechanical-stamping-is-a-script.md) | Mechanical stamping is a script; prose keeps judgment (amends 0016 § 4) |
 | [0022](0022-tracker-is-an-engine-step.md) | The tracker is an engine step; a Chunk may be frozen with importers (extends 0013) |
 | [0023](0023-light-default-run-profile.md) | A run posts a light default profile; the owner turns add-ons on; `xhigh` is retired (supersedes 0018) |
+| [0024](0024-implement-run-outline-and-defaults-file.md) | `implement-run` is an outline plus stage files read at their step; defaults live in one values-only file that projects inherit per key |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

@@ -1,0 +1,34 @@
+## Close
+
+1. Sweep `git status` in every checkout the run touched, after any fan-out.
+2. **Load `git-flow-squash`**, or the `git-flow-*` Skill the project's Profile `fork:` names,
+   before the merge. Nothing fires it from context (description-matched triggering: 1 invocation
+   in 105 sessions, measured on another Skill), and a squash without its clauses fails silently
+   toward a lost tree: a peer's unpushed commit riding the push, a branch deleted against a moved
+   `main`, an approval spent on a tree that no longer exists.
+3. **One approval covers posting the run record, the merge and the close**, given by the owner, or
+   by the delegate inside a batch. Offer the diff, the record and the close in one message, naming
+   the acceptance reading you took and why; act on the single yes. A ticket whose acceptance needs
+   the owner's attended run stays open: the push is not the acceptance.
+4. **Emit the kickoff** once step 3's actions land, a ticket left open for the owner included, as
+   its own message, unfenced: `/implement-run <n>` for the lowest ticket on the tracker chunk's
+   frontier. An empty frontier takes the contract's frontier-empty instruction; where it names
+   none, say the frontier is empty — and where the tracker's query cannot tell an empty frontier
+   from an unminted label, run its label check and report which. Nothing else follows — no other
+   query, no grill, no wrap: the run record is the tracker write, the kickoff the handoff.
+
+**The run record is the tracker's closing record**: one comment on the ticket (in the file, for a
+file ticket) carrying both structures — the headings `Slots`, `Gates`, `Review`, `Deviations`, and
+each acceptance criterion by number with its evidence and the reviewed commit SHA. `Slots` repeats
+the profile block as dispatched, followed by `approved: owner` or
+`approved: owner's delegate — <what the delegate read>` where the stop fired; inside a batch it
+also names the batch grant. The body is the spec, and a run never rewrites its own ticket's body —
+`gh issue edit --body` and its equivalents replace it wholesale, so ticking one checkbox can take
+the spec with it. Checkboxes are the owner's; every observation, verdict and piece of evidence goes
+in a comment.
+
+**A criterion your run missed is the owner's to re-cost (§ Inside a batch); the ask must not make
+your reading the default.** *The criterion was wrong* is an overrun's predictable output, and
+sometimes true; with the deliverable already on disk, *land it and decide later* installs your
+preference by silence. Produce the alternative as an artifact the owner can diff, not a number you
+describe, and leave the criterion unticked either way.

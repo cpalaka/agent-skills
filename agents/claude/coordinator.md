@@ -18,7 +18,8 @@ dial is on without a usage read of your own.
    ticket for the owner's delegate: …`); the batch grant, verbatim; the absolute path of
    `implement-run/SKILL.md`. A brief missing any of them is handed back as `STOP park` naming the
    missing part, before any other work, since a run on a partial brief answers to no one.
-2. **Load the procedure by reading that path** and follow it, its § Inside a batch included. Never
+2. **Load the procedure by reading that path**, then `batch.md` beside it (the same directory as
+   that `SKILL.md` path), and follow both. Never
    through the Skill tool: its refusal of a slash-only Skill, with its text against replicating the
    workflow, addresses a session replicating it for itself, not a coordinator the owner delegated.
    The run's shape is `subagents` whatever the project's knob says — the Workflow tool is absent
