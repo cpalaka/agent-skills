@@ -277,8 +277,8 @@ subagent (the host mechanism that fills a seat, not the seat), agent type (the h
 The set of per-run values the **Coordinator** posts from its own plan before dispatch — which
 seats run, the bug hunter, the gate tier, each seat's effort, the fix-round and scope caps, and
 whether a reader stops the run — one **dial** each. Every dial sits at its default, light by
-design: the Spec axis at `medium` and the Codex lens (the Spec axis alone on a **light plan**), no
-advisor, no critic, one fix round. Above that sit only the **add-ons** the owner approved and
+design: the Spec axis at `medium` and the Codex lens (the Spec axis alone on a **light plan**), the
+advisor on, no critic, one fix round. Above that sit only the **add-ons** the owner approved and
 the pins the ticket set. Posted as a profile block in the run's first message, with one line per
 recommended add-on, and repeated in the run record
 ([ADR 0023](docs/adr/0023-light-default-run-profile.md), superseding ADR 0018's derived profile).
@@ -343,7 +343,7 @@ with "solo"), main session (true but says nothing about the role), driver.
 One of three numbered positions for judgment within a ticket, numbered as the `implement-run`
 Skill numbers them. Slot 1, the pre-dispatch pass over the execution spec, and slot 3, floating for
 whatever the coordinator would otherwise put to the owner or decide silently, are the advisor's,
-filled by consulting the seat where the advisor **add-on** is on and, where it is off or cannot be
+filled by consulting the seat where the `advisor` dial is on (its default) and, where it is off or cannot be
 spawned, by holding the judgment yourself. Slot 2, pre-merge, is the **critic seat**'s where that
 add-on is on, never the advisor's. The `implement-run` Skill's § Advisor slots Fallback
 paragraph says what a tight meter funds. A fourth need goes to the owner.

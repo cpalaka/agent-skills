@@ -68,7 +68,7 @@ Cross-repo gate-runner).
   `parallel-when-disjoint` when their files are disjoint, `serial` never. Worktrees are
   `parallel-work`'s decision: one phase in flight is its single-task case and takes none; a second
   is its explicit signal, each implementer in its own tree.
-- **Advisor** — `advisor`, `high` only, an add-on as a whole; slot 1, one consult (ticket, spec, first question); slot 3
+- **Advisor** — `advisor`, `high` only, on by default and dialled as a whole; slot 1, one consult (ticket, spec, first question); slot 3
   continues it by message or spawns fresh.
 - **Reviewer** — `code-reviewer-medium` or `code-reviewer` (`high`), filling
   the Spec axis, the Standards axis, the Correctness charter and the critic (§ Review), each a
@@ -103,7 +103,7 @@ tokens name the dials in a pin, the profile block and the workflow script's `arg
 |---|---|---|---|
 | `implementer`, `gate-runner`, `spec` | on | on | none |
 | `standards` | off, on | off | on, where an instruction file is in the diff |
-| `advisor` (slot 1; slot 3 only where on) | off, on | off | on, only by naming the premise or design question you cannot settle alone |
+| `advisor` (slot 1; slot 3 only where on) | off, on | on | none |
 | `critic` | off, on | off | on |
 | `bug hunter` | `off`, `codex`, `correctness` | `codex`; `off` on a light plan | `codex` on a light plan; `correctness` only in place of `codex` (§ Review) |
 | `gate tier` | a named tier of the project contract plus any trigger-table pulls; where the contract names none, one full gate less `verify-gate`'s derived skips | the lowest tier plus every trigger-table pull for the changed paths | a higher tier, by pin only |
@@ -127,7 +127,7 @@ axis, which found 10 of its 11 measured findings on such diffs (ADR 0018's #86 a
 changes the instrument the next run reads; it turns nothing on by itself.
 
 **Effort** is dispatched as a definition name (§ Seats): `medium` for every seat, `high` an add-on;
-the advisor, an add-on as a whole, and the batch `coordinator`, the main loop rather than a dial,
+the advisor, a dial as a whole, and the batch `coordinator`, the main loop rather than a dial,
 keep their one `high` definition. The Codex lens takes no effort. Expected implementer calls turns
 no dial: it sizes phases and sets the `scope` cap.
 
@@ -180,8 +180,8 @@ dials share one line naming the definition dispatched per seat, the gate-runner'
 unlisted:
 
 ```
-effort: implementer-medium, code-reviewer-medium (spec) — default
-effort: implementer-medium, code-reviewer-medium (spec), code-reviewer (critic), advisor — critic and its high pinned; advisor approved
+effort: implementer-medium, code-reviewer-medium (spec), advisor — default
+effort: implementer-medium, code-reviewer-medium (spec), code-reviewer (critic), advisor — critic and its high pinned
 recommend standards: on — an instruction file in the diff
 ```
 
@@ -241,8 +241,8 @@ scoped to named files. Read the meter before spawning; the owner decides a tight
 (§ Inside a batch).
 
 **Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner
-(§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor off, the
-default, or unavailable (no definition this host can dispatch, meter spent, knob `none`): hold the
+(§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor off (the owner
+lowered it), or unavailable (no definition this host can dispatch, meter spent, knob `none`): hold the
 judgment yourself, ask
 the owner at the same triggers (§ Inside a batch), say so. That is self-review unless slot 1's
 observable that cannot go red becomes a question the implementer's dispatch prompt asks before it

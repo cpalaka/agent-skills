@@ -232,7 +232,7 @@ Two closed sets.
   advisor running, it parks;
 - a false premise met mid-run, only where its disposition leaves every acceptance criterion
   satisfied in form with the failed premise named (ADR § 3): after the advisor where one runs;
-  where none runs — the `advisor` dial off, its default, or the advisor unavailable (meter
+  where none runs — the `advisor` dial off (the owner lowered it), or the advisor unavailable (meter
   spent, no definition, knob `none`) — it reaches you directly as `STOP slot-3`.
 
 So `STOP slot-3` has two preconditions, and the `coordinator` definition carries both: a slot-3

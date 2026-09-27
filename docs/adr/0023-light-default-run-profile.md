@@ -45,13 +45,14 @@ than split off.
    no `.result`. Known confound: one fixture, never measured on real diffs. With the critic off by
    default, its design-challenge framing partly covers the critic's charge of asking whether a
    remedy overreaches.
-3. **Advisor.** Off by default. The coordinator recommends slot 1 only by naming the premise or
-   design question it cannot settle alone; slot 3 opens only where the advisor is on. The existing
-   fallback for a run with no advisor, holding the judgment and asking the owner at the same
-   triggers, now covers the default.
+3. **Advisor.** On by default (amended 2026-09-27, the owner's decision; was: "Off by default. The
+   coordinator recommends slot 1 only by naming the premise or design question it cannot settle
+   alone"). Slots 1 and 3 run wherever the dial is on; the owner may lower it at the stop like any
+   dial but `spec`. The fallback for a run with no advisor, holding the judgment and asking the
+   owner at the same triggers, covers a lowered or unavailable advisor.
 4. **Effort.** Every profile seat defaults to `medium`; `high` is an add-on; `xhigh` is retired, its
    definition deleted with its link, and the red-gate raise of the critic removed. Two definitions
-   keep `high`: the advisor, an add-on as a whole, and the batch `coordinator`, the main loop rather
+   keep `high`: the advisor, a dial as a whole, and the batch `coordinator`, the main loop rather
    than a dial. The mechanism is 0018 § 7's: an effort value is a definition name. The `-medium`
    name is now the default dispatch and the bare name the `high` add-on; no definition is renamed.
 5. **Fix rounds.** One by default. A second is the **fix-round cap stop**, whose ask offers "land
@@ -120,7 +121,7 @@ adds one `recommend <token>: <value> — <reason>` line per recommended add-on.
 
 ## Consequences
 
-- The default run costs less: one axis and one lens at `medium`, no advisor, no critic, one fix
+- The default run costs less: one axis and one lens at `medium`, the advisor (§ 3 as amended), no critic, one fix
   round. What is accepted with it: the critic's measured yield, a material defect in 9 of 10 of
   #84's runs, is now opt-in, and the Codex lens as default rests on one fixture.
 - The owner has a sanctioned lever: lowering at the stop, recorded as a decision rather than an
