@@ -62,8 +62,8 @@ No durable rule — Skill, Chunk, contract, ADR, either host's global file — n
 artifact does: a seat definition or workflow script pins a family alias (`opus`, `fable`), which
 follows its family's latest release, never a versioned ID, which stays behind until someone
 re-probes it ([ADR 0017](../docs/adr/0017-seats-pin-family-aliases.md)). A new version needs no
-edit. When the meter moves a role to another family, `context-hygiene`'s reverse pass (where
-installed) re-audits the seats' model fields; nothing else reads them.
+edit. Nothing audits the seats' model fields, so when the meter moves a role to another family,
+re-point the seat definitions by hand.
 
 ## Elsewhere
 
