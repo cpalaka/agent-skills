@@ -132,3 +132,10 @@ Passing work to the user mid-slice, restate the invariants it depends on (the st
 move, the step that must precede a save, how many things may be in flight), even if a prior round
 covered them, since the handoff is read alone; then verify the returned state against those
 invariants, since the user reports the instruction they followed, not the invariant.
+
+**Claude Code only.** A seat inherits the session's MCP servers and permission mode, so its dispatch
+prompt forbids any MCP server the project keeps to the coordinator and restates the contract's hard
+limits. A seat can also be handed stale copies: its definition until the host's lazy refresh lands,
+and the `@`-imported contract as the parent's session-start snapshot. Where the run's diff so far
+changes either, the dispatch prompt has the seat read it off disk and say whether it differed; the
+coordinator re-reads a changed contract too.
