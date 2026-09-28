@@ -18,8 +18,8 @@ entry, not a quiet edit.
 | [0011](0011-roles-not-cost-tiers.md) | Capability roles, not cost tiers, decide which model fills a seat (supersedes 0006) |
 | [0012](0012-issue-status-is-derived.md) | Issue status is derived from open state, gate label and blocked-by; never from a board or a body rewrite |
 | [0013](0013-retire-unused-chunks.md) | Three Chunks retire on a zero-importer measurement; the git-flow fork keeps one side (supersedes 0002 in part; extended by 0022) |
-| [0014](0014-floor-is-a-location.md) | The floor is a location: `chunks/` holds always-on rules only, and a situational body is a Skill (amends 0001, 0009) |
-| [0015](0015-chunk-cap-250-ceiling-2900.md) | The condensed-Chunk cap is 250 words and the floor ceiling is 2,900 (amends 0014) |
+| [0014](0014-floor-is-a-location.md) | The floor is a location: `chunks/` holds always-on rules only, and a situational body is a Skill (amends 0001, 0009; amended by 0025) |
+| [0015](0015-chunk-cap-250-ceiling-2900.md) | The condensed-Chunk cap is 250 words and the floor ceiling is 2,900 (amends 0014; amended by 0025) |
 | [0016](0016-floor-ceiling-is-acceptance-time.md) | The floor ceiling is acceptance-time, and every standing number names its reader (amends 0014 § 7, 0015 § 2; amended by 0021) |
 | [0017](0017-seats-pin-family-aliases.md) | Seats and workflow scripts pin a family alias, not a versioned model ID (amends 0011) |
 | [0018](0018-run-profile-derived-from-plan.md) | A run's profile is derived from its plan; the ticket pins dials, never levels; effort is a dial (amends 0011; superseded by 0023) |
@@ -29,6 +29,7 @@ entry, not a quiet edit.
 | [0022](0022-tracker-is-an-engine-step.md) | The tracker is an engine step; a Chunk may be frozen with importers (extends 0013) |
 | [0023](0023-light-default-run-profile.md) | A run posts a light default profile; the owner turns add-ons on; `xhigh` is retired (supersedes 0018) |
 | [0024](0024-implement-run-outline-and-defaults-file.md) | `implement-run` is an outline plus stage files read at their step; defaults live in one values-only file that projects inherit per key |
+| [0025](0025-tracker-github-core-and-skill.md) | `tracker-github` splits into an always-on core Chunk held to 250 words and a Skill holding the rest (amends 0014 § 1, § 7, 0015) |
 
 **0012 is now taken.** It was claimed rather than free while it sat empty: spec issue #23 reserved
 it for the tracker ADR and cited that number in a public issue body, so the entry written first

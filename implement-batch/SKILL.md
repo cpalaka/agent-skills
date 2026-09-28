@@ -12,8 +12,8 @@ session start and kickoff would reach the coordinators stale, while the snapshot
 host or a headless session (ADR § 10): the transport below is measured only in an attended Claude
 Code session, and a dialog needs the owner at its terminal. A project where neither the contract
 nor a host adapter imports the `tracker-github` Chunk — the `@` line usually sits in the adapter:
-a batch is defined over that Chunk's operations — the frontier query, the claim, the gate labels,
-the closing record.
+a batch is defined over the operations that Chunk defers to the `tracker-github` Skill — the
+frontier query, the claim, the gate labels, the footer by gate, the closing record.
 
 ## The delegate
 
@@ -162,10 +162,13 @@ The last tests local `main` ahead of `origin`, not equal to it, so a peer's push
 the batch. At kickoff a failure means the batch does not start: tell the owner. Later it ends the
 batch (§ Batch end).
 
+Load the `tracker-github` Skill at kickoff, before the first screening: the frontier query, the
+claim, the footer by gate and the closing record are its.
+
 ## Screening, before each start
 
 Keep the batch's **parked set**: every ticket parked this batch. Re-derive the frontier with the
-tracker Chunk's frontier query, plus its `--label gate:accept` variant where the grant takes those,
+`tracker-github` Skill's frontier query, plus its `--label gate:accept` variant where the grant takes those,
 with the parked set filtered out before `min_by`: inside the query's array, after its blocker
 `select`, insert `select(.number as $n | [<parked numbers>] | index($n) | not)`. The query ends in
 `min_by(.number)` and returns one ticket, so excluding afterwards leaves nothing; and a parked
@@ -256,7 +259,7 @@ Close, and every cap stop, which hands back as `STOP plan` after fix rounds — 
 `git diff main...<branch>` (three dots: the branch against its merge base with `main`), with the
 commits and the live issue; at Close, also the draft record and the acceptance reading the
 coordinator names. `<branch>` comes from git as well, never from the report: the ticket's branch by
-the tracker Chunk's name form `<type>/<n>-<slug>`, found with `git branch --list '*/<n>-*'`.
+the `tracker-github` Skill's name form `<type>/<n>-<slug>`, found with `git branch --list '*/<n>-*'`.
 More than one match — a branch a parked run left for the owner, say — parks the ticket, and the
 report never picks between them.
 
@@ -323,10 +326,10 @@ No further dispatch after the first of:
   squash whose push failed leaves local `main` equal to the reviewed tree, so local `main` alone
   cannot go red on it). The tracker disagrees: red unless the squash's footer
   (`git log -1 --format=%B <squash>`, `<squash>` being the head of `origin/main` after the fetch,
-  read from git and never from the report) is the one the tracker Chunk's § Footer by gate gives
+  read from git and never from the report) is the one the `tracker-github` Skill's § Footer by gate gives
   the ticket's gate label — `gate:agent` → `Closes`, `gate:accept` → `Refs` — **and** the
   issue reads that footer's state: `CLOSED` under `Closes` after a bounded re-read
-  (`gh issue view <n> --json state`, up to 6 reads 10 s apart, for the Chunk's close lag), `OPEN`
+  (`gh issue view <n> --json state`, up to 6 reads 10 s apart, for the Skill's close lag), `OPEN`
   under `Refs`;
 - a 429 or meter stall, in a coordinator's report or in your own tools, or the Planner role's weekly
   line read tight before a dispatch, tight being the owner's word, which this Skill's § Kickoff

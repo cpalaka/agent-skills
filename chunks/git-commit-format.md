@@ -4,7 +4,8 @@
 
 **Subject `<type>(<scope>): <imperative summary>`, ≤~72 chars; never drop the task id to make
 room.** `<type>` matches the *dominant* change; `<scope>` is the slice/subsystem — task-id and
-footer forms: the tracker chunk. **Body: what changed and why**, plus deviations.
+footer forms: the tracker chunk (on `tracker-github`, its Skill). **Body: what changed and why**,
+plus deviations.
 
 **Body through `-F <file>`, never `-m`: that file's FIRST LINE is the subject, then a blank line,
 then the body.** Either mistake exits 0 (2026-09-18). Write that file inside the repo, never

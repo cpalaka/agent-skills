@@ -111,7 +111,7 @@ private companion's godot parity check diffs some of godot's `docs/` assets
 ([issue #17](https://github.com/cpalaka/agent-skills/issues/17)). One pair is unchecked by
 decision rather than by omission: the engine's `issue-tracker.md` and `triage-labels.md` Templates
 mirror this repository's hand-written `docs/agents/` pair and are deliberately divergent —
-both sides are pointers plus one table over the single-sourced `tracker-github` Chunk, so there is no
+both sides are pointers plus one table over the single-sourced `tracker-github` Chunk and Skill, so there is no
 second source for a convention to drift from, and a check would cost more than it saves
 ([issue #43](https://github.com/cpalaka/agent-skills/issues/43)).
 _Avoid_: scaffold, boilerplate; Chunk (the referenced, single-source mechanism — they coexist).
@@ -400,7 +400,7 @@ _Avoid_: skip (says nothing was recorded), defer, block.
 
 ### Issue tracking
 
-The `tracker-github` Chunk and the pipeline Skills (wayfinder, to-spec, to-tickets, implement)
+The `tracker-github` Chunk and Skill and the pipeline Skills (wayfinder, to-spec, to-tickets, implement)
 share these terms. Status is never stored: it is read off an issue's open state, its gate label
 and its blocked-by edges.
 

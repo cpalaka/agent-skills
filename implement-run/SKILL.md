@@ -81,8 +81,10 @@ sign-off**. Every run, whatever its size, posts a plan: 1–5 chat bullets namin
 changed paths, the deliverable count and the expected implementer calls, which the profile reads.
 Read the ticket's `Pins:` line and any tier sentence, set the profile (§ Run profile), and post
 plan and profile block together; where the stop fires, get approval before code. Verify is the
-`verify-gate` Chunk; sign-off is the Done gate the project's tracker chunk sets, or its own inline
-rule.
+`verify-gate` Chunk; sign-off is the Done gate the project's tracker sets (on a `tracker-github`
+project, its Skill), or its own inline rule. On a project importing the `tracker-github` Chunk,
+load the `tracker-github` Skill here: the frontier, the claim, the footer and the closing record
+are its.
 
 State the knob values in force, asking only where the ticket cannot fit them, and this session's
 role; if it is not Builder, ask the owner to switch (§ Inside a batch), and stay on Planner (the

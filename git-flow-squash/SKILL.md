@@ -12,7 +12,7 @@ coupled and stay together (ADR 0002, kept by ADR 0013). Sync and branch per
 **Board-less projects** (no tracker Chunk imported) have no task ids: branches are
 `<type>/<slug>`, and every task-id form and (c) drop out. A `tracker-github`
 project is **not** board-less: a clause naming a task id, a board, Done or the tracker's notes
-resolves as that chunk's deferred-clauses section says. The integration mechanics stay the same
+resolves as the `tracker-github` Skill's § Commit forms, and clauses deferred here says. The integration mechanics stay the same
 either way.
 
 **(a) Integration = squash-merge: code and Done land as ONE commit on `main`.** Once (d)'s diff

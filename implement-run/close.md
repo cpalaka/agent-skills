@@ -8,8 +8,8 @@
    the acceptance reading you took and why; act on the single yes. A ticket whose acceptance needs
    the owner's attended run stays open.
 4. **Emit the kickoff** once step 3's actions land, a ticket left open for the owner included, as
-   its own message, unfenced: `/implement-run <n>` for the lowest ticket on the tracker chunk's
-   frontier. An empty frontier takes the contract's frontier-empty instruction; where it names
+   its own message, unfenced: `/implement-run <n>` for the lowest ticket on the tracker's
+   frontier (on `tracker-github`, the Skill's query). An empty frontier takes the contract's frontier-empty instruction; where it names
    none, say the frontier is empty — and where the tracker's query cannot tell an empty frontier
    from an unminted label, run its label check and report which. Nothing else follows (no other
    query, grill or wrap): the run record is the tracker write, the kickoff the handoff.

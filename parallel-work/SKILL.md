@@ -41,7 +41,8 @@ not check out, or `git checkout main` refuses or would carry changes along.
 
 **Mode A — Waves.** For tasks with no shared state and no ordering between them:
 
-- **The coordinator alone** syncs `main` and claims each task, in the tracker chunk's form of claim.
+- **The coordinator alone** syncs `main` and claims each task, in the tracker chunk's form of claim (on a
+  `tracker-github` project, the `tracker-github` Skill's — load it).
 - Per task, from the repo root: `git worktree add <path> -b <branch> main`, then run `install` in
   it. A Claude Code subagent inherits the parent's permission mode and sandbox, so nothing is
   copied; the Agent tool's `isolation: "worktree"` also works but ignores both knobs. Codex role
@@ -59,7 +60,7 @@ not check out, or `git checkout main` refuses or would carry changes along.
 
 **Mode B — Attended worktrees.** `git worktree add <path> -b <branch> origin/main` — branching off
 fresh `origin/main` is the sync, so don't re-pull inside. Which tracker writes the session may make
-is the tracker chunk's.
+is the tracker chunk's — on a `tracker-github` project, the `tracker-github` Skill's, so load it.
 
 - **A fresh interactive worktree inherits no gitignored host config.** Claude Code:
   `cp .claude/settings.local.json <path>/.claude/` before launch, or the session silently runs

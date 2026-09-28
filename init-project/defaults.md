@@ -9,10 +9,10 @@ knobs:
   # the answers file gives the key. This file is the one home of each key's gloss.
   tracker-github:
     # Written only where the tracker outcome is github, and first. Exactly these two keys, in this
-    # order: the Chunk's § Knobs fixes both the names and that there are two of them. PROJECT,
-    # COLUMNS, AGENT_LABEL and RECORDS_DIR are retired — a contract still carrying one is on the old
-    # five-knob shape, and the Chunk says where those four go instead (the project's own policy
-    # file, never back into the Chunk).
+    # order: the tracker-github Skill's § Knobs fixes both the names and that there are two of
+    # them. PROJECT, COLUMNS, AGENT_LABEL and RECORDS_DIR are retired — a contract still carrying
+    # one is on the old five-knob shape, and the Skill says where those four go instead (the
+    # project's own policy file, never back into the Chunk or the Skill).
     REPO: "<owner/repo>"    # derived, never asked blind: SKILL.md step 0, stage 2, then confirmed
                             # with the owner.
     RESULTS_DIR: "<a path relative to the repository root where a gate:accept ticket's result note goes — or `none` for comments only>"

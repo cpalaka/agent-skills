@@ -4,7 +4,7 @@
      § Hand-written, and it stays that way). init-project/templates/tracker/triage-labels.md
      stamps the same file into a project that IS stamped; it is the shape this one mirrors, not its
      source, and neither is generated from the other. The vocabulary is defined once in
-     chunks/tracker-github.md § Two label axes — this file maps, it does not define. -->
+     tracker-github/SKILL.md § Two label axes — this file maps, it does not define. -->
 
 Skills speak in seven triage roles: two **category** roles and five **state** roles. This tracker
 routes on two label axes instead, so the two groups map differently — the state roles onto the
@@ -26,7 +26,7 @@ the work; why it is waiting is the issue's own text.
 `ready-for-human` reads backwards here: it means the owner must accept the **result**, not that an
 agent may not do the work — a session works it and stops at the close.
 
-`wontfix` maps to no label because a decline is an exit rather than a state — the Chunk's
+`wontfix` maps to no label because a decline is an exit rather than a state — the Skill's
 § Acceptance and re-gating closes it not planned with the owner's reply quoted. GitHub's default
 label set, which ships with every repository, includes a literal `wontfix`; it is not part of this
 mapping, and seeing it on an issue does not mean the decline path was taken.
@@ -51,5 +51,5 @@ That is an accident of the defaults, not part of this mapping.
 ## The other axis
 
 The second axis is **origin**, saying why an issue exists. Its values, the wayfinder labels that
-replace it, and the rule that a `Spec:` or `Map:` parent carries neither axis are the Chunk's
-§ Two label axes and § Parents.
+replace it, and the rule that a `Spec:` or `Map:` parent carries neither axis are the
+`tracker-github` Skill's § Two label axes and § Parents.

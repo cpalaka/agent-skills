@@ -55,6 +55,8 @@ It creates `~/.claude/chunks` and `~/.codex/chunks`, both pointing at this clone
 clone may live anywhere — the script takes the location from its own path. Claude Code resolves
 `@~/.claude/chunks/<name>.md` imports from there; Codex has no `@import` syntax, so its
 `AGENTS.md` names the files and reads them explicitly ([ADR 0005](docs/adr/0005-codex-chunks-use-explicit-read-directives.md)).
+`tracker-github.md` is only a core: the rest of that convention is the `tracker-github` Skill, which
+is linked like any other Skill, one symlink per host — `bootstrap.sh` does not do it.
 
 Chunk imports are *external includes*: Claude Code asks for approval once per consuming project
 on first launch, and the session must be restarted before they load.
@@ -311,6 +313,20 @@ the winner, synthesize a final answer.
 (no Workflow runtime there — the fan-out runs on `collaboration.spawn_agent`, and
 `codex-skills/tournament/scripts/tourney.mjs` reconciles every stage's sent-vs-returned)
 
+### tracker-github
+
+The GitHub Issues tracker convention beyond the always-on rules: the gate and origin label axes,
+parents and decomposition, the frontier query and the claim, the footer by gate and the closing
+record, acceptance and re-gating, unplanned tickets, wayfinder and boards, and commit forms. The
+`tracker-github` Chunk keeps the always-on core — single source of progress, the body-file rule,
+the gated set, search first — and names this Skill; every section here keeps the heading it had in
+the Chunk ([ADR 0025](docs/adr/0025-tracker-github-core-and-skill.md)).
+
+**When to use:** before any `gh issue` or `gh label` write, and before picking, claiming or closing
+a ticket, in a project that imports the `tracker-github` Chunk.
+
+[`SKILL.md`](tracker-github/SKILL.md)
+
 ### unslop
 
 Cuts AI tells from prose and rewrites it in a human voice — docs, READMEs, essays, release notes,
@@ -353,7 +369,7 @@ delivery? No → Chunk. Yes → Template.
 | `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
 | `verify-gate.md` | The gate to run before any commit or handoff. |
 | `backlog-core.md` | Frozen: task tracking with backlog.md, kept for its existing importers; stamped by nothing, takes no edits. |
-| `tracker-github.md` | Task tracking with GitHub Issues — gate and origin labels, no board. |
+| `tracker-github.md` | Always-on core of task tracking with GitHub Issues — single source, body-file rule, gated set, search first; the rest of the convention is the `tracker-github` Skill. |
 
 Per-project variation belongs in **knobs** (an engine-written tagged block in the project's
 `CLAUDE.md`) or an **inline-leaf** (hand-authored, project-specific prose) — never in a Chunk.

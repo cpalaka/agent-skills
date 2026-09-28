@@ -135,6 +135,10 @@ steps below say where a re-run differs.
     expired token. The remedy is `gh auth login` or a network, then a re-run at no cost.
   - **On success the owner picks**: `github`, the default — `REPO` is stage 2's value, confirmed
     with the owner before it is written — or `none`, for a prototype or sketch.
+- **The `tracker-github` Skill**, once the tracker outcome is `github`:
+  `~/.claude/skills/tracker-github` and `~/.agents/skills/tracker-github` each resolve to the skills
+  repo's `tracker-github/`; where either is missing, create the symlink. The stamped core defers the
+  claim, the frontier, the footer and the closing record to it, and `bootstrap.sh` does not link it.
 - **A pre-contract layout** — a `CLAUDE.md` carrying knob blocks with no contract — is the
   script's stop at step 2 (ADR 0020); report it, and the owner decides.
 
@@ -200,7 +204,7 @@ exit 0. List first, then create only what is missing:
    finds all thirteen, creates nothing and errors on nothing.
 
 **Which gate the approval is.** Init's own interaction gate, over a batch of writes to the owner's
-repository — **not** `git-confirm-destructive`'s: the tracker Chunk's § Commit forms puts minting a
+repository — **not** `git-confirm-destructive`'s: the tracker Chunk's **Gated writes** puts minting a
 label among the writes that need no approval under *that* gate. Both hold, because they are about
 different gates; named so a reader holding both does not report a contradiction.
 
@@ -221,7 +225,7 @@ different gates; named so a reader holding both does not report a contradiction.
 | `wayfinder:task` | `0969DA` | A wayfinder ticket that is ordinary work |
 
 Three gate, five origin, five wayfinder. **The Description column is the `-d` string the mint
-passes, not a definition**: the Chunk's § Two label axes is authoritative, and a description here
+passes, not a definition**: the `tracker-github` Skill's § Two label axes is authoritative, and a description here
 that has drifted from it is this table's bug (§ Maintaining the label table). Beyond the names,
 restate no label's meaning here, in a stamped file, or in the approval.
 
@@ -310,14 +314,14 @@ Read `profiles/`: today `web`, `godot` and `none`.
 
 ## Maintaining the label table
 
-A maintainer's check when step 4's table or the tracker Chunk changes, never a stamp step. Run it
+A maintainer's check when step 4's table or the `tracker-github` Skill changes, never a stamp step. Run it
 **from this Skill's directory** — from anywhere else both greps read missing files and `diff`
 prints nothing, which looks like agreement — and in one shell, which reads its own `$TMPDIR`:
 
 ```sh
 t="${TMPDIR:-/tmp}"
 grep -oE '^\| `(gate|origin|wayfinder):[a-z-]+`' SKILL.md | tr -d '|` ' | sort -u > "$t/labels-skill"
-grep -oE '(gate|origin|wayfinder):[a-z-]+' ../chunks/tracker-github.md | sort -u > "$t/labels-chunk"
+grep -oE '(gate|origin|wayfinder):[a-z-]+' ../tracker-github/SKILL.md | sort -u > "$t/labels-chunk"
 wc -l "$t/labels-skill" "$t/labels-chunk"; diff "$t/labels-skill" "$t/labels-chunk"
 rm -f "$t/labels-skill" "$t/labels-chunk"
 ```

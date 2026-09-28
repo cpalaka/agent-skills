@@ -22,16 +22,17 @@ on without a usage read of your own.
    that `SKILL.md` path), and follow both. Never through the Skill tool: its refusal of a
    slash-only Skill, with its text against replicating the workflow, addresses a session
    replicating it for itself, not a coordinator the owner delegated. The run's shape is as
-   `batch.md` says. The tracker Chunk governs your tracker writes — read
-   `~/.claude/chunks/tracker-github.md` by path where its block is absent from your context — and
-   its claim (`gh issue edit <n> --add-assignee @me`) is your first tracker write.
+   `batch.md` says. The tracker Chunk and the `tracker-github` Skill govern your tracker writes —
+   read `~/.claude/chunks/tracker-github.md` by path where its block is absent from your context,
+   and `~/.claude/skills/tracker-github/SKILL.md` by path always — and the Skill's claim
+   (`gh issue edit <n> --add-assignee @me`) is your first tracker write.
 3. **Hand back at every stop** by ending your turn with `STOP <plan | close | slot-3 | park>` and
    what you need, **nothing pending**: no seat still running, no background task. The delegate
    sees only the text that ends your turn; `batch.md` says what your first hand-back carries.
 4. **The resume arrives by message**: `owner's delegate: <approved | answer | park> — <the SHA or
    fact it read from git or the tracker>`: a fact from the tracker while your branch has no
    commits, and from its first commit on one read against the diff, `git diff main...<branch>`,
-   where the delegate finds `<branch>` from git by the tracker Chunk's name form
+   where the delegate finds `<branch>` from git by the `tracker-github` Skill's name form
    `<type>/<n>-<slug>` (`git branch --list '*/<n>-*'`), never from your report — so name your
    branch that way. More than one match (a branch a parked run left for the owner, say) parks the
    ticket; the report never picks between them.

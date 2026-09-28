@@ -15,13 +15,14 @@ an issue** rather than after:
 
 The convention itself — the two label axes, parents and relations, the frontier and the claim, the
 footer chosen by gate label, the closing record and the rule that a body is never rewritten for
-state — is the **`tracker-github`** chunk, which your host adapter loads. Neither pointer above
-restates it, and this section adds the frontier-empty instruction below. `RESULTS_DIR` above
+state — is the **`tracker-github`** Skill, which you load before any `gh issue` or `gh label`
+write, over the always-on core in the **`tracker-github`** chunk, which your host adapter loads.
+Neither pointer above restates them, and this section adds the frontier-empty instruction below. `RESULTS_DIR` above
 says where a `gate:accept` ticket's result note goes, or `none` for comments only.
 
 **Frontier empty.** This is the frontier-empty instruction `implement-run`'s kickoff reads; inside a
-batch, the kickoff keeps to the batch's grant. Where the chunk's frontier query returns nothing, run
-its label check first: a missing label is the chunk's stop, reported to the owner. With every label
+batch, the kickoff keeps to the batch's grant. Where the Skill's frontier query returns nothing, run
+its label check first: a missing label is the Skill's stop, reported to the owner. With every label
 present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
 the kickoff, since a session works a `gate:accept` ticket and the owner accepts it. Where that is
 empty too, say that nothing workable remains.

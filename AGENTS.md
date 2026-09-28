@@ -6,14 +6,15 @@ carries the load-bearing facts in full — the checkout-is-the-install rule, the
 the leak-guard's identity file, the no-attribution commit policy, and the existence gate on
 private Skills. This file is the Codex entry point, not a duplicate of it.
 
-**Read three more files before running a ticket here**, since Codex expands no import directives:
+**Read four more files before running a ticket here**, since Codex expands no import directives:
 `docs/agents/project-workflow.md` (this repository's contract — the knob values below, and its own
 rules: the wrap-commit push carve-out and the playthrough that closes a prose deliverable), the
 **`implement-run` Skill** under `~/.agents/skills/implement-run/SKILL.md` (the procedure the
 `implement-run` knobs configure — it is a Skill, not a Chunk, so there is no
-`~/.codex/chunks/implement-run.md` to read) and `~/.codex/chunks/tracker-github.md` (the tracker
-convention the `tracker-github` knobs configure). `CLAUDE.md` imports only the contract, with the
-tracker chunk nested inside it, and loads the Skill by name; on this host every one of the three is
+`~/.codex/chunks/implement-run.md` to read), `~/.codex/chunks/tracker-github.md` (the tracker
+convention's always-on core) and `~/.agents/skills/tracker-github/SKILL.md` (the rest of it,
+including the § Knobs the `tracker-github` knobs follow). `CLAUDE.md` imports only the contract, with the
+tracker chunk nested inside it, and loads the Skills by name; on this host every one of the four is
 an explicit read.
 
 This repository is the canonical source for the Skills and Chunks it contains. Claude Code

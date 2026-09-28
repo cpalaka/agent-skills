@@ -10,7 +10,7 @@ checkout-is-the-install rule, the hooks, the leak guard, the commit-attribution 
 engine's output a source file of the engine. So there is no engine run here, now or later: the knob
 block below is maintained by hand, in the shape the engine writes, and the bodies that read it are
 reached one at a time rather than through `dev-base`: the tracker Chunk by import, the
-`implement-run` Skill by name.
+`implement-run` and `tracker-github` Skills by name.
 
 ## Execution and review defaults
 
@@ -38,8 +38,9 @@ beginning "So a seat need not"). This block carries what varies here; the rest i
   `selftest: <k>/<N> verdicts correct` line quoted in the closing record; there is no other test
   suite and no typecheck.
   **The floor check**, run before any commit here: `wc -w` over every file in `chunks/`, each
-  condensed Chunk against 250 and `dev-base` against 80, `tracker-github` reported with no target
-  and the frozen `backlog-core` reported as frozen with no target — **and the four-plus-bundle sum
+  condensed Chunk against 250 and `dev-base` against 80, `tracker-github` against 250 as well
+  ([ADR 0025](../adr/0025-tracker-github-core-and-skill.md)) but outside the sum below, and the
+  frozen `backlog-core` reported as frozen with no target — **and the four-plus-bundle sum
   against 1,080**, which sums the four condensed Chunks `dev-base` imports plus `dev-base` itself,
   not every file just counted, because a per-file reading passes with four files at 249 while the
   floor grows, and ADR 0014 § 7 (amended by ADR 0015, then by
@@ -79,8 +80,8 @@ imports that path has approved. Read its tool calls from its transcript, not fro
 
 ## Issue tracker
 
-Work lives in GitHub issues, driven through the `gh` CLI; the convention is the Chunk's, and the
-values under it are this repository's.
+Work lives in GitHub issues, driven through the `gh` CLI; the always-on core of the convention is
+the Chunk and the rest the `tracker-github` Skill, and the values under it are this repository's.
 
 @~/.claude/chunks/tracker-github.md
 
@@ -96,8 +97,9 @@ injected block of its own, under a `Contents of <path> (…):` header whose path
 path, not the line's end: a parenthetical follows it, so a header-suffix test misses a loaded
 Chunk. Unexpanded, no such block exists anywhere
 in your context. Any phrase quoted here would be in your context because this file is, so the
-block is the only honest discriminator. Present, the tracker convention is loaded and you may rely
-on it; absent, it is not, and you open `chunks/tracker-github.md` yourself. A seat dispatched
+block is the only honest discriminator. Present, the tracker core is loaded and you may rely
+on it; absent, it is not, and you open `chunks/tracker-github.md` yourself. Either way the
+`tracker-github` Skill loads separately. A seat dispatched
 from a session that carries the block is handed it too (#35, measured at the delivery record);
 where one reads absent, suspect approval first, a parent walk memoized before it second, the
 seat boundary last. (Codex expands no `@` line and reads the Chunk explicitly; nothing to check
@@ -118,8 +120,8 @@ Two pointers sit beside it, hand-written here for the same reason:
   tracker's gate labels.
 
 **Frontier empty.** This is the frontier-empty instruction `implement-run`'s kickoff reads; inside a
-batch, the kickoff keeps to the batch's grant. Where the Chunk's frontier query returns nothing, run
-its label check first: a missing label is the Chunk's stop, reported to the owner. With every label
-present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
+batch, the kickoff keeps to the batch's grant. Where the `tracker-github` Skill's frontier query
+returns nothing, run its label check first: a missing label is the Skill's stop, reported to the
+owner. With every label present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
 the kickoff, since a session works a `gate:accept` ticket and the owner accepts it. Where that is
 empty too, say that nothing workable remains.

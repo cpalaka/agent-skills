@@ -47,7 +47,7 @@ token is one of the seat tokens above. A pin is a lower bound on you: the dial t
 pin and default, and only the owner lowers one (the stop, below). A line naming an unknown
 token, `fix rounds` or `scope` (only a plan pin raises those), or a
 value outside its range reads as absent, noted under `Deviations`. Adding a pin to a ticket not yet
-started is the tracker Chunk's body write for adding an acceptance criterion. Two retired forms read
+started is the tracker's body write for adding an acceptance criterion (on `tracker-github`, the Skill's). Two retired forms read
 as absent, a `Seats: light` or `Seats: full` line and the
 `Advisor: pre-dispatch only` marker: no pin is inferred, the run takes its defaults, and the record notes the
 line as present and read as absent. A body sentence naming a gate tier in prose ("runs tier 2",
