@@ -60,8 +60,8 @@ value, never an override.
   `parallel-when-disjoint` when their files are disjoint, `serial` never. Worktrees are
   `parallel-work`'s decision: one phase in flight is its single-task case and takes none; a second
   is its explicit signal, each implementer in its own tree.
-- **Advisor** — `advisor`, `high` only, dialled as a whole by the `advisor` dial; slot 1, one consult
-  (ticket, spec, first question); slot 3 continues it by message or spawns fresh.
+- **Advisor** — `advisor`, `high` only, dialled as a whole by the `advisor` dial; slot 1, one prompt
+  (§ Advisor slots); slot 3 continues it by message or spawns fresh.
 - **Reviewer** — `code-reviewer-medium` or `code-reviewer` (`high`), filling
   the Spec axis, the Standards axis, the Correctness charter and the critic (§ Review), each a
   fresh dispatch with its charge named; `/code-review`'s sub-agents are this seat only when
@@ -96,14 +96,21 @@ a worktree this lapses.
 
 Announce each.
 
-1. **Pre-dispatch**, spawned wherever the `advisor` dial is on, held otherwise (Fallback). After
-   checking the drafted spec's premises against source, one pass looks for a false or unverified
-   premise, a missing hard limit, an observable that cannot go red, and — pasted verbatim — *what
-   will this run raise that the ticket does not list?* Check the spec's *mechanisms* against its
-   stated *intent* too: no review or gate written from the spec can catch a mechanism that contradicts it. **A prose deliverable** (record, Skill, Chunk) loads in no
-   gate: its observable is an independent reader given the source rows, not the writer's table,
-   calibrated by one planted absent row whose count is read, beside a fresh agent's playthrough of
-   it.
+1. **Pre-dispatch**, spawned wherever the `advisor` dial is on, held otherwise (Fallback). Check
+   the drafted spec's premises against source yourself and fix the spec for any that fail, naming
+   each fix in the prompt, then send the seat **one prompt**: the ticket, and the spec with each
+   source it cites excerpted inline — the seat's definition says when it reads further. A claim
+   that a source lacks something, or that a search returned nothing, has no excerpt: it travels as
+   the command and its output. Beyond the definition's own checks (item 4 of the `advisor`
+   definition, `agents/claude/advisor.md` in this Skill's repository, `cpalaka/agent-skills`,
+   among them an observable that cannot go red on a known-bad, which the spec's observable has to
+   survive), the prompt carries three: *what will this run raise that the ticket does not list?*,
+   pasted verbatim; the spec's *mechanisms* against its stated *intent*, since no review or gate
+   written from the spec can catch a mechanism that contradicts it; and, where a deliverable is
+   prose (record, Skill, Chunk), whether the spec gives it the observable you draft for one: it
+   loads in no gate, so its observable is an independent reader given the source rows, not the
+   writer's table, calibrated by one planted absent row whose count is read, beside a fresh
+   agent's playthrough of it.
 2. Retired: pre-merge is the critic seat (§ Review).
 3. **Floating**, wherever the `advisor` dial is on — a reading you would otherwise decide silently
    or put to the owner: a review finding you want to reject, one that would change an acceptance
@@ -117,7 +124,8 @@ scoped to named files. Read the meter before spawning; the owner decides a tight
 **Fallback.** A tight meter funds slot 1; slot 3's triggers then go to the owner
 (§ Inside a batch), and the critic, a Builder seat, spends no Planner meter. Advisor off (the owner
 lowered it), or unavailable (no definition this host can dispatch, meter spent, knob `none`):
-hold the judgment yourself, ask the owner at the same triggers (§ Inside a batch), say so. That is
+hold the judgment yourself (for slot 1, item 4 of `agents/claude/advisor.md` and the three checks
+the prompt would carry), ask the owner at the same triggers (§ Inside a batch), say so. That is
 self-review unless slot 1's observable that cannot go red becomes a question the implementer's
 dispatch prompt asks before it writes code. Gate-runner unavailable (the target project stamps
 none) or knob `coordinator` (the target project's where the session is rooted elsewhere, § Cross-repo

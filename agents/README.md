@@ -81,6 +81,16 @@ session's (measured 2026-09-24). Run the parent at a value the seat does not car
 (`claude -p --effort low`), so an inherited value cannot pass for the definition's; a bare
 `claude -p` ran at the CLI's own default, above every seat's value.
 
+## Length
+
+No word cap owns a seat body. A body reaches no session until its seat is dispatched, and then
+only that seat: it is part of no other session's floor or host floor (`CONTEXT.md`), unlike its
+`description:`, which is host floor wherever the Agent tool lists it. No cap is set because none
+would have a named reader and trigger, which
+[ADR 0016](../docs/adr/0016-floor-ceiling-is-acceptance-time.md) § 2 requires of every standing
+number: "A number whose reader is unnamed is the state that produced this decision." That changes
+if a seat body joins the floor of any session other than its own seat's.
+
 ## Editing here is live
 
 Same rule as the Skills (`CLAUDE.md` § Load-bearing facts): the installed definition *is* this
