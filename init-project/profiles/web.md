@@ -17,7 +17,7 @@ knobs:
     # that hangs — no exit, banner only — as a STAMP FAILURE, so `smoke: <the dev command>` fails the
     # gate run of every project stamped from this Profile. State the procedure instead.
     smoke: "bring the dev server up in the background (`npm run dev`, or the project's package manager and script name), request the affected route, and read the route's OWN rendered content — the server's ready banner is not the verdict, and a route that 500s or renders an error boundary still prints that banner. Then stop the server and confirm the port is free. PASS = the affected route's expected content observed AND no server process left behind; either half missing is a FAIL"
-    secret_scan: "grep -rEn --exclude-dir=.git --exclude-dir=node_modules '<secret-leak pattern>' . from repo root — every file in the working tree, untracked and ignored ones included, except git's store and the installed modules; expect ZERO matches"
+    secret_scan: "grep -rEn --exclude-dir=.git --exclude-dir=node_modules '<Fill at init: the secret-leak pattern>' . from repo root — every file in the working tree, untracked and ignored ones included, except git's store and the installed modules; expect ZERO matches"
     env: "<where the deployed secrets live — an env file on the host, a secrets manager, the platform's own store; never in the repo and never in the client runtime>"
   parallel-work:
     install: "<the fresh-worktree install command: the lockfile install, e.g. `npm ci --prefix <app>` or `cd <app> && npm ci`>"
@@ -38,7 +38,9 @@ by default:
 - **Where task worktrees go**: `parallel-work.worktree_path_prefix` (its last segment names the
   task, not the branch; `parallel-work` defines it).
 - **The secret-leak pattern**: `verify-gate.secret_scan`. The manifest's value is a literal carrying
-  a `<secret-leak pattern>` shape the script passes through unanswered, so give the whole key.
+  a `<Fill at init: …>` shape that the stamp passes through unanswered and verify fails on until
+  the whole key is answered, so give the whole key. An edit to this literal keeps that shape out of
+  backticks: verify reads a prompt inside a code span as prose and would pass it.
 - **The deploy target** — not a knob: deploy is inline-leaf, so it is part of the
   `fill:docs/agents/project-workflow.md#Working in this repo` answer, with the rest of the list
   below.

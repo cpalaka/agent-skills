@@ -46,6 +46,8 @@ no-final-newline kept-as-is
 unlisted-block-kept kept-unless-declared
 rerun-fill-outside filled-converged
 fill-key-typo-rerun stopped-untouched
+fresh-fill-existing-pointer fresh-filled
+fresh-fill-key-typo stopped-untouched
 outside-fill-skips-code code-kept
 fence-closing-rule commonmark-fences
 fill-heading-renamed-rerun renamed-note-typo-stops
@@ -84,3 +86,10 @@ codespan-reset-heading reset-counted
 codespan-reset-fence reset-counted
 codespan-reset-blank-crlf reset-counted
 codespan-run-length exact-run-paired
+host-setup-grep-error stopped-untouched
+host-setup-undo-last last-copy-removed
+stdout-closed stopped-on-stderr
+fill-prompt-before-open-fence prompt-counted
+fill-prompt-cross-file-fence fill-prompt-clean
+fill-knob-unanswered knob-line-named
+fill-knob-answered clean

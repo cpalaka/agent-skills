@@ -5,6 +5,8 @@
 refusal to install such a gate and the disqualifiers behind it, and §§ 1–3 and 5–7 whole.
 **Amended 2026-09-27 on #138**, the inline-code-span reading: known limit 9 keeps its text and
 gains the fix beside it, marked.
+**Amended 2026-09-27 on #131**, the stamping script's residue: § 2's outside fill and known limits
+3, 6 and 9 keep their text and gain an amendment beside it, marked.
 
 ## Context
 
@@ -46,6 +48,13 @@ measured the Skill at 7,473 words, with eleven projects on this machine importin
    the target that fills no prompt there is a `NOTE` where its heading is in that file, its render
    or its source Template, and a stop, as on a fresh stamp, where the heading is in none of them —
    so an answered prompt, or a heading renamed since, is never a silent drop and never a stop.
+   **Amended 2026-09-27 on #131:** the outside fill is not a re-run's alone — it runs wherever
+   the destination already exists, a fresh stamp (no contract) included. A Profile template or
+   tracker pointer already in the target is still left, reading `SKIPPED <dest> — exists`, unless
+   a fill answers a prompt it carries outside every zone; then it is written with exactly that span
+   replaced (`FILLED <dest>#<heading>`, then `WROTE <dest>`). The fill-key rule above holds on a
+   fresh stamp the same way: a key whose heading that file, its render and its source Template all
+   lack is a stop, never a `NOTE`.
 3. **Knob blocks keep every existing value.** A re-run changes only the key set: a respelling
    (`-`, `_` and space match), the renames and retirements declared in `scripts/knob-changes`, a
    key the Profile adds. A key the Profile does not list and no `retire` row names is the
@@ -106,12 +115,40 @@ measured the Skill at 7,473 words, with eleven projects on this machine importin
    `.mcp.json` and `.codex/config.toml` with the rest (#127).
 3. The Linux half — GNU `awk`, glibc locale names, `jq` there — is unmeasured until that machine is
    online.
+   **Amended 2026-09-27 on #131:** a Linux container stood in for that machine, the tree at
+   23417c8 mounted read-only. Debian 13 (native arm64, `sh` = dash) and Arch Linux ARM (native
+   aarch64, `sh` = bash 5.3) each read `selftest: 94/94 verdicts correct` as uid 1000 and 93/93 as
+   root. Arch read 84/85 before #131 (the amd64 image, emulated), on `jq-absent` alone; with
+   #131's pacman link removed from
+   that case it reads 93/94 (`expected stopped-install-named, got no-install-line`). Debian with
+   `ps` deleted read three cases `got no-ps` (82/85) before #131, and after it one
+   `STOP: selftest needs ps …` at exit 2. The official `archlinux` image is amd64-only, and Docker
+   Desktop's Rosetta emulation on Apple silicon misreads two cases on any distro: `stdout-closed`
+   reads `exit0` (the emulator holds the interpreter binary open on fd 1, so the stdout the case
+   closes is open again) and `host-setup-grep-error` reads `home-changed` (it writes
+   `~/.cache/rosetta` into the fixture HOME). Debian amd64 under the same emulation read 92/94
+   against native Debian's 94/94, so a Linux reading on Apple silicon needs a native arm64 image.
+   Two things the selftest could not mean there are now named rather than miscounted: under uid 0
+   the case `check-not-run` prints `NOT RUN` and leaves k and N (root reads a mode-000 file), and
+   `ps` is a named selftest dependency that stops the run before any case when missing. What stays
+   unmeasured is the owner's own Linux machine — its `awk`, its locale set and its `jq` — which a
+   container reading does not certify.
 4. The canary zone's close tag is now an adapter's last line, while `SKILL.md` still calls the
    canary the last line (#127).
 5. A live v1 knob block carrying a prose line reads `unparsed` on `check` and stops a re-run
    `stamp`: text the script cannot parse is never rewritten.
 6. A shape inside a literal Profile value (web's `secret_scan`) passes through as a literal; the
    prose has to answer it.
+   **Amended 2026-09-27 on #131:** web's literal now spells its shape
+   `'<Fill at init: the secret-leak pattern>'`, so what the prose missed a check catches. `stamp`
+   still passes it through as a literal — its fill pass and the D8 guard act only on the
+   `*<Fill at init` spelling — but `verify`'s fill-prompt check matches `fill at init` in any case
+   anywhere outside code, the contract's knob blocks included, and fails naming that knob line until
+   the whole key is answered: in the answers file before the first stamp, in the contract's knob
+   block after it, since a re-run keeps the contract's value (§ 3). The catch holds only outside
+   code: the same shape inside backticks is an inline code span, which `verify` reads as prose and
+   passes, so the literal keeps it out of backticks. The selftest cases `fill-knob-unanswered` and
+   `fill-knob-answered` pin both verdicts, the second beside a `[<scene>]` literal that stays clean.
 7. An owner's fill inside a zone is never read back from the target, and nothing persists the
    answers file: unless the answers file given to a later run repeats that fill, `check` reads the
    zone `differs` and a re-run `stamp` stops on the D8 fill guard (#127).
@@ -132,3 +169,11 @@ measured the Skill at 7,473 words, with eleven projects on this machine importin
    filled nor counted by `verify`, with no `NOTE`. And the paragraph ends only at a blank line, a
    heading or a fence, not at a list item, block quote, thematic break or HTML block as CommonMark's
    does.
+   **Amended 2026-09-27 on #131:** that shared routine is also what keeps a fence from crossing
+   files in `verify`'s scan: it starts each file with no fence open, so none crosses from the file
+   before, and leaves none open after its read-ahead, so the file's own scan starts outside any
+   fence. The detector's own
+   per-file reset, which duplicated the start one, is removed, and two selftest cases pin the pair
+   — `fill-prompt-before-open-fence` (a prompt above a fence its file never closes is still
+   counted) and `fill-prompt-cross-file-fence` (a fence `CLAUDE.md` never closes does not quote a
+   prompt in `AGENTS.md`).

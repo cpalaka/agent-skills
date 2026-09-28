@@ -36,7 +36,9 @@ cleanup() { [ -z "$INFLIGHT" ] || rm -f "$INFLIGHT"; set -f; _ifs=$IFS; IFS=$NL;
 trap cleanup EXIT
 # RESULT stays the last line, printed through fd 3 (this run's stdout, duplicated here) because the
 # signal can land while a function's stdout is redirected into a staging file cleanup deletes.
-exec 3>&1
+# A closed stdout makes the dup fail: bash-as-sh exits 1, dash 2, bash carries on. `command` makes
+# the special builtin's redirection failure non-fatal, so every shell stops here, on stderr.
+command exec 3>&1 || { printf 'STOP: stdout is closed — this script reports on stdout; run it with stdout open\n' >&2; exit 2; }
 trap 'result stopped 2 >&3' INT TERM HUP
 
 result() { printf 'RESULT: %s %s (exit %s)\n' "${SUB:-engine.sh}" "$1" "$2"; exit "$2"; }
@@ -60,17 +62,25 @@ help() {
 'Exit codes: 0 clean, 1 a gate or check failed or could not run, 2 a stop (nothing half-written: all' \
 'rendering and validation happen in a staging directory before the first write, and each write is a' \
 'temp file beside its destination renamed over it; an interrupt (INT, TERM, HUP) removes the temp in' \
-'flight, while a SIGKILL, which no script can trap, can leave one <dest>.tmp.<pid> behind).' \
+'flight, while a SIGKILL, which no script can trap, can leave one <dest>.tmp.<pid> behind). A run' \
+'started with stdout closed stops at once with exit 2: the shell'"'"'s own diagnostic first (e.g. bash:' \
+'line 41: 1: Bad file descriptor), then its STOP line on stderr, and no RESULT line.' \
 '' \
 'Temp space: every subcommand needs it. Where a sandbox'"'"'s mktemp -d returns nothing, the run stops' \
 'naming that (STOP: mktemp -d returned no directory); run it unsandboxed there.' \
 '' \
 'Subcommands' \
 '  selftest    run the fixture cases; prints one line per wrong verdict, then' \
-'              "selftest: <k>/<N> verdicts correct". Exit 0 only when k = N.' \
+'              "selftest: <k>/<N> verdicts correct", N counting the cases run. Exit 0 only when' \
+'              k = N. A case that cannot mean anything here is NOT RUN, named, and left out of k' \
+'              and N: check-not-run under uid 0, which reads a mode-000 file. Needs ps (package' \
+'              procps; procps-ng on Arch): it stops before any case without it.' \
 '  stamp       write the four engine files (contract, CLAUDE.md, AGENTS.md, the gate-runner seat),' \
 '              the Profile templates and, for tracker github, the two pointer files (the engine'"'"'s own,' \
 '              under templates/tracker/, with the ## Issue tracker contract fragment), into --target.' \
+'              Needs both chunk roots, ~/.claude/chunks and ~/.codex/chunks, as directories, and' \
+'              ~/.claude/chunks/dev-base.md; a missing one is a stop before the answers file is' \
+'              read (check needs the same; verify does not).' \
 '              A Profile templates entry marked after_freeze: true is SKIPPED by a plain stamp;' \
 '              --after-freeze writes only those entries.' \
 '              An entry marked opt_in: <name> is written only where the answers file'"'"'s opt_in names' \
@@ -101,9 +111,14 @@ help() {
 '              span, is prose and never filled. A span pairs across the lines of its paragraph, which' \
 '              ends at a blank line, a heading or a fence: a run of n backticks opens one only where a' \
 '              later run of exactly n closes it in that paragraph, and a run with none is literal.' \
-'              On a re-run, a fill key for a file already in the target that fills no prompt there is a' \
-'              NOTE where its heading is in that file, its render or its source Template, and a stop,' \
-'              as on a fresh stamp, where the heading is in none of them.' \
+'              This pass runs whenever the destination already exists, on a fresh stamp (no contract)' \
+'              as on a re-run: a Profile template or pointer already in the target is otherwise left' \
+'              (SKIPPED <dest> — exists), but one whose outside prompt a fill answers is written with' \
+'              only that span replaced (FILLED <dest>#<heading>, printed while staging, before every' \
+'              WROTE line; its WROTE <dest> comes later, among the writes). A fill key for a' \
+'              file already in the target that fills no prompt there is a NOTE where its heading is in' \
+'              that file, its render or its source Template, and a stop where the heading is in none' \
+'              of them (STOP: fill:<key> matches no heading in <dest>, ...), fresh stamp or re-run.' \
 '              Tags inside fenced code are prose, never read as tags: a fence opens on three or' \
 '              more ` or ~ and closes only on a run of the same character at least as long, alone on' \
 '              its line (CommonMark), so ~~~ inside a ``` block is content.' \
@@ -149,7 +164,9 @@ help() {
 '              excludes file (core.excludesFile, else $XDG_CONFIG_HOME or ~/.config, /git/ignore), and' \
 '              the Profile templates whose dest starts ~/ (copied verbatim; executable where the source' \
 '              is or the parent directory is bin). Absent -> written; identical -> present; different ->' \
-'              differs, left, never overwritten. Each line carries its undo.' \
+'              differs, left, never overwritten. Each line carries its undo, spelled with ~, so run it' \
+'              in a shell with the same HOME. Only the run that added a line prints its undo (a later' \
+'              run reads present ... — undo: none needed): keep that first run'"'"'s output.' \
 '  verify      read-only, over --target. Five residue checks, each run first over a known-bad it must' \
 '              match (CONTROL), then over the stamped files (CHECK): braces ({{ left), marker' \
 '              (<!-- profile: left), fill-prompt (fill at init / filled at init, any case, in any file but' \
@@ -183,7 +200,10 @@ help() {
 '              differs until a stamp re-run records one.' \
 '' \
 'A run: write the answers file; stamp; verify (a fill-prompt FAIL names each prompt still to' \
-'answer: add its fill: block and stamp again); check; host-setup once per machine.' \
+'answer: add its fill: block and stamp again; a hit on a knob line is a literal carrying a' \
+'<Fill at init: ...> shape, so answer that knob key instead: in the answers file before the first' \
+'stamp, in the contract'"'"'s knob block after it, since a re-run keeps the contract'"'"'s value); check;' \
+'host-setup once per machine.' \
 '' \
 'Answers file (markdown; only these tagged blocks are read, each tag alone on its line):' \
 '  <!-- answers:meta -->' \
@@ -209,7 +229,8 @@ help() {
 '  dest, a tracker pointer); <heading> is the nearest heading above the prompt, #s and edge spaces' \
 '  dropped (fill:AGENTS.md#Skills). Text before *< and after >* on its line is kept. A fill for a' \
 '  file the run does not write is a NOTE; one that matches no prompt in a file it writes stops' \
-'  (a re-run over a file already in the target follows the fill-key rule under stamp).' \
+'  (a file already in the target, on a fresh stamp or a re-run, follows the fill-key rule under' \
+'  stamp).' \
 '  Inside a zone the fill lands between fill markers (stamp, Fill markers); outside, bare.' \
 '  CLAUDE.md'"'"'s fork slot is filled by the engine, never from the answers file.' \
 '  <!-- /fill:<dest>#<heading> -->' \
@@ -238,7 +259,9 @@ help() {
 '' \
 'Output lines (stdout, fixed; paths target-relative, ~/-relative under $HOME):' \
 '  WROTE <path> | UNCHANGED <path> | SKIPPED <path> — <reason> | NOTE <text> | STOP: <reason>' \
-'  FILLED <path>#<heading>                             (stamp re-run: a fill applied outside a zone)' \
+'  FILLED <path>#<heading>                             (stamp, fresh or re-run: a fill applied outside a' \
+'                                                        zone of a file already in the target; printed' \
+'                                                        while staging, before every WROTE line)' \
 '  NOTE fill <path>#<heading> read back from the target  (stamp or check re-run: an in-zone fill kept from its markers)' \
 '  ZONE <path> <zone> <same|refreshed|absent|orphan>     (stamp re-run; printed before any write)' \
 '  ZONE <path> <zone> <same|differs|absent|orphan|held|unparsed>   (check; a knob block'"'"'s zone is' \
@@ -253,16 +276,27 @@ help() {
 '  LOAD <claude|codex> <path> <bytes>                  LOAD <claude|codex> TOTAL <bytes> — reported, not gated' \
 '  VERIFY-GATE: NOT RUN by this script — <reason>' \
 '  SELFTEST <case>: expected <x>, got <y> | selftest: <k>/<N> verdicts correct' \
-'  RESULT: <subcommand> <clean|failed|stopped> (exit <n>)   (always the last line)' \
+'  SELFTEST <case>: NOT RUN — <why>' \
+'  RESULT: <subcommand> <clean|failed|stopped> (exit <n>)   (the last line; none on the closed-stdout' \
+'                                                            stop, which ends on its STOP line on stderr)' \
 '' \
-'Test seams (selftest and calibration only):' \
+'Test seams (selftest and calibration only). Running a stamp against scripts/fixtures/ by hand takes' \
+'the four path seams below together, as selftest sets them: INIT_PROJECT_PROFILE_DIR=' \
+'scripts/fixtures/profiles, INIT_PROJECT_DEFAULTS=scripts/fixtures/defaults.md,' \
+'INIT_PROJECT_TRACKER_DIR=scripts/fixtures/tracker, INIT_PROJECT_KNOB_CHANGES=' \
+'scripts/fixtures/knob-changes/none (a Profile directory alone still reads the live defaults.md,' \
+'tracker Templates and knob-changes, and stops on their keys), plus a hand-built HOME holding' \
+'.claude/chunks and .codex/chunks, each a copy of fixtures/chunks/ (as selftest builds it).' \
+'An answers file that then stamps and verifies clean: scripts/fixtures/answers/verify-clean.md.' \
+'The seams:' \
 '  INIT_PROJECT_PROFILE_DIR    read Profiles from this directory instead of profiles/' \
 '  INIT_PROJECT_DEFAULTS       read the engine defaults from this file instead of defaults.md' \
 '  INIT_PROJECT_TRACKER_DIR    read the tracker'"'"'s contract fragment and pointer Templates from this' \
 '                              directory instead of templates/tracker/' \
 '  INIT_PROJECT_KNOB_CHANGES   the knob-changes file a re-run reads (default scripts/knob-changes; rows:' \
 '                              rename <id> <old> <new> | retire <id> <key> | retire-block <id>)' \
-'  INIT_PROJECT_NO_LOCALE_PIN=1  skip the UTF-8 locale pin'
+'  INIT_PROJECT_NO_LOCALE_PIN=1  skip the UTF-8 locale pin' \
+'  INIT_PROJECT_SELFTEST_UID    the uid selftest reads instead of id -u (0 leaves check-not-run NOT RUN)'
 }
 
 # ---- locale pin ------------------------------------------------------------------------------------
@@ -335,8 +369,9 @@ FENCEFN='
 # blank line (whitespace only, a CRLF line's trailing CR included), a heading (its own one-line
 # paragraph), or a fence line or any line inside a fence (whose mask is the line itself) -- not at
 # the list items, block quotes, thematic breaks or HTML blocks that also end one in CommonMark.
-# Returns the line count, or -1 when the read fails. It uses the fence reader and leaves fch ""
-# (the state at line 1), so call it before reading the file.
+# Returns the line count, or -1 when the read fails. It uses the fence reader, starts with fch ""
+# whatever the file before left, and leaves fch "" (the state at line 1), so call it before
+# reading the file: no fence crosses from one file into the next.
 CODESPANFN='
     function cm_close(r, n,   p, q, m) { # just past the first run of exactly n backticks in r, else 0
       p = 0
@@ -1505,13 +1540,15 @@ cmd_host_setup() {
   [ -d "$_x" ] && stop "$(hrel "$_x") exists as a directory — nothing written"
   : > "$ST/hs.plan"; : > "$ST/ign.add"
   for _line in '**/.codex/config.toml' '**/.claude/settings.local.json'; do
-    if [ -f "$_x" ] && grep -qxF -e "$_line" "$_x"; then
-      printf 'HOST-SETUP present %s in %s — undo: none needed\n' "$_line" "$(hrel "$_x")" >> "$ST/hs.plan"
-    else
-      printf '%s\n' "$_line" >> "$ST/ign.add"
-      printf "HOST-SETUP added %s to %s — undo: grep -vxF '%s' %s > %s.tmp && mv %s.tmp %s\\n" "$_line" "$(hrel "$_x")" \
-        "$_line" "$(hrel "$_x")" "$(hrel "$_x")" "$(hrel "$_x")" "$(hrel "$_x")" >> "$ST/hs.plan"
-    fi
+    _g=1; [ -f "$_x" ] && { grep -qxF -e "$_line" "$_x"; _g=$?; }
+    case $_g in
+      0) printf 'HOST-SETUP present %s in %s — undo: none needed\n' "$_line" "$(hrel "$_x")" >> "$ST/hs.plan" ;;
+      1) printf '%s\n' "$_line" >> "$ST/ign.add"
+         # the undo drops the last copy only, the one this run appends, so an owner's earlier copy survives
+         printf "HOST-SETUP added %s to %s — undo: awk 'NR == FNR { if (\$0 == \"%s\") n = FNR; next } FNR != n' %s %s > %s.tmp && mv %s.tmp %s\\n" \
+           "$_line" "$(hrel "$_x")" "$_line" "$(hrel "$_x")" "$(hrel "$_x")" "$(hrel "$_x")" "$(hrel "$_x")" "$(hrel "$_x")" >> "$ST/hs.plan" ;;
+      *) stop "grep could not read $(hrel "$_x") (exit $_g) to test for $_line — nothing written" ;;
+    esac
   done
   if [ -s "$ST/ign.add" ]; then
     if [ -f "$_x" ]; then
@@ -1851,7 +1888,8 @@ detect() { # <check> <file>...
     BEGIN { m = ENVIRON["DC"] }
     m == "braces" { if (index($0, "{{")) print FILENAME ":" FNR; next }
     m == "marker" { if (index($0, "<!-- profile:")) print FILENAME ":" FNR; next }
-    m == "fill-prompt" { if (FNR == 1) fch = "" # a prompt in fenced code or an inline code span is prose, as the outside fill pass reads it
+    m == "fill-prompt" { # a prompt in fenced code or an inline code span is prose, as the outside fill pass reads it;
+                         # codemask_file starts and ends each file with fch empty (CODESPANFN'"'"'s header), so no fence crosses files
                          if (FNR == 1 && codemask_file(FILENAME) < 0) exit 2
                          if (!(FNR in CM)) exit 2
                          if (fence_line($0) || fch != "") next
@@ -2336,6 +2374,9 @@ case_jq_absent() { # a PATH of symlinks to every tool the script uses, minus jq 
     _w=$(command -v "$_t") || { GOT=no-$_t; return; }
     ln -s "$_w" "$H/bin/$_t" && ln -s "$_w" "$H/binjq/$_t" || { GOT=fixture-edit; return; }
   done
+  if _w=$(command -v pacman); then # jq_install reads it: the child must see what the expected line saw
+    ln -s "$_w" "$H/bin/pacman" && ln -s "$_w" "$H/binjq/pacman" || { GOT=fixture-edit; return; }
+  fi
   ln -s "$(command -v jq)" "$H/binjq/jq" || { GOT=fixture-edit; return; }
   OUT=$(PATH=$H/binjq HOME=$H INIT_PROJECT_PROFILE_DIR=$FIXTURE_DIR/profiles INIT_PROJECT_DEFAULTS=$FIXTURE_DIR/defaults.md INIT_PROJECT_TRACKER_DIR=$FIXTURE_DIR/tracker INIT_PROJECT_KNOB_CHANGES=$FIXTURE_DIR/knob-changes/none \
     "$SELF_SH" "$SELF" stamp --target "$T" --answers "$FIXTURE_DIR/answers/settings.md" < /dev/null 2>&1); RC=$?
@@ -2354,7 +2395,7 @@ case_host_setup_idempotent() {
   mkdir -p "$H/.config/git" && printf '%s' '*.swp' > "$_ig" || { GOT=fixture-edit; return; } # no final newline
   st_run host-setup --answers "$FIXTURE_DIR/answers/settings.md"
   [ "$RC" = 0 ] || { GOT=exit$RC; return; }
-  st_has "HOST-SETUP added **/.codex/config.toml to ~/.config/git/ignore — undo: grep -vxF '**/.codex/config.toml' ~/.config/git/ignore > ~/.config/git/ignore.tmp && mv ~/.config/git/ignore.tmp ~/.config/git/ignore" ||
+  st_has 'HOST-SETUP added **/.codex/config.toml to ~/.config/git/ignore — undo: awk '"'"'NR == FNR { if ($0 == "**/.codex/config.toml") n = FNR; next } FNR != n'"'"' ~/.config/git/ignore ~/.config/git/ignore > ~/.config/git/ignore.tmp && mv ~/.config/git/ignore.tmp ~/.config/git/ignore' ||
     { GOT=no-added-codex; return; }
   st_has 'HOST-SETUP wrote ~/.local/bin/fixture-helper — undo: rm ~/.local/bin/fixture-helper' || { GOT=no-wrote; return; }
   printf '%s\n' '*.swp' '**/.codex/config.toml' '**/.claude/settings.local.json' > "$H/want"
@@ -2369,6 +2410,37 @@ case_host_setup_idempotent() {
   [ "$RC" = 0 ] && [ "$_before" = "$(st_snapshot "$H")" ] || { GOT=differing-overwritten; return; }
   st_has 'HOST-SETUP differs ~/.local/bin/fixture-helper — left, not overwritten — undo: none needed' || { GOT=no-differs; return; }
   GOT=idempotent
+}
+case_host_setup_grep_error() { # a grep that fails reading the excludes file (exit 2) is a stop, never an absent line
+  st_env; _ig=$H/.config/git/ignore; mkdir -p "$H/.config/git" "$H/bin" || { GOT=fixture-edit; return; }
+  printf '%s\n' '**/.codex/config.toml' '**/.claude/settings.local.json' > "$_ig" || { GOT=fixture-edit; return; }
+  printf '%s\n' '#!/bin/sh' 'exit 2' > "$H/bin/grep" && chmod +x "$H/bin/grep" || { GOT=fixture-edit; return; }
+  _before=$(st_snapshot "$H")
+  _op=$PATH; PATH=$H/bin:$PATH; st_run host-setup --answers "$FIXTURE_DIR/answers/settings.md"; PATH=$_op
+  [ "$RC" = 2 ] || { GOT=exit$RC; return; }
+  st_has 'STOP: grep could not read ~/.config/git/ignore (exit 2) to test for **/.codex/config.toml — nothing written' || { GOT=wrong-stop; return; }
+  [ "$_before" = "$(st_snapshot "$H")" ] || { GOT=home-changed; return; }
+  GOT=stopped-untouched
+}
+case_host_setup_undo_last() { # the printed undo drops the copy the run appended, never the owner's earlier one
+  st_env; _ig=$H/.config/git/ignore
+  mkdir -p "$H/.config/git" && printf '%s\n' '*.swp' > "$_ig" || { GOT=fixture-edit; return; }
+  st_run host-setup --answers "$FIXTURE_DIR/answers/settings.md"
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  _u=$(printf '%s\n' "$OUT" | sed -n 's/^HOST-SETUP added [*][*]\/[.]codex\/config[.]toml to .* undo: //p')
+  [ -n "$_u" ] || { GOT=no-undo; return; }
+  printf '%s\n' '**/.codex/config.toml' '*.swp' '**/.codex/config.toml' > "$_ig" || { GOT=fixture-edit; return; } # the owner's copy, then the appended one
+  HOME=$H sh -c "$_u" || { GOT=undo-failed; return; }
+  printf '%s\n' '**/.codex/config.toml' '*.swp' > "$H/want"
+  cmp -s "$H/want" "$_ig" || { GOT=wrong-copy-removed; return; }
+  GOT=last-copy-removed
+}
+case_stdout_closed() { # a run with stdout closed stops at once, on stderr, exit 2 (bash-as-sh exited 1, bash ran on)
+  mk_tmpdir; H=$MKD
+  "$SELF_SH" "$SELF" --help >&- 2>"$H/err" < /dev/null; RC=$?
+  [ "$RC" = 2 ] || { GOT=exit$RC; return; }
+  grep -qF 'STOP: stdout is closed' "$H/err" || { GOT=no-stop-line; return; }
+  GOT=stopped-on-stderr
 }
 
 # verify and check: a stamp with every fill answered is the base every residue case plants into
@@ -2695,6 +2767,31 @@ case_fill_key_typo_rerun() { # a re-run key whose heading the file never had sto
   st_stop_case "$H/typo.md" 'fill:AGENTS.md#Skils matches no heading in AGENTS.md'
 }
 
+st_fresh_pointer() { # <fill key> <fill line> — no contract in $T, a pointer already there with a prompt; → $H/a.md, $H/pre
+  st_env
+  mkdir -p "$T/docs/agents"
+  printf '%s\n' '# Issue tracker — hand-kept' '' '## Notes' '' '*<Fill at init: the owner notes.>*' '' 'Kept line.' > "$T/docs/agents/issue-tracker.md"
+  cp "$T/docs/agents/issue-tracker.md" "$H/pre"
+  st_answers "$H/a.md" four-fragments github "$1" "$2"
+  printf '%s\n' '' '<!-- knobs:tracker-github -->' '- REPO: owner/fixture' '<!-- /knobs:tracker-github -->' >> "$H/a.md"
+}
+case_fresh_fill_existing_pointer() { # O2 on a fresh stamp: a pointer already present takes its outside fill, that span only
+  st_fresh_pointer 'docs/agents/issue-tracker.md#Notes' 'Owner notes.'
+  [ ! -e "$T/$CONTRACT" ] || { GOT=not-fresh; return; }
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  st_has 'FILLED docs/agents/issue-tracker.md#Notes' && st_has 'WROTE docs/agents/issue-tracker.md' || { GOT=not-filled; return; }
+  sed 's/^\*<Fill at init: the owner notes\.>\*$/Owner notes./' "$H/pre" > "$H/want"
+  cmp -s "$H/want" "$H/pre" && { GOT=fixture-want; return; }
+  cmp -s "$H/want" "$T/docs/agents/issue-tracker.md" || { GOT=span-differs; return; }
+  GOT=fresh-filled
+}
+case_fresh_fill_key_typo() { # a fresh-stamp key whose heading the present pointer lacks stops before any write
+  st_fresh_pointer 'docs/agents/issue-tracker.md#Notez' 'A typo.'
+  [ ! -e "$T/$CONTRACT" ] || { GOT=not-fresh; return; }
+  st_stop_case "$H/a.md" 'fill:docs/agents/issue-tracker.md#Notez matches no heading in docs/agents/issue-tracker.md'
+}
+
 case_outside_fill_skips_code() { # O2 neither fills nor counts a prompt quoted in a fence or an inline code span
   st_env
   st_answers "$H/bare.md" four-fragments none
@@ -2785,6 +2882,45 @@ case_fill_prompt_skips_code() { # verify reads a prompt in fenced code or an inl
   st_has 'CONTROL fill-prompt: known-bad matched 2 — target matched 1' || { GOT=control-or-count; return; }
   st_has "CHECK fill-prompt: FAIL — 1 match(es): $CONTRACT:$_fl" || { GOT=wrong-hits; return; }
   GOT=quoted-skipped
+}
+case_fill_prompt_before_open_fence() { # a prompt above a fence its file never closes is still counted
+  st_vbase || return
+  printf '%s\n' '' '*<Fill at init: still to answer.>*' '' '```' 'a fence this file never closes' >> "$T/$CONTRACT" || { GOT=fixture-edit; return; }
+  _fl=$(($(wc -l < "$T/$CONTRACT") - 3))
+  st_verify
+  st_has "CHECK fill-prompt: FAIL — 1 match(es): $CONTRACT:$_fl" || { GOT=wrong-hits; return; }
+  GOT=prompt-counted
+}
+case_fill_prompt_cross_file_fence() { # a fence CLAUDE.md never closes does not reach into AGENTS.md's code spans
+  st_vbase || return
+  printf '%s\n' '' '```' 'a fence this file never closes' >> "$T/CLAUDE.md" &&
+    printf '%s\n' '' 'Quoted: `*<Fill at init: an inline example.>*`.' >> "$T/AGENTS.md" || { GOT=fixture-edit; return; }
+  st_verify
+  printf '%s\n' "$OUT" | grep -q '^CHECK fill-prompt: PASS — ' || { GOT=fill-prompt-not-pass; return; }
+  GOT=fill-prompt-clean
+}
+# web's secret_scan literal carries a <Fill at init: …> shape: verify fails on it until the key is answered
+st_fill_knob() { # [<knob answer line>] → a fresh stamp of the fill-knob fixture Profile, then verify
+  st_env
+  st_answers "$H/a.md" fill-knob none "$CONTRACT#Project" 'A fixture project.' "$CONTRACT#Working in this repo" 'Nothing beyond the Chunks.' \
+    "$CONTRACT#Running" 'make test; read its summary line.' 'AGENTS.md#Skills' '`$git-flow-squash` only.'
+  [ -z "${1:-}" ] || printf '%s\n' '' '<!-- knobs:verify-gate -->' "$1" '<!-- /knobs:verify-gate -->' >> "$H/a.md"
+  st_run stamp --target "$T" --answers "$H/a.md"
+  [ "$RC" = 0 ] || { GOT=stamp-exit$RC; return 1; }
+  st_run verify --target "$T" --answers "$H/a.md"
+}
+case_fill_knob_unanswered() {
+  st_fill_knob || return
+  [ "$RC" = 1 ] || { GOT=exit$RC; return; }
+  _kl=$(grep -n '^- secret_scan: ' "$T/$CONTRACT" | cut -d: -f1)
+  st_has "CHECK fill-prompt: FAIL — 1 match(es): $CONTRACT:$_kl" || { GOT=wrong-hits; return; }
+  GOT=knob-line-named
+}
+case_fill_knob_answered() { # the answered key reads clean; the [<scene>] literal beside it is the false-positive control
+  st_fill_knob "- secret_scan: grep -rEn 'sk_live_' . — expect ZERO matches" || return
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  grep -qF -e '- scene: open [<scene>] in the editor' "$T/$CONTRACT" || { GOT=control-literal-missing; return; }
+  GOT=clean
 }
 
 # #138: a code span pairs across the lines of its paragraph. st_under_project inserts lines after
@@ -3164,11 +3300,16 @@ case_fresh_no_type_stop() { # C5: a fresh stamp has no contract to read a type f
 cmd_selftest() {
   _exp=$FIXTURE_DIR/expected
   [ -f "$_exp" ] || stop "selftest: $_exp not found"
+  command -v ps >/dev/null 2>&1 || stop "selftest needs ps (it names the shell running it, and cases link it into a fixture PATH) — install procps (procps-ng on Arch)"
+  _uid=${INIT_PROJECT_SELFTEST_UID:-$(id -u)} # the one uid seam: root reads a mode-000 file
   SELF_SH=$(ps -o comm= -p $$ 2>/dev/null | sed 's|.*/||; s/^-//')
   case $SELF_SH in sh|dash|bash|ksh|mksh|posh|yash) ;; *) SELF_SH=sh ;; esac
   _k=0; _n=0
   while read -r _case _want; do
     case $_case in ''|'#'*) continue ;; esac
+    if [ "$_case" = check-not-run ] && [ "$_uid" = 0 ]; then
+      printf 'SELFTEST %s: NOT RUN — uid 0 reads a mode-000 file\n' "$_case"; continue
+    fi
     _n=$((_n + 1)); GOT=unknown-case; ST_KC=; ST_PD=; ST_DF=; ST_LOC=; ST_NOPIN=
     _fn=case_$(printf '%s' "$_case" | tr '-' '_')
     case $_case in
@@ -3190,7 +3331,10 @@ cmd_selftest() {
       opt-in-skipped|opt-in-taken|opt-in-unknown-stop|opt-in-verify-braces|\
       codespan-wrapped|codespan-after-wrapped|codespan-wrapped-same-heading|\
       codespan-reset-blank|codespan-reset-heading|codespan-reset-fence|\
-      codespan-reset-blank-crlf|codespan-run-length) "$_fn" ;;
+      codespan-reset-blank-crlf|codespan-run-length|\
+      host-setup-grep-error|host-setup-undo-last|stdout-closed|fill-prompt-before-open-fence|\
+      fill-prompt-cross-file-fence|fill-knob-unanswered|fill-knob-answered|\
+      fresh-fill-existing-pointer|fresh-fill-key-typo) "$_fn" ;;
     esac
     if [ "$GOT" = "$_want" ]; then _k=$((_k + 1)); else printf 'SELFTEST %s: expected %s, got %s\n' "$_case" "$_want" "$GOT"; fi
   done < "$_exp"
