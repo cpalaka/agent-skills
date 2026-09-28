@@ -142,13 +142,25 @@ Worse than a denial, which at least announces itself.
 - **`git status`/`diff` at session start can show phantom-dirty files** that read clean minutes
   later (suspected: a denied index refresh). Re-run and reconcile against `git log` /
   `git ls-tree` before acting on a surprising dirty tree.
-- **Heredocs and here-strings fail in a sibling worktree.** bash 3.2 does not put their temp file
-  in `$TMPDIR`: it tries `/tmp` and `/var/tmp`, denied everywhere, then the working directory, which
-  the sandbox grants for the session's own checkout and not for a sibling worktree.
-  There a heredoc-backed gate printed `cannot create temp file for here document` on stderr,
-  exited 0, and printed a clean verdict with 1 of 28 checks run; a loop fed by one runs zero times.
-  Run such scripts sandbox-off, read a gate's executed-check count, and feed loops with
-  `< <(printf '%s\n' "$VAR")`. A heredoc working in the main checkout is not evidence against this.
+- **Heredocs and here-strings fail when the cwd they run in is outside the sandbox write set** — a
+  sibling worktree, `~/.claude/projects`, any other plain directory under `$HOME` unless settings
+  add it to the write set. The sandboxed Bash tool's shell and `/bin/sh` are bash 3.2 even where
+  the environment advertises zsh; it tries `/tmp` and `/var/tmp` for the temp file, denied, then the cwd, never
+  `$TMPDIR`. zsh escapes only while it inherits the sandbox's `TMPPREFIX`, which points into
+  `$TMPDIR`. Control, 2026-09-27, `bash <script>` per cwd running `cd "$d" && cat <<'EOF'` / `cat <<< ok`:
+
+  | cwd | bash heredoc / here-string | `< <(printf)`, `python3 -c`, zsh heredoc |
+  |---|---|---|
+  | `~/.claude/projects` | fail | ok |
+  | a plain directory under `$HOME` | fail | ok |
+  | `$TMPDIR` | ok | ok |
+  | the session's checkout | ok | ok |
+
+  In a sibling worktree a heredoc-backed gate printed `cannot create temp file for here document`,
+  exited 0, and reported clean with 1 of 28 checks run; a loop fed by one runs zero times.
+  Launching from the checkout does not help once a script `cd`s out. Run such scripts sandbox-off,
+  read a gate's executed-check count, feed loops with `< <(printf '%s\n' "$VAR")`, and pass a body
+  to `python3 -c`. A heredoc that works in a writable cwd or sandbox-off disproves nothing.
 - **Process substitution as a path argument** (`diff <(git show REF:f) f`) fails
   `/dev/fd/63: Operation not permitted`; as stdin (`< <(…)`) it works. Use tool-native forms
   (`git diff REF -- f`).
