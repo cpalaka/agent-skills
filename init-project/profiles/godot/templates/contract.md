@@ -21,15 +21,15 @@
 - **MCP servers connect at session start.** After any MCP config change, start a new session — your
   host adapter says which files hold that config and how a new session is started. The tool-name
   prefix a host shows you is a host detail; the roles above are not.
-- **Four Godot skills, read when you touch the work they cover** — `godot-gdscript-patterns`
-  (GDScript), `godot-animation-tree-mastery` (AnimationTree), `godot-gotchas` (engine/editor quirks —
+- **Three Godot skills, read when you touch the work they cover** — `godot-gdscript-patterns`
+  (GDScript), `godot-gotchas` (engine/editor quirks —
   the single source for *universal* ones; `docs/godot-gotchas.md` holds only *project-local* ones),
   `godot-personal-preferences` (workflow rules — read at session start). Read each **where it is
   installed** — its directory exists under `~/.claude/skills` (Claude Code) or `~/.agents/skills`
   (Codex); the two hosts resolve skills through different roots, so a check against one root skips
   the read for everyone on the other. Where one is absent, skip that read and fall back to
   `docs/godot-gotchas.md` and this contract — never fail on it. Read them when touching `.gd` /
-  `.tscn` / AnimationTree work whether or not your host fires them from context on its own; your
+  `.tscn` work whether or not your host fires them from context on its own; your
   adapter says which of the two it is here.
 - **Invoke by name, always explicitly:** `godot-architecture-review` for architecture/refactor work
   (leaves `CONTEXT.md`, `docs/adr/`, `docs/architecture/system-map.md`); `audit-godot-parity` for

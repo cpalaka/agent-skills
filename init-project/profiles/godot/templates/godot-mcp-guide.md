@@ -170,4 +170,3 @@ Verifying the adapter from Codex: `codex mcp list` from the clone root must show
 5. This guide copied to `docs/godot-mcp-guide.md`; `docs/agents/project-workflow.md` references it
 6. `docs/blender-mcp-guide.md` and `docs/asset-pipeline.md` copied together if the project uses Blender as a DCC source — the pipeline conventions and the tool guide for the same pipeline
 7. `godot-gdscript-patterns` skill installed globally; `docs/agents/project-workflow.md` references it for GDScript context
-8. `godot-animation-tree-mastery` skill installed globally; `docs/agents/project-workflow.md` references it for AnimationTree context

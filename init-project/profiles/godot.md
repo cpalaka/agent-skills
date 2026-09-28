@@ -182,9 +182,6 @@ out of git machine-wide, never the project's `.gitignore`.
   (godot-ai-only), drop `godot-mcp-clean` AND its `Bash(godot-mcp-clean)` allowlist line together.
 - **`godot-gdscript-patterns` skill** (global, idempotent):
   `test -d ~/.agents/skills/godot-gdscript-patterns && echo installed || npx -y skills add wshobson/agents@godot-gdscript-patterns -g -y`
-- **`godot-animation-tree-mastery` skill** (global, idempotent — narrower, AnimationTree-only;
-  pre-installing is cheap):
-  `test -d ~/.agents/skills/godot-animation-tree-mastery && echo installed || npx -y skills add thedivergentai/gd-agentic-skills@godot-animation-tree-mastery -g -y`
 
 <!-- precondition -->
 ### 2. Verify target is a Godot project

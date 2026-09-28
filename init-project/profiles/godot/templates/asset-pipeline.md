@@ -264,4 +264,3 @@ Don't commit `.blend1` backups (gitignore `*.blend1`, `*.blend@`). Do commit `.b
 - **Blender tool reference + gotchas:** `blender-mcp-guide.md`
 - **Godot tool reference + gotchas:** `godot-mcp-guide.md`
 - **GDScript idioms:** `godot-gdscript-patterns` skill
-- **AnimationTree gotchas:** `godot-animation-tree-mastery` skill

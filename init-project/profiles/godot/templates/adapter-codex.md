@@ -12,9 +12,9 @@
   is applied to every host's user-scope config.
 - Which server writes and which only read is in the contract, § Working in this repo — not
   host-specific; only the tool-name prefix you see is.
-- **The four Godot skills the contract names, and when each one fires here:**
-  `$godot-gdscript-patterns` on GDScript work, `$godot-animation-tree-mastery` on AnimationTree work,
-  `$godot-gotchas` before hand-editing a `.tscn`/`.tres`, before a risky editor operation, and before
-  any commit, `$godot-personal-preferences` at session start.
+- **The three Godot skills the contract names, and when each one fires here:**
+  `$godot-gdscript-patterns` on GDScript work, `$godot-gotchas` before hand-editing a
+  `.tscn`/`.tres`, before a risky editor operation, and before any commit,
+  `$godot-personal-preferences` at session start.
 - **The `build` step's export smoke-tester has no Codex dispatch yet.** Until one exists, run exports
   from a Claude Code session or by hand, and say which of the two you did.
