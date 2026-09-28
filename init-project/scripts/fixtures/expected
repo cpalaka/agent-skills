@@ -76,3 +76,11 @@ opt-in-skipped skipped-unrendered
 opt-in-taken written-substituted
 opt-in-unknown-stop stopped-untouched
 opt-in-verify-braces fails-braces
+codespan-wrapped wrapped-quoted
+codespan-after-wrapped next-span-paired
+codespan-wrapped-same-heading real-filled-quoted-kept
+codespan-reset-blank reset-counted
+codespan-reset-heading reset-counted
+codespan-reset-fence reset-counted
+codespan-reset-blank-crlf reset-counted
+codespan-run-length exact-run-paired

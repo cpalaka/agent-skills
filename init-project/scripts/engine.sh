@@ -98,10 +98,12 @@ help() {
 '              zone of a file already in the target (an engine file, a Profile template, a pointer)' \
 '              and whose fill:<dest>#<heading> the answers file gives is replaced by it, exactly that' \
 '              span (FILLED <dest>#<heading>); a prompt inside fenced code, or inside an inline code' \
-'              span closed on the same line, is prose and never filled. On a re-run, a fill key for a' \
-'              file already in the target that fills no prompt there is a NOTE where its heading is in' \
-'              that file, its render or its source Template, and a stop, as on a fresh stamp, where the' \
-'              heading is in none of them.' \
+'              span, is prose and never filled. A span pairs across the lines of its paragraph, which' \
+'              ends at a blank line, a heading or a fence: a run of n backticks opens one only where a' \
+'              later run of exactly n closes it in that paragraph, and a run with none is literal.' \
+'              On a re-run, a fill key for a file already in the target that fills no prompt there is a' \
+'              NOTE where its heading is in that file, its render or its source Template, and a stop,' \
+'              as on a fresh stamp, where the heading is in none of them.' \
 '              Tags inside fenced code are prose, never read as tags: a fence opens on three or' \
 '              more ` or ~ and closes only on a run of the same character at least as long, alone on' \
 '              its line (CommonMark), so ~~~ inside a ``` block is content.' \
@@ -151,12 +153,13 @@ help() {
 '  verify      read-only, over --target. Five residue checks, each run first over a known-bad it must' \
 '              match (CONTROL), then over the stamped files (CHECK): braces ({{ left), marker' \
 '              (<!-- profile: left), fill-prompt (fill at init / filled at init, any case, in any file but' \
-'              the fork slot below, outside fenced code and inline code spans closed on their line, as' \
-'              the outside fill reads them), fork-slot (filled at init in CLAUDE.md), empty-heading (in the four' \
-'              engine files, a heading with nothing but blank lines, comments or zone tags before the' \
-'              next heading of its level or higher, or the end). A CHECK FAIL names file:line (the' \
-'              first three; fill-prompt names every one). A control that ran and missed its known-bad' \
-'              is FAIL; a detector that errored, or no file to scan, is NOT RUN, which exits 1 too.' \
+'              the fork slot below, outside fenced code and inline code spans paired within their' \
+'              paragraph, as the outside fill reads them), fork-slot (filled at init in CLAUDE.md),' \
+'              empty-heading (in the four engine files, a heading with nothing but blank lines,' \
+'              comments or zone tags before the next heading of its level or higher, or the end).' \
+'              A CHECK FAIL names file:line (the first three; fill-prompt names every one). A control' \
+'              that ran and missed its known-bad is FAIL; a detector that errored, or no file to scan,' \
+'              is NOT RUN, which exits 1 too.' \
 '              Byte gates, per file: CLAUDE.md and AGENTS.md 32768 each, ~/.codex/AGENTS.md 32768 where' \
 '              it exists, the contract 16384. imports-resolve: every @ line reached from CLAUDE.md is a' \
 '              readable file. Then the resolved load, one LOAD line per file and a TOTAL per host,' \
@@ -323,12 +326,19 @@ FENCEFN='
       return 0
     }
 '
-# Inline code spans, shared by the outside fill pass and verify's fill-prompt detector: a run of n
-# backticks opens one, closed by the next run of exactly n on the same line (a span that wraps onto
-# the next line is not seen). codespan returns the index just past the span, or 0 when unclosed,
-# with CSRUN the opening run's length; uncode returns a line with each closed span replaced by a space.
+# Inline code spans, one pairing shared by the outside fill pass and verify's fill-prompt detector,
+# so the two cannot disagree about what is quoted. codemask_file reads a whole file and sets CM[n],
+# per line n, to a mask: the line with every character inside a code span, delimiters included,
+# turned to a space. Pairing is within a paragraph: a run of n backticks opens a span only where a
+# later run of exactly n exists in the same paragraph, and the span runs through that closer across
+# line breaks; a run with no such closer is literal text. A paragraph ends at a reset line only: a
+# blank line (whitespace only, a CRLF line's trailing CR included), a heading (its own one-line
+# paragraph), or a fence line or any line inside a fence (whose mask is the line itself) -- not at
+# the list items, block quotes, thematic breaks or HTML blocks that also end one in CommonMark.
+# Returns the line count, or -1 when the read fails. It uses the fence reader and leaves fch ""
+# (the state at line 1), so call it before reading the file.
 CODESPANFN='
-    function spanend(r, n,   p, q, m) { # just past the first run of exactly n backticks in r, else 0
+    function cm_close(r, n,   p, q, m) { # just past the first run of exactly n backticks in r, else 0
       p = 0
       while ((q = index(substr(r, p + 1), "`")) > 0) {
         q += p; m = 1; while (substr(r, q + m, 1) == "`") m++
@@ -337,19 +347,36 @@ CODESPANFN='
       }
       return 0
     }
-    function codespan(s, b,   n, j) { # a backtick run starts at b in s
-      n = 1; while (substr(s, b + n, 1) == "`") n++
-      CSRUN = n; j = spanend(substr(s, b + n), n)
-      return j ? b + n + j - 1 : 0
-    }
-    function uncode(s,   out, b, e) {
+    function cm_para(p, first,   out, b, n, j, e, c, i, q) { # pair over paragraph p (lines joined by \n) from line first
+      if (!first) return
       out = ""
-      while ((b = index(s, "`")) > 0) {
-        e = codespan(s, b)
-        if (e) { out = out substr(s, 1, b - 1) " "; s = substr(s, e) }
-        else { out = out substr(s, 1, b + CSRUN - 1); s = substr(s, b + CSRUN) }
+      while ((b = index(p, "`")) > 0) {
+        n = 1; while (substr(p, b + n, 1) == "`") n++
+        j = cm_close(substr(p, b + n), n)
+        if (!j) { out = out substr(p, 1, b + n - 1); p = substr(p, b + n); continue }
+        e = b + n + j - 1; out = out substr(p, 1, b - 1)
+        for (i = b; i < e; i++) { c = substr(p, i, 1); out = out (c == "\n" ? "\n" : " ") }
+        p = substr(p, e)
       }
-      return out s
+      out = out p
+      while ((q = index(out, "\n")) > 0) { CM[first++] = substr(out, 1, q - 1); out = substr(out, q + 1) }
+      CM[first] = out
+    }
+    function codemask_file(f,   k, l, r, n, p, first, rs, hd) {
+      for (k in CM) delete CM[k]
+      fch = ""; flen = 0; n = 0; p = ""; first = 0
+      while ((r = (getline l < f)) > 0) {
+        n++
+        rs = (fence_line(l) || fch != "" || l ~ /^[ \t\r]*$/)
+        hd = (!rs && l ~ /^#+[ \t]/)
+        if (rs || hd) { cm_para(p, first); p = ""; first = 0 }
+        if (rs) { CM[n] = l; continue }
+        if (hd) { cm_para(l, n); continue }
+        if (first) p = p "\n" l; else { p = l; first = n }
+      }
+      close(f); fch = ""
+      if (r < 0) return -1
+      cm_para(p, first); return n
     }
 '
 # FENCE is the fragment each tag reader starts its body with; it sets fk (fence_line's verdict) and
@@ -617,6 +644,7 @@ fill_pass() { # <in> <out> <dest> [outside]
         close(rbf); fch = ""
         for (cz in tz) marks(cz, tz[cz])
       }
+      if (outside && codemask_file(ARGV[1]) < 0) { print "cannot read " ARGV[1] " to find its code spans" > ENVIRON["ERRF"]; cmerr = 1; exit }
     }
     function norm(s) { gsub(/[ \t\n]+/, " ", s); return s }
     function filltext(n,   p, l, t, first) {
@@ -643,32 +671,28 @@ fill_pass() { # <in> <out> <dest> [outside]
       }
       return "*<" body ">*"
     }
-    function scan(s,   out, i, r, j, b, e) {
+    function scan(s, m,   out, i, r, j) { # m: the code mask of s, which the outside pass searches, so a quoted prompt is prose
       out = ""
-      while ((i = index(s, "*<")) > 0) {
-        b = outside ? index(s, "`") : 0
-        if (b && b < i) { # the outside pass copies an inline code span verbatim: a quoted prompt is prose
-          e = codespan(s, b); if (!e) e = b + CSRUN
-          out = out substr(s, 1, e - 1); s = substr(s, e); continue
-        }
+      while ((i = index(outside ? m : s, "*<")) > 0) {
         r = substr(s, i + 2)
         if (substr(r, 1, 12) == "Fill at init" || substr(r, 1, 7) == "`/name`") {
           j = index(r, ">*")
-          if (j > 0) { out = out substr(s, 1, i - 1) span(substr(r, 1, j - 1)); s = substr(r, j + 2); continue }
+          if (j > 0) { out = out substr(s, 1, i - 1) span(substr(r, 1, j - 1)); s = substr(r, j + 2); m = substr(m, i + j + 3); continue }
           pre = out substr(s, 1, i - 1); buf = r; collecting = 1; return ""
         }
-        out = out substr(s, 1, i + 1); s = r
+        out = out substr(s, 1, i + 1); s = r; m = substr(m, i + 2)
       }
       return out s
     }
     {
       line = $0
+      if (outside && !(FNR in CM)) { print "no code mask for line " FNR " of " FILENAME > ENVIRON["ERRF"]; cmerr = 1; exit }
       if (collecting) {
         j = index(line, ">*")
         if (!j) { buf = buf "\n" line; next }
         collecting = 0
         head = pre span(buf "\n" substr(line, 1, j - 1))
-        res = scan(substr(line, j + 2))
+        res = scan(substr(line, j + 2), substr(CM[FNR], j + 2))
         if (collecting) { pre = head pre; next }
         print head res; next
       }
@@ -678,10 +702,11 @@ fill_pass() { # <in> <out> <dest> [outside]
       else if (!fz && t ~ /^<!-- \/zone:[^ ]+ -->$/) z = ""
       else if (!fz && line ~ /^#+[ \t]/) { h = line; sub(/^#+[ \t]+/, "", h); sub(/[ \t]+$/, "", h); heading = h }
       if (outside && fz) { print line; next } # fenced text is prose: the outside pass neither fills nor counts it
-      res = scan(line)
+      res = scan(line, CM[FNR])
       if (!collecting) print res
     }
     END {
+      if (cmerr) exit
       if (collecting) printf "%s*<%s\n", pre, buf
       for (k in used) { print k "\t" used[k] >> ENVIRON["USEDF"]; if (outside) print "FILLED " k >> ENVIRON["FILLEDF"] }
     }' "$1" > "$2" || stop "awk failed applying fills in $3"
@@ -1826,9 +1851,11 @@ detect() { # <check> <file>...
     BEGIN { m = ENVIRON["DC"] }
     m == "braces" { if (index($0, "{{")) print FILENAME ":" FNR; next }
     m == "marker" { if (index($0, "<!-- profile:")) print FILENAME ":" FNR; next }
-    m == "fill-prompt" { if (FNR == 1) fch = "" # a prompt in fenced code or a closed inline code span is prose, as the outside fill pass reads it
+    m == "fill-prompt" { if (FNR == 1) fch = "" # a prompt in fenced code or an inline code span is prose, as the outside fill pass reads it
+                         if (FNR == 1 && codemask_file(FILENAME) < 0) exit 2
+                         if (!(FNR in CM)) exit 2
                          if (fence_line($0) || fch != "") next
-                         s = tolower(uncode($0)); if (FILENAME == "CLAUDE.md") gsub(/filled at init/, "", s) # fork-slot owns that one
+                         s = tolower(CM[FNR]); if (FILENAME == "CLAUDE.md") gsub(/filled at init/, "", s) # fork-slot owns that one
                          if (s ~ /fill(ed)? at init/) print FILENAME ":" FNR; next }
     m == "fork-slot" { if (tolower($0) ~ /filled at init/) print FILENAME ":" FNR; next }
     m != "empty-heading" { exit 2 }
@@ -2748,7 +2775,7 @@ case_interrupt_in_staging() { # a TERM while a function's stdout goes to a stagi
   GOT=result-printed
 }
 
-case_fill_prompt_skips_code() { # verify reads a prompt in fenced code or a closed inline code span as prose, as the fill pass does
+case_fill_prompt_skips_code() { # verify reads a prompt in fenced code or an inline code span as prose, as the fill pass does
   st_vbase || return
   printf '%s\n' '' '```md' '*<Fill at init: a fenced example.>*' '```' '' 'Quoted: `*<Fill at init: an inline example.>*`.' '' \
     '*<Fill at init: still to answer.>*' >> "$T/$CONTRACT" || { GOT=fixture-edit; return; }
@@ -2758,6 +2785,93 @@ case_fill_prompt_skips_code() { # verify reads a prompt in fenced code or a clos
   st_has 'CONTROL fill-prompt: known-bad matched 2 — target matched 1' || { GOT=control-or-count; return; }
   st_has "CHECK fill-prompt: FAIL — 1 match(es): $CONTRACT:$_fl" || { GOT=wrong-hits; return; }
   GOT=quoted-skipped
+}
+
+# #138: a code span pairs across the lines of its paragraph. st_under_project inserts lines after
+# "## Project" (a blank line first); st_rerun_kept re-runs a stamp and asserts the target unchanged
+# with the Project key's not-used NOTE; st_verify_one asserts verify counts only the last line.
+st_under_project() { # <line>...
+  _ul=$H/ul; printf '%s\n' '' "$@" > "$_ul" || return 1
+  UL=$_ul awk '{ print } $0 == "## Project" { while ((getline l < ENVIRON["UL"]) > 0) print l; close(ENVIRON["UL"]) }' "$T/$CONTRACT" > "$H/c" && cp "$H/c" "$T/$CONTRACT"
+}
+st_rerun_kept() { # <line>... — a fresh stamp with Project filled, the lines under it, a re-run that must not fill them
+  st_env
+  st_answers "$H/full.md" four-fragments none "$CONTRACT#Project" 'A fixture project.'
+  st_run stamp --target "$T" --answers "$H/full.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return 1; }
+  st_under_project "$@" || { GOT=fixture-edit; return 1; }
+  _before=$(st_snapshot "$T")
+  st_run stamp --target "$T" --answers "$H/full.md"
+  [ "$RC" = 0 ] || { GOT=rerun-exit$RC; return 1; }
+  st_has "FILLED $CONTRACT#Project" && { GOT=quoted-filled; return 1; }
+  [ "$_before" = "$(st_snapshot "$T")" ] || { GOT=target-changed; return 1; }
+  st_has "NOTE fill:$CONTRACT#Project not used — no fill prompt under that heading survives in $CONTRACT" || { GOT=no-note; return 1; }
+}
+st_verify_one() { # <line>... appended (a blank line first); verify must name exactly the last line
+  st_vbase || return 1
+  printf '%s\n' '' "$@" >> "$T/$CONTRACT" || { GOT=fixture-edit; return 1; }
+  _fl=$(wc -l < "$T/$CONTRACT" | tr -d ' ')
+  st_verify
+  [ "$RC" = 1 ] || { GOT=exit$RC; return 1; }
+  st_has "CHECK fill-prompt: FAIL — 1 match(es): $CONTRACT:$_fl" || { GOT=wrong-hits; return 1; }
+}
+
+case_codespan_wrapped() { # a span opening on one line and closing on the next quotes the prompt inside it
+  st_rerun_kept 'Wrapped: `a span that opens here,' '*<Fill at init: a wrapped example.>* and closes` here.' || return
+  st_verify_one 'Wrapped: `a span that opens here,' '*<Fill at init: a wrapped example.>* and closes` here.' '' \
+    '*<Fill at init: still to answer.>*' || return
+  GOT=wrapped-quoted
+}
+
+case_codespan_after_wrapped() { # after a wrapped span, a span on the next line pairs with its own closer (#138's reproduction)
+  st_rerun_kept 'A wrapped `span' 'closes` here, then `*<Fill at init: inline.>*` quoted.' || return
+  grep -qxF 'closes` here, then `*<Fill at init: inline.>*` quoted.' "$T/$CONTRACT" || { GOT=quoted-lost; return; }
+  st_verify_one 'A wrapped `span' 'closes` here, then `*<Fill at init: inline.>*` quoted.' '' \
+    '*<Fill at init: still to answer.>*' || return
+  GOT=next-span-paired
+}
+
+case_codespan_wrapped_same_heading() { # a wrapped quoted prompt beside a real one under one heading: the real one fills
+  st_env
+  st_answers "$H/bare.md" four-fragments none
+  st_answers "$H/full.md" four-fragments none "$CONTRACT#Project" 'A fixture project.'
+  st_run stamp --target "$T" --answers "$H/bare.md"
+  [ "$RC" = 0 ] || { GOT=fresh-exit$RC; return; }
+  st_under_project 'Wrapped: `a span that opens here,' '*<Fill at init: a wrapped example.>* and closes` here.' || { GOT=fixture-edit; return; }
+  st_run stamp --target "$T" --answers "$H/full.md"
+  st_has 'STOP: more than one fill prompt under heading "Project" in '"$CONTRACT"' — fill:'"$CONTRACT"'#Project is ambiguous' && { GOT=ambiguous-stop; return; }
+  [ "$RC" = 0 ] || { GOT=exit$RC; return; }
+  st_has "FILLED $CONTRACT#Project" && grep -qxF 'A fixture project.' "$T/$CONTRACT" || { GOT=not-filled; return; }
+  grep -qxF '*<Fill at init: a wrapped example.>* and closes` here.' "$T/$CONTRACT" || { GOT=quoted-filled; return; }
+  GOT=real-filled-quoted-kept
+}
+
+case_codespan_run_length() { # a run closes only on a run of exactly its length, across the lines of a paragraph
+  # a single opener skips the double run and pairs with the single after the prompt, quoting it;
+  # in the next paragraph a double opener has no double closer, so it is literal and the prompt counts
+  st_verify_one 'One ` opens here,' 'then `` before *<Fill at init: quoted.>* and one ` after.' '' \
+    'Two `` open here,' '*<Fill at init: counted.>* and one ` after.' || return
+  GOT=exact-run-paired
+}
+
+# A stray backtick, a reset, then a real prompt followed on its line by a backtick: were the reset
+# missing, the two would pair and quote the prompt, and verify would not count it.
+case_codespan_reset_blank() {
+  st_verify_one 'A stray ` backtick.' '' '*<Fill at init: real.>* and a ` tail' || return
+  GOT=reset-counted
+}
+case_codespan_reset_heading() {
+  st_verify_one 'A stray ` backtick.' '## A reset heading' '*<Fill at init: real.>* and a ` tail' || return
+  GOT=reset-counted
+}
+case_codespan_reset_blank_crlf() { # a CRLF blank line (a lone CR) is a blank line
+  _cr=$(printf '\r')
+  st_verify_one "A stray \` backtick.$_cr" "$_cr" "*<Fill at init: real.>* and a \` tail$_cr" || return
+  GOT=reset-counted
+}
+case_codespan_reset_fence() {
+  st_verify_one 'A stray ` backtick.' '```' 'fenced' '```' '*<Fill at init: real.>* and a ` tail' || return
+  GOT=reset-counted
 }
 
 case_overlay_by_key() { # the defaults' block and key order; the Profile's scalar and list replace by key, its own keys and block follow
@@ -3073,7 +3187,10 @@ cmd_selftest() {
       fill-read-back|fill-read-back-untyped|fill-read-back-ambiguous|fill-template-line-deleted|\
       fill-prompt-reworded|fill-siblings-independent|check-read-back-differs|type-recorded-twice-stop|\
       defaults-missing-stop|defaults-parse-stop|no-fork-stop|fresh-no-type-stop|fill-close-marker-stop|\
-      opt-in-skipped|opt-in-taken|opt-in-unknown-stop|opt-in-verify-braces) "$_fn" ;;
+      opt-in-skipped|opt-in-taken|opt-in-unknown-stop|opt-in-verify-braces|\
+      codespan-wrapped|codespan-after-wrapped|codespan-wrapped-same-heading|\
+      codespan-reset-blank|codespan-reset-heading|codespan-reset-fence|\
+      codespan-reset-blank-crlf|codespan-run-length) "$_fn" ;;
     esac
     if [ "$GOT" = "$_want" ]; then _k=$((_k + 1)); else printf 'SELFTEST %s: expected %s, got %s\n' "$_case" "$_want" "$GOT"; fi
   done < "$_exp"

@@ -3,6 +3,8 @@
 **Status:** accepted — 2026-09-25. Amends [ADR 0016](0016-floor-ceiling-is-acceptance-time.md)
 § 4, on where an adapter-plus-contract budget would belong. Everything else there stands: § 4's
 refusal to install such a gate and the disqualifiers behind it, and §§ 1–3 and 5–7 whole.
+**Amended 2026-09-27 on #138**, the inline-code-span reading: known limit 9 keeps its text and
+gains the fix beside it, marked.
 
 ## Context
 
@@ -119,3 +121,14 @@ measured the Skill at 7,473 words, with eleven projects on this machine importin
 9. The inline-code-span reading is one line at a time: a span that wraps onto a second line and
    quotes a `*<Fill at init …>*` prompt is filled on a re-run, and `verify`'s fill-prompt check
    counts it. A follow-up ticket owns it.
+   **Amended 2026-09-27 on #138:** one routine, shared by the outside fill pass and `verify`,
+   replaced the one-line reading with pairing within a paragraph — a run of n backticks opens a span
+   only where a later run of exactly n closes it in the same paragraph, across line breaks, and a
+   run with no such closer is literal text; a paragraph ends at a blank line (a CRLF one included),
+   a heading or a fence. The CRLF allowance is that blank-line reset's alone: a fence closer ending
+   in a CR still does not close its fence, a gap in the fence reader that predates #138 and is not
+   fixed here. That leaves two limits of its own. A stray backtick in a paragraph followed, on a
+   later line of it, by a real prompt and then a backtick now quotes that prompt, so it is neither
+   filled nor counted by `verify`, with no `NOTE`. And the paragraph ends only at a blank line, a
+   heading or a fence, not at a list item, block quote, thematic break or HTML block as CommonMark's
+   does.
