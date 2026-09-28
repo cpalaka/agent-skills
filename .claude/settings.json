@@ -3,5 +3,30 @@
     "commit": "",
     "pr": "",
     "sessionUrl": false
-  }
+  },
+  "skillOverrides": {
+    "vercel-react-best-practices": "off",
+    "typesafe-ai": "off",
+    "frontend-design": "off",
+    "dataviz": "off",
+    "agent-browser": "off",
+    "agent-browser-gotchas": "off",
+    "godot-gdscript-patterns": "off",
+    "godot-shaders-basics": "off",
+    "godot-personal-preferences": "off",
+    "anthropic-skills:google-workspace": "off",
+    "anthropic-skills:built-in-browser": "off",
+    "anthropic-skills:chrome-browser": "off",
+    "anthropic-skills:computer-use": "off",
+    "anthropic-skills:deep-research": "off",
+    "find-skills": "name-only",
+    "service-credentials": "name-only",
+    "computer-use-gotchas": "name-only"
+  },
+  "enabledPlugins": {
+    "cowork-plugin-management@synced": false
+  },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Claude Docs" }
+  ]
 }
