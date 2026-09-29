@@ -190,9 +190,10 @@ Which capability role fills which seat in a multi-agent run. Two roles — **Pla
 model name, so a model release does not silently invalidate the routing. Carries the pin rule
 (every seat is a definition; a bare spawn inherits the parent), the meter check, effort by
 definition — Builder-role seats `medium | high` where their definitions reach, which one a run
-starts at being `dials.effort` in `implement-run/defaults.yaml`, the Planner-role advisor `high` only, and no seat dispatch passes
-`model` — and the rule that model names live in run artifacts, as family aliases, and never in
-durable prose ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
+starts at being `dials.effort` in `implement-run/defaults.yaml`, the Planner-role advisor `high`
+only, and no `model` on a dispatch of a definition that pins one, since it overrides the pin — and
+the rule that model names live in run artifacts, as family aliases, and never in durable prose
+([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
 [ADR 0017](docs/adr/0017-seats-pin-family-aliases.md),
 [ADR 0023](docs/adr/0023-light-default-run-profile.md)). The procedure an implementation run
 follows is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.

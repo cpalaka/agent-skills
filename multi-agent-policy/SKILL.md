@@ -46,8 +46,8 @@ Builder main session — the **delegate** — which dispatches one `coordinator`
   [`agents/README.md`](../agents/README.md);
   [ADR 0023](../docs/adr/0023-light-default-run-profile.md)). The dispatched name carries it — the
   `-medium` name the `medium` dispatch, the bare name the `high`, the gate-runner `medium` —
-  or a workflow stage's `effort`; the Agent tool pins only `model`. Never pass `model` on a seat
-  dispatch: it overrides the pin; a run never changes a seat's model.
+  or a workflow stage's `effort`; the Agent tool pins only `model`. Never pass `model` on a
+  dispatch of a definition that pins one: it overrides the pin; a run never changes a seat's model.
 - **Drive `agent-browser` in the parent, never a sub-agent** (load `agent-browser-gotchas`). A
   sub-agent's screenshot never reaches you, so a visual acceptance passes with nobody having seen
   the page. Do the pass yourself rather than handing "eyeball this" to the owner.

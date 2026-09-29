@@ -14,7 +14,7 @@ skill: <path>` on a slash load), else the directory of the path `SKILL.md` was r
 | File | Read when |
 |---|---|
 | `batch.md` — § Inside a batch | first, where a brief states the owner's delegation |
-| `cross-repo.md` — § Cross-repo gate-runner: the target project's contract, the gate-runner substitute dispatch | where the session is rooted outside the ticket's project, or the project's `gate_runner` seat was stamped since the session started — first in the first case, at the plan step before the shape is chosen in the second; after `batch.md` where both hold |
+| `cross-repo.md` — § Cross-repo gate-runner: the target project's contract, the gate-runner substitute dispatch, a gate handed to another of the project's seats | where the session is rooted outside the ticket's project, or the project's `gate_runner` seat was stamped since the session started — first in the first case, at the plan step before the shape is chosen in the second; after `batch.md` where both hold |
 | `defaults.yaml` — every default value, knobs and dials | at Start, every run |
 | `profile.md` — § Run profile: the dial table, A light plan, An instruction file, Effort, Pins, The ratchet, Caps (the fix-round cap stop, A plan pin), The profile block, The stop | at the plan step, before posting the profile |
 | `workflow-shape.md` — § Workflow shape: Launch, Resume, At return, Adoption | where `shape` resolves to `workflow` |

@@ -20,3 +20,17 @@ gate's output is a write: its verdicts do not count, you revert nothing, and the
 owner (§ Inside a batch). Record under `Deviations` the substitution, the model passed, the effort
 read and the before and after reads. A workflow script cannot make this substitution, so a
 cross-repo run takes `subagents`.
+
+**A gate handed to another of X's seats stays open.** The substitution above fills the gate-runner
+seat alone. A gate whose value in X's contract hands it to another seat — a token the value puts in
+backticks resolving to `.claude/agents/<token>.md` in X's checkout, as a godot project's `build`
+names its export smoke-tester — cannot be dispatched from a session rooted outside X, whether the
+gate-runner reports it on an `OWNED ELSEWHERE:` line or you run X's gates yourself and meet the
+value; neither the substitution nor you stands in for that seat, so never run the gate yourself.
+Record it in `Gates` beside `OVERALL`, as `OWNED ELSEWHERE` and open, unless the value's own not-due
+clause applies at this close, in which case quote that clause there as what you close on. A close
+that needs that seat's verdict runs as one needing the owner's attended run does (§ Close, step 3):
+the Close approval covers the record and the merge, and the ticket stays open until a session rooted
+in X records the verdict. A token resolving only to `~/.claude/agents/<token>.md` is a user-scope
+seat: dispatch it by name and close on its verdict in `Gates` — unless this session's root holds a
+`.claude/agents/<token>.md` of its own, which shadows it, so the gate stays open as above.
