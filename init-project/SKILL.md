@@ -101,7 +101,8 @@ every project (ADR 0014 § decision 3).
 ## The run
 
 A re-run is the same run: the script refreshes only the engine's zones and keeps the rest, and the
-steps below say where a re-run differs.
+steps below say where a re-run differs — a Profile's recipe says where its own steps differ (the
+`godot` recipe, for one, never re-vendors an `addons/godot_ai/` already present).
 
 **0. Preconditions** — all pass before anything is written, because of the three writes above.
 **A re-run** is a target whose `docs/agents/project-workflow.md` exists — the script's own test.

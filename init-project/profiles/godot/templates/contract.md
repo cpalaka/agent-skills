@@ -9,7 +9,7 @@
   labour: **godot-ai = primary WRITER** where the project vendors it (§ godot-ai addon) —
   scene/node/script/property creation, `project_run`, `editor_screenshot`, `logs_read`;
   **godot-mcp = READ/TEST complement** (`godot_input`, `godot_runtime_state`, `godot_docs`,
-  `godot_editor get_log_messages` — **no `source` arg, it is a phantom and silently stripped**;
+  `godot_editor_read get_log_messages` — **no `source` arg, it is a phantom and silently stripped**;
   editor-only filtering is godot-ai `logs_read source="editor"`). godot-mcp silently no-ops `Rect2`:
   with godot-ai vendored, never write through godot-mcp; without it, godot-mcp is the writer and that
   no-op is a known gap — a `Rect2` is hand-edited in the `.tscn`/`.tres` and re-verified, and the
@@ -64,8 +64,9 @@ project-scope `godot-ai` entry. **Ports are RESOLVED, not fixed:** the plugin wa
 collision, so one walk strands every host at once. **Apply a port fix to every host's user-scope
 config**, by re-running the dock's client setup where it can write that file and by hand where it
 cannot. Never hardcode `8000`/`9500` in a probe or a kill recipe — a stale port can mislead a check
-into killing an unrelated process. Telemetry is ON by default: set `GODOT_AI_DISABLE_TELEMETRY=true`
-before first launch.
+into killing an unrelated process. Telemetry is ON by default: turn it off with the dock's telemetry
+toggle (an EditorSetting, kept per machine); the `GODOT_AI_DISABLE_TELEMETRY=true` environment
+variable holds only for an editor launched from a shell that exports it.
 
 **The addon updates itself in-editor** — one button in the dock rewrites the whole tree, and it
 rewrites `project.godot` and `.mcp.json` on its own schedule (gotcha #116). That is why it is
@@ -73,15 +74,17 @@ tracked, not ignored: the update lands as a diff you accept deliberately
 (`chore(mcp): vendor godot-ai X.Y.Z`), bumping the version above in the same commit, and
 **no project gate reads `addons/`** — the gotcha scan and `secret_scan` both exclude it — so
 `git status` is the only thing that announces it. **Do not hand-verify the release**: the addon
-authenticates the signed manifest, the archive inventory and a post-restart tree hash against the
-key in the *running* plugin (`utils/release_verifier.gd`). The one path that skips all of it is
-overlaying a source checkout on the tree, so never do that.
+checks each update against a signing key embedded in the *running* plugin — at the baseline tag
+v3.2.4, a signed checksum over the archive (`utils/update_manager.gd`); from 4.0.0, a signed
+manifest, the archive inventory and a post-restart tree hash (`utils/release_verifier.gd`). The one
+path that skips all of it is overlaying a source checkout on the tree, so never do that.
 
 ## Running
 
-Open the project in the Godot editor and press F5. From the CLI, `godot --path .` runs the main scene
-defined in `project.godot` (`tests/run_tests.sh` finds the binary on its own via the `GODOT` env var
-→ macOS app path → PATH).
+Open the project in the Godot editor and press F5. From the CLI, `"$GODOT" --path .` runs the main
+scene defined in `project.godot`, `&&`-chained after the `env` knob's resolve line in the
+`verify-gate` block, which sets `$GODOT` (the same chain `tests/run_tests.sh` uses: the `GODOT` env
+var → macOS app path → PATH).
 
 **Run the headless test suite with `tests/run_tests.sh`** (subset by pattern:
 `tests/run_tests.sh <pattern>`; `--selftest` verifies the runner's own verdicts against
@@ -95,7 +98,8 @@ it a scope (`--all`, or the scan's own diff arguments for a change), and read it
 never `$?`. With no scope on a clean tree it prints `VERDICT: VACUOUS`, which is not a pass.
 
 **Fresh-clone rehydrate:** `npm ci --prefix tools/mcp`, then import once
-(`godot --headless --path . --import` or open the editor) so the global class cache exists —
+(`"$GODOT" --headless --path . --import`, `&&`-chained after the resolve line as above, or open
+the editor) so the global class cache exists —
 otherwise `tests/run_tests.sh` false-FAILs `fixture_pass.gd`. A vendored `addons/godot_ai` is
 tracked, so there is no re-vendor step. On Codex the project-scope MCP config, `.codex/config.toml`,
 is never committed — the machine-wide git excludes cover it — so re-create it as well; your host

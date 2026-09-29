@@ -58,15 +58,15 @@ settings:                 # merged into .claude/settings.local.json by `stamp`
   allow:
     - "Bash(pgrep -fl:*)"
     - "Bash(lsof -nP -iTCP:6550*)"
-    - "Bash(lsof -nP -iTCP:8000*)"
-    - "Bash(lsof -nP -iTCP:9500*)"
     - "Bash(mkdir -p:*)"
     - "Bash(chmod +x:*)"
     - "Bash(godot-mcp-clean)"
     - "mcp__godot-mcp__godot_scene"
-    - "mcp__godot-mcp__godot_node"
+    - "mcp__godot-mcp__godot_node_read"
+    - "mcp__godot-mcp__godot_node_edit"
     - "mcp__godot-mcp__godot_scene3d"
-    - "mcp__godot-mcp__godot_editor"
+    - "mcp__godot-mcp__godot_editor_read"
+    - "mcp__godot-mcp__godot_editor_edit"
     - "mcp__godot-mcp__godot_project"
     - "mcp__godot-mcp__godot_resource"
     - "mcp__godot-mcp__godot_docs"
@@ -90,15 +90,15 @@ knobs:
     # NOT `--check-only --quit`: measured 2026-09-03 on Godot 4.7.2.stable, that prints the banner
     # and never exits, because --check-only modifies --script and with no script the run never
     # reaches --quit. A gate step that hangs reads as a pass to anyone watching for a failure.
-    typecheck: "godot --headless --path . --import --quit, output grepped for `SCRIPT ERROR` / `Parse Error` / `Error importing` — expect zero (a failed asset import prints `ERROR: Error importing` and matches neither of the first two; this step then runs unsandboxed, see env). **Not an exhaustive parse**; treat it as a smoke check, not project-wide parse coverage. Same editor-lifecycle pass the init recipe's Edit C runs; it returned in under 40 s on Godot 4.7.2.stable (measured 2026-09-03)"
+    typecheck: "the `env` knob's resolve line `&&` \"$GODOT\" --headless --path . --import --quit, output grepped for `SCRIPT ERROR` / `Parse Error` / `Error importing` — expect zero (a failed asset import prints `ERROR: Error importing` and matches neither of the first two; this step then runs unsandboxed, see env) — **and for the `Godot Engine v` banner line — expect one: no banner means Godot never ran, a FAIL however the error grep reads** (measured 2026-09-28: a bare `godot` on a host with only the app bundle exits 127 and its error grep reads zero). **Not an exhaustive parse**; treat it as a smoke check, not project-wide parse coverage. The init recipe's Edit C runs the same `--import` pass without `--quit`, which `--import` does not need — it exits on its own (measured 2026-09-28, Godot 4.7.2.stable) — so the flag is a guard, not a different check; it returned in under 40 s on Godot 4.7.2.stable (measured 2026-09-03)"
     test: "tests/run_tests.sh — the headless runner; see **## Running** for its verdict-from-output / --selftest / never-trust-`$?` discipline"
     build: "headless export via the project's export smoke-tester (`godot-export-verifier`; your host adapter says how to dispatch it) — not due unless the owner asks for the export: on any other close a coordinator leaves build out of the gate tier"
     build_check: "the smoke-tester's own PASS/FAIL line per platform preset, read from its output — an export that exits 0 having written nothing still reports FAIL there"
-    smoke: "pick the scene: the one the dispatch prompt names as the affected scene (the coordinator names it), else the main scene (`run/main_scene` in project.godot). Where the prompt names none and project.godot has no `run/main_scene` (a day-zero tree), run nothing and report NOT RUN — no scene yet: with no main scene the headless run prints `Can't run project: no main scene defined` and never returns. Otherwise godot --headless --path . --quit-after 120 [<scene>], the argument only for a named scene — the main scene runs with none, since `run/main_scene` may be a `uid://` value — output grepped for `SCRIPT ERROR` / `Parse Error` / `Failed to load` / `Failed loading` — expect zero, never $? (a script parse error and a missing scene path both exit 0; with a scene, or with no argument and a `uid://` main scene, it returned in about 1 s, and with no main scene it was killed at 60 s still running; measured 2026-09-26 on Godot 4.7.2.stable). Then F5 the scene the headless run used (the named scene, else the main scene) — a person's step (a headless run is not a played scene); on the NOT RUN branch no F5 step is owed, since there is no scene to play"
-    secret_scan: "git grep -niE -e '(api[_-]?key|secret|password|token)[[:space:]]*=([^=]|$)' --and --not -e 'do-not-print' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match. [[:space:]], not \\s (git grep -E on macOS matches \\s only as a literal, measured 2026-09-04); =([^=]|$) skips == comparisons while still catching an assignment whose value sits on the next line; -i catches API_KEY = …; 'do-not-print' is the reserved sentinel a fixture needing a secret-shaped literal must use, and nothing else in the tree may contain it. Re-calibrate against known-bad plus the benign shapes whenever this line changes (measured 2026-09-13: 4 benign matches before, 0 after)"
-    env: "$GODOT → the editor binary (macOS app path → `godot` on PATH); run from the repo root. The runner writes its capture files under $TMPDIR, so the runner as scaffolded needs no sandbox bypass (measured 2026-09-03) — but that holds only while it greps `^SCRIPT ERROR` alone and the tree has no `.blend`. Sandboxed, Godot is denied `user://logs` and the CA store and prints `ERROR:` for each (godot-gotchas #88), and a `.blend` import crashes at GPU detection (#47). So the typecheck step above, and any runner tightened to grep `^ERROR:`, run with the sandbox off"
+    smoke: "pick the scene: the one the dispatch prompt names as the affected scene (the coordinator names it), else the main scene (`run/main_scene` in project.godot). Where the prompt names none and project.godot has no `run/main_scene` (a day-zero tree), run nothing and report NOT RUN — no scene yet: with no main scene the headless run prints `Can't run project: no main scene defined` and never returns. Otherwise the `env` knob's resolve line `&&` \"$GODOT\" --headless --path . --quit-after 120 [SCENE], SCENE being the named scene's path, the argument only for a named scene — the main scene runs with none, since `run/main_scene` may be a `uid://` value — output grepped for `SCRIPT ERROR` / `Parse Error` / `Failed to load` / `Failed loading` — expect zero, never $? (a script parse error and a missing scene path both exit 0; with a scene, or with no argument and a `uid://` main scene, it returned in about 1 s, and with no main scene it was killed at 60 s still running; measured 2026-09-26 on Godot 4.7.2.stable) — and for the `Godot Engine v` banner line — expect one: no banner means Godot never ran, a FAIL however the error grep reads. Then F5 the scene the headless run used (the named scene, else the main scene) — a person's step (a headless run is not a played scene); on the NOT RUN branch no F5 step is owed, since there is no scene to play"
+    secret_scan: "git grep --untracked -niE -e '(api[_-]?key|secret|password|token)[[:space:]]*=([^=]|$)' --and --not -e 'do-not-print' -- ':!docs' ':!*.md' ':!addons'  # vendored addons/ excluded; expect ZERO — investigate any match. `--untracked` reads files not yet tracked too (ignored ones stay skipped), so the day-zero scan before the adoption commit reads the tree rather than nearly nothing. [[:space:]], not \\s (git grep -E on macOS matches \\s only as a literal, measured 2026-09-04); =([^=]|$) skips == comparisons while still catching an assignment whose value sits on the next line; -i catches API_KEY = …; 'do-not-print' is the reserved sentinel a fixture needing a secret-shaped literal must use, and nothing else in the tree may contain it. Re-calibrate against known-bad plus the benign shapes whenever this line changes (measured 2026-09-13: 4 benign matches before, 0 after)"
+    env: "resolve the binary first, in the shell that runs any Godot step: `GODOT=\"${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}\"; [ -x \"$GODOT\" ] || GODOT=\"$(command -v godot)\"; [ -n \"$GODOT\" ] && [ -x \"$GODOT\" ] || { echo \"FATAL: godot binary not found — set GODOT\" >&2; false; }` — the chain tests/run_tests.sh uses (`$GODOT` → the macOS app path → `godot` on PATH); every Godot command runs `&&`-chained after it, never `;`-joined, so a FATAL fails the step, never passes it, and every knob here spells the binary `\"$GODOT\"`. Run from the repo root. The runner writes its capture files under $TMPDIR, so the runner as scaffolded needs no sandbox bypass (measured 2026-09-03) — but that holds only while it greps `^SCRIPT ERROR` alone and the tree has no `.blend`. Sandboxed, Godot is denied `user://logs` and the CA store and prints `ERROR:` for each (godot-gotchas #88), and a `.blend` import crashes at GPU detection (#47). So the typecheck step above, and any runner tightened to grep `^ERROR:`, run with the sandbox off"
   parallel-work:
-    install: "npm ci --prefix tools/mcp (rehydrate the frozen MCP launcher tree), then import once (open the editor or `godot --headless --path . --import`) so the global class cache exists — else tests/run_tests.sh false-FAILs fixture_pass.gd"
+    install: "npm ci --prefix tools/mcp (rehydrate the frozen MCP launcher tree), then import once (open the editor, or run the `env` knob's resolve line `&&` `\"$GODOT\" --headless --path . --import`) so the global class cache exists — else tests/run_tests.sh false-FAILs fixture_pass.gd"
 ---
 
 ## Bespoke setup
@@ -127,6 +127,12 @@ script the test is:
 That test is why `tools/agent/godot-gotchas-scan.sh` is stamped: the contract fragment's gotcha-scan
 rule, which both hosts read, names the wrapper, and the wrapper does the resolving. Its own exit 2
 (neither root holds a runnable scanner) is a broken install to fix, never a clean verdict.
+
+**The Godot binary.** Every recipe step that runs Godot first runs the `env` knob's resolve line
+(the frontmatter above) in the same shell, with the Godot command `&&`-chained to it, never
+`;`-joined, and spells the binary `"$GODOT"`; a FATAL there is a stop, never read past — a bare
+`godot` exits 127 on a host with only the app bundle, and a grep over that output reads a vacuous
+zero.
 
 **The contract fragment's three fill prompts are answered, never edited around.** The fragment sits
 in an engine zone, so the recipe changes no text inside it: what varies per project is a prompt,
@@ -185,7 +191,7 @@ out of git machine-wide, never the project's `.gitignore`.
   is a break-glass helper, low-frequency by design. If a project ever drops godot-mcp entirely
   (godot-ai-only), drop `godot-mcp-clean` AND its `Bash(godot-mcp-clean)` allowlist line together.
 - **`godot-gdscript-patterns` skill** (global, idempotent):
-  `test -d ~/.agents/skills/godot-gdscript-patterns && echo installed || npx -y skills add wshobson/agents@godot-gdscript-patterns -g -y`
+  `{ test -d ~/.claude/skills/godot-gdscript-patterns || test -d ~/.agents/skills/godot-gdscript-patterns; } && echo installed || npx -y skills add wshobson/agents@godot-gdscript-patterns -g -y`
 
 <!-- precondition -->
 ### 2. Verify target is a Godot project
@@ -228,13 +234,29 @@ fix. If the `godot-gotchas` skill is installed (its directory exists under `~/.c
 `~/.agents/skills`), its catalog is the current quirk set and its retired list says which quirks
 no longer apply; otherwise skip that lookup and treat the notes here as the record. godot-mcp
 stays as the read/test complement. Skip this step only if the project writes through godot-mcp
-(not recommended — godot-mcp silently no-ops `Rect2`).
+(not recommended — godot-mcp silently no-ops `Rect2`). **Whether to vendor is the owner's.** On a
+fresh run the owner is asked here, before 4.1 (recommended: yes), and the answer becomes the
+contract's `#godot-ai addon` fill (a tag, or `none`) at engine step 5, which a re-run keeps. On a
+re-run nothing is asked: `addons/godot_ai/` present means vendored (skip 4.1, as written there);
+absent with the kept fill `none` means the owner declined, so skip 4.1–4.4 (the no-godot-ai branch
+below holds); absent with a tag kept means the vendored tree was removed — report it to the owner,
+never re-vendor on your own.
 
-1. **Vendor the addon (pinned + TRACKED).** From a clone of `hi-godot/godot-ai`,
-   `git checkout v3.2.4` (the current baseline — check `git ls-remote --tags` for newer; the
-   pin here is re-read against the fleet at each `audit-godot-parity` run) **before copying**,
-   then copy the install-ready `addons/godot_ai/` (at `plugin/addons/godot_ai/`, not the repo
-   root; a `src/godot_ai` copy is NOT the one to vendor) into the project's `addons/`.
+1. **Vendor the addon (pinned + TRACKED) — only where `addons/godot_ai/` is absent.** Where
+   it is present — an earlier vendoring, by this recipe or by hand — skip 4.1 whatever version it
+   holds, and the run report says "present at <plugin.cfg version>": re-copying would overlay a
+   source checkout on the tree, which the contract's godot-ai section forbids, and a version bump
+   is the owner's separate act, re-read at `audit-godot-parity`. **One tag per machine (the fleet
+   pin):** the dock owns one user-scope entry per host (4.4) that every project on the machine
+   shares, so read the pin by running 4.4's check now — nothing is vendored yet, so it prints
+   `plugin.cfg: none` and exits 1, and the entry versions it prints are the pin. From a clone of
+   `hi-godot/godot-ai`, `git checkout v<that>` **before copying**; where both hosts print `none`,
+   take the baseline `v3.2.4`; where the two hosts print different versions, stop and tell the
+   owner — the fleet is already split. A newer upstream tag
+   (`git ls-remote --tags https://github.com/hi-godot/godot-ai`) is a run-report line for the
+   owner, never a reason to vendor it here. Then copy the install-ready `addons/godot_ai/` (at
+   `plugin/addons/godot_ai/`, not the repo root; a `src/godot_ai` copy is NOT the one to vendor)
+   into the project's `addons/`.
    **WHY the tag is the pin:** the vendored `plugin.cfg` version drives which Python MCP
    server the dock fetches from PyPI via `uvx` (`uv` must be on PATH) — so the checked-out
    tag pins BOTH addon and server, stopping cross-project drift. **Commit the vendored copy;
@@ -245,19 +267,43 @@ stays as the read/test complement. Skip this step only if the project writes thr
    shows in `git status` and can be pinned by a test that asserts `plugin.cfg` equals the
    version the contract records. The vendored tag is the answer to the contract's
    `#godot-ai addon` fill, where both hosts read it.
-2. **Disable telemetry** (ON by default): set `GODOT_AI_DISABLE_TELEMETRY=true` before first
-   launching the editor; the setting persists once written.
+2. **Disable telemetry** (ON by default). `GODOT_AI_DISABLE_TELEMETRY` is read at each editor
+   launch and persists nowhere: only a truthy value force-disables, and only for an editor started
+   from a shell exporting it. The lasting opt-out is the dock's telemetry toggle, the
+   EditorSetting `godot_ai/telemetry_enabled`, kept per machine; once it is off, the dock
+   re-renders its user-scope entry (4.4) with `--disable-telemetry`. A headless `--import` in this
+   recipe neither counts nor needs it: `godot_ai` is not in `[editor_plugins]` until the owner
+   enables it at 4.3, so it never loads before then (godot-ai v3.2.4 `telemetry.gd`, header lines
+   11–19). Turning the toggle off is an owner-only handoff item (§ 7, item 3).
 3. **Enable the plugin** at Project → Project Settings → Plugins after opening the editor — an
    owner-only handoff item (engine step 9).
 4. **The MCP client entry is written by the dock, at USER scope — not by this recipe.**
    Since godot-ai 3.2.x the dock configures the client itself: on first enable it writes a
    stdio entry into `~/.claude.json` (`uvx --from godot-ai==<plugin.cfg version> godot-ai
-   attach --port 8000 --ws-port 9500 --disable-telemetry`) and deletes any project-scope
+   attach --port 8000 --ws-port 9500`, plus `--disable-telemetry` once the dock's telemetry
+   toggle is off — 4.2) and deletes any project-scope
    `godot-ai` block from `.mcp.json` — which is why the stamped `mcp.json` carries none and
    the `settings` delta lists only godot-mcp in `enabled_mcp_servers` (the
    `mcp__godot-ai__*` allow stays; user-scope servers are not gated by
-   `enabledMcpjsonServers`). Verify after the first editor launch:
-   `python3 -c 'import json;print(json.load(open("$HOME/.claude.json"))["mcpServers"]["godot-ai"])'`.
+   `enabledMcpjsonServers`). Verify after the first editor launch **and on every re-run** (it is
+   a read) — and once at 4.1, before anything is vendored, to read the pin:
+
+   ```
+   python3 -c 'import json,os,re,sys;r=lambda p:open(os.path.expanduser(p),encoding="utf-8").read() if os.path.exists(os.path.expanduser(p)) else "";c=" ".join((json.loads(r("~/.claude.json") or "{}").get("mcpServers",{}).get("godot-ai") or {}).get("args",[]));s=re.search(r"(?ms)^\[mcp_servers\.\"?godot-ai\"?\]$(.*?)(?=^\[|\Z)",r("~/.codex/config.toml"));v={h:(re.search(r"godot-ai==([^\s\",]+)",t) or [0,"none"])[1] for h,t in (("claude",c),("codex",s.group(1) if s else ""))};p=(re.search(r"(?m)^version=\"([^\"]+)\"",r("addons/godot_ai/plugin.cfg")) or [0,"none"])[1];print("claude:",v["claude"],"| codex:",v["codex"],"| plugin.cfg:",p);f={x for x in v.values() if x!="none"};sys.exit(0 if f=={p}!={"none"} else 1)'
+   ```
+
+   It reads each host's user-scope `godot-ai` entry — Claude Code's `~/.claude.json`, Codex's
+   `~/.codex/config.toml`; a missing file reads `none` — and `plugin.cfg`, and exits 0 only when
+   every present entry names the `plugin.cfg` version. It exits 1 on a mismatch; on two hosts
+   disagreeing (the fleet is already split — the owner's to resolve); on no entry on either host;
+   and on no `plugin.cfg`. On a mismatch, this project's vendored tag is not the machine's fleet
+   pin: tell the owner, whose remedy is re-running the dock's client setup from the project at the
+   tag they choose as the pin — never a hand-edit of either host's config. That remedy applies only
+   when `plugin.cfg` and at least one host print a version: an entry reading `none` before the
+   owner's first enable (4.3, owner-only) is the handoff item, not a defect — re-run the check after
+   the first enable. `plugin.cfg: none` with the kept `#godot-ai addon` fill `none` is the
+   no-godot-ai branch, where this check does not run; with a tag kept, the vendored tree is gone —
+   report it to the owner as the step 4 intro says, never re-vendor.
    Two consequences: (a) the pin now lives in that user-scope entry — bumping the vendored
    tag without re-running the dock's client setup leaves the client on the old server;
    (b) the entry **hardcodes 8000/9500** while the plugin itself walks ports on collision —
@@ -273,13 +319,14 @@ permitting a server it does not run. (`uv` on PATH is a prerequisite when used �
 auto-starts a uv-managed Python server on `:8000` + `:9500`.)
 
 1. **Permissions — in the project's `.claude/settings.local.json`**, the file `stamp` has already
-   merged; the `settings` delta in this manifest stays as it is, or every future project loses
-   these too. Move all three godot-ai entries from `permissions.allow` to `permissions.deny`:
-   `mcp__godot-ai__*` and the two port probes `Bash(lsof -nP -iTCP:8000*)` and
-   `Bash(lsof -nP -iTCP:9500*)`, which exist only for its HTTP and WS ports — deny, not a bare
-   removal, because every re-run's merge adds back a Profile entry that deny does not hold. Then
-   remove the user-scope `godot-ai` entry from `~/.claude.json` if a previous project's dock wrote
-   one (it is machine-wide, so it will otherwise show as a failed server in every project).
+   merged; the `settings` delta in this manifest stays as it is, or every future project loses these
+   too. Move the one godot-ai entry, `mcp__godot-ai__*`, from `permissions.allow` to
+   `permissions.deny` — deny, not a bare removal, because every re-run's merge adds back a Profile
+   entry that deny does not hold. Leave the user-scope `godot-ai` entries alone — each host's
+   (Claude Code `~/.claude.json`, Codex `~/.codex/config.toml`) is machine-wide, shared by every
+   project on the machine that vendors godot-ai at the fleet pin. The run report names each host's
+   entry wherever one exists; removing them from both hosts' configs is the owner's decision, and
+   only where no other project on the machine vendors godot-ai.
 2. **The contract's fills** take their no-godot-ai branch: `#godot-ai addon` is `none`, and the
    project pins name godot-mcp alone. The fragments' fixed text already reads true without godot-ai
    (godot-mcp as the writer, its `Rect2` hole stated as a hole); **leave the guide's own
@@ -331,13 +378,17 @@ reorders cleanly on next save):
   invalid). If the array exists, parse the quoted paths between the parens and add the entry
   only if not already present (exact-string match); preserve existing paths.
 - **Edit B — `[autoload]`.** Add `MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"`
-  if not already present; don't disturb other autoloads.
+  if not already present; don't disturb other autoloads. No `*` prefix, on purpose: it is the
+  value the addon's own `plugin.gd` writes (`_ensure_game_bridge_autoload`, godot-mcp 4.1.0),
+  which sets the key only when absent, so the bridge is an autoload with no global singleton name
+  and the plugin leaves the line alone.
 - **Do NOT hand-write a `[godot_mcp]` section** — Godot auto-writes its default settings
   (`bind_mode`, `port_override`, …) on the first import/editor-open (Edit C below). Your
   hand-edits happen before that; leave that section to be auto-created.
-- **Edit C — import to populate the class cache, then re-verify the harness:**
+- **Edit C — import to populate the class cache, then re-verify the harness.** Run the `env`
+  knob's resolve line with the import `&&`-chained to it:
   ```
-  godot --headless --path . --import        # editor-build-only flag; writes .godot/global_script_class_cache.cfg, then quits
+  : "${GODOT:?run the env knob resolve line first}" && "$GODOT" --headless --path . --import  # editor-build-only flag; writes .godot/global_script_class_cache.cfg, then quits
   grep -c MCPFrameProfiler .godot/global_script_class_cache.cfg   # must be > 0
   tests/run_tests.sh --selftest             # must end with: selftest: 8/8 verdicts correct
   ```
@@ -374,13 +425,29 @@ reorders cleanly on next save):
    **Single-client bridge:** the godot-mcp bridge accepts ONE client, on either host — if they hit
    "Another MCP server connected and replaced this one", or a Codex read reports the bridge already
    held, run `godot-mcp-clean` and reconnect from the one session that should hold it.
+3. Where godot-ai is vendored, turn off telemetry with the dock's telemetry toggle (the lasting
+   opt-out, step 4.2), then re-run the step 4.4 check, which must still exit 0 — the dock re-renders
+   its entries on the toggle; the check reads versions, not the telemetry flag, so the toggle's own
+   state is read in the dock.
+
+**The adoption commit** (engine step 7) — files the recipe created, each staged by its own path:
+
+- the vendored `addons/godot_mcp/` (step 3) and `addons/godot_ai/` (4.1), each by its directory
+  path, which takes exactly the vendored copy — the godot-ai tree ships its own `.uid` files
+  upstream;
+- the `.uid` sidecars Godot writes beside the stamped `tests/` scripts during Edit C's import,
+  staged beside their scripts, since Godot 4.4+ expects each `.uid` committed with its script
+  (measured 2026-09-28 on Godot 4.7.2.stable: a headless `--import` wrote `tests/a.gd.uid` and
+  `addons/x/b.gd.uid` beside their scripts). A `.uid` beside a file the recipe did not create is
+  the owner's.
 
 **Run-report items:**
 
 1. **Fresh-clone rehydrate** (the lockfile-freeze clone gap): `node_modules/` and `.godot/`
    are both gitignored, so a clone must (a) `npm ci --prefix tools/mcp` once
    (integrity-verified against the committed lock) before the godot-mcp tools load,
-   (b) import once — open the editor or `godot --headless --path . --import` — or
+   (b) import once — open the editor, or `"$GODOT" --headless --path . --import` `&&`-chained
+   after the `env` knob's resolve line — or
    `tests/run_tests.sh` false-FAILs `fixture_pass.gd` with `SCRIPT ERROR` (class cache empty).
    A vendored `addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai
    MCP client entry is user-scope, so a clone on a NEW machine gets it only after the dock's first
