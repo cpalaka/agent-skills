@@ -24,11 +24,11 @@ Never bake in a literal.
 exist to avoid. The tell: `git status` shows changes you did not make, HEAD is on a branch you did
 not check out, or `git checkout main` refuses or would carry changes along.
 
-- **A peer's uncommitted work is not yours to move.** On a tree that is not yours, `stash`,
+- **A peer's work is not yours to move.** On a tree that is not yours, `stash`,
   `reset --hard`, `clean`, `checkout -- <file>`, `restore`, `rebase` and any branch switch each
   remove, overwrite or hide in-flight work, silently — a switch carries dirty changes onto the
-  branch you land on and leaves the source branch nothing to merge. Park your work and ask the
-  peer to commit.
+  branch you land on and leaves the source branch nothing to merge — and `branch -D` deletes a
+  branch's unmerged commits. Park your work and ask the peer to commit.
 - **Stage by explicit path, board files included, and re-verify the branch before every commit**
   (`git-commit-format`). **Landed on the integration branch, your commit only?** Fast-forward
   only — `git merge-base --is-ancestor main <sha> && git branch -f main <sha>` — never
