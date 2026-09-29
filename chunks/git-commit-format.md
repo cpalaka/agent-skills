@@ -8,8 +8,9 @@ footer forms: the tracker chunk (on `tracker-github`, its Skill). **Body: what c
 plus deviations.
 
 **Body through `-F <file>`, never `-m`: that file's FIRST LINE is the subject, then a blank line,
-then the body.** Either mistake exits 0 (2026-09-18). Write that file inside the repo, never
-`$TMPDIR` (`sandbox-and-permissions`).
+then the body.** Either mistake exits 0 (2026-09-18). Write that file at the repository root,
+untracked, never `$TMPDIR` (`sandbox-and-permissions`), and remove it after the commit; the
+explicit-path rule below keeps it unstaged.
 
 **One logical change per commit.**
 

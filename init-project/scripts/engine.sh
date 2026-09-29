@@ -218,7 +218,7 @@ help() {
 '  <!-- answers:tokens -->' \
 '  - SOME_TOKEN: its value    (any {{NAME}} a written file carries beyond PROJECT_NAME/PROJECT_ROOT)' \
 '  <!-- /answers:tokens -->' \
-'  <!-- knobs:<id> -->        (the exact inner shape the contract gets, copied verbatim)' \
+'  <!-- knobs:<id> -->        (the tag and only the keys you answer; the rest: Knob values, below)' \
 '  - <key>: <value>' \
 '  - <list-key>:' \
 '    1. <item>' \
@@ -2054,7 +2054,7 @@ cmd_verify() {
   done < "$ST/q.codex"
   printf 'LOAD codex TOTAL %s — reported, not gated\n' "$_tot" >> "$ST/load"
   cat "$ST/load"
-  printf 'VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk'"'"'s gates from the contract'"'"'s knob block, as step 5 does\n'
+  printf 'VERIFY-GATE: NOT RUN by this script — the init session runs the project'"'"'s gate from the contract'"'"'s knob block (init-project SKILL.md, step 5)\n'
   [ "$FAILED" = 0 ] || result failed 1
   result clean 0
 }
@@ -2475,7 +2475,7 @@ case_verify_clean() {
     printf '%s\n' "$OUT" | grep -q "^CHECK $_c: PASS — " || { GOT=check-$_c; return; }
   done
   st_has 'GATE imports-resolve: PASS — 8 import(s) resolve' || { GOT=imports; return; }
-  st_has "VERIFY-GATE: NOT RUN by this script — the seat runs the verify-gate Chunk's gates from the contract's knob block, as step 5 does" || { GOT=verify-gate-line; return; }
+  st_has "VERIFY-GATE: NOT RUN by this script — the init session runs the project's gate from the contract's knob block (init-project SKILL.md, step 5)" || { GOT=verify-gate-line; return; }
   GOT=clean
 }
 

@@ -106,15 +106,19 @@ steps below say where a re-run differs.
 **0. Preconditions** — all pass before anything is written, because of the three writes above.
 **A re-run** is a target whose `docs/agents/project-workflow.md` exists — the script's own test.
 
-- **Both Chunk symlinks**: `readlink ~/.claude/chunks` and `readlink ~/.codex/chunks`, each → the
-  skills repo's `chunks/`; where either is missing, run `bootstrap.sh` / `bootstrap.ps1`. **Both, on
+- **Both Chunk symlinks**: `readlink ~/.claude/chunks` and `readlink ~/.codex/chunks`, each → `chunks/`
+  at the root of the clone this Skill lives in, which `git -C "$(dirname "$E")" rev-parse
+  --show-toplevel` names, a symlinked install included; where either is missing, run `bootstrap.sh`
+  / `bootstrap.ps1` at that root. **Both, on
   either host:** a stamp names `~/.claude/chunks/…` in `CLAUDE.md` and `~/.codex/chunks/…` in
   `AGENTS.md` whichever host runs it, so checking only your own leaves the other adapter pointing at
   nothing, with no error at stamp time and none at that host's next launch.
 - **The script's own verdict**: `"$E" selftest`. Quote its `selftest: <k>/<N> verdicts correct`
   line in the run report; k < N is a stop.
-- **The type** — the Profile to stamp, `none` where no Profile fits — picked here, because the next
-  bullet runs that Profile's sections; step 1 writes it into `A`. On a re-run it is the type the
+- **The type** — the Profile to stamp, `none` where no Profile fits — settled here, because the next
+  bullet runs that Profile's sections: propose it from what the tree holds (a root `project.godot`,
+  a `package.json`), read against `profiles/`, and the owner confirms it, never picked silently;
+  step 1 writes it into `A`. On a re-run it is the type the
   contract records (`<!-- init-project:type <t> -->`) where it records one.
 - **The Profile's precondition sections**, in the recipe's order.
 - **The tracker outcome, `github` or `none`** (ADR 0022). **A re-run never re-asks** and runs none
@@ -147,7 +151,7 @@ steps below say where a re-run differs.
 **1. The interview → the answers file.** Write `A` in the target's git directory (`.git` is a
 file in a linked worktree, hence `--git-dir`), in the shape `--help` gives: inside the repository,
 so sandboxed and unsandboxed shells read the same file, and never committed or shown by
-`git status`. Keep it: the next re-run starts from it. It carries:
+`git status`. Keep it: the next re-run starts from it. `A` carries:
 
 - **`project_name`** — the `{{PROJECT_NAME}}` token, asked once;
 - **`type`** — step 0's pick; kept in `A` on a re-run too, since `host-setup` has no target to
@@ -155,7 +159,8 @@ so sandboxed and unsandboxed shells read the same file, and never committed or s
 - **`tracker`** — step 0's outcome, on a fresh stamp;
 - **`opt_in`** — the opt-in names the owner takes (the recipe says which it offers);
 - **every knob the merged key set leaves a `<…>` shape**, and every key whose literal still carries
-  a `<…>` inside it, which the script passes through as written;
+  a `<…>` inside it, which the script passes through as written — a knob block in `A` carries only
+  the keys it answers, and every other key takes its value as `--help` gives under "Knob values";
 - **every other `{{TOKEN}}`** a written file carries (`{{PROJECT_ROOT}}` is derived, never asked);
 - **the fills** — each `*<Fill at init: …>*` prompt's answer. **This is when fills are asked**:
   every prompt the stamp will write, here, before the stamp — the engine Templates' own (such as the
@@ -174,12 +179,15 @@ so sandboxed and unsandboxed shells read the same file, and never committed or s
 gate command is worse than none. A value read off the repo — a `package.json` script, a lockfile —
 is a measurement you may propose, confirmed with the owner before it is written, and so
 is a command you write from a fact the owner gave but did not give verbatim; a value neither
-measured nor answered is never written. A `~/.claude/skills/<skill>/scripts/…` path inside a knob
-value resolves on one host and silently misses on the other, so the owner replaces it with a
-host-neutral entry point in the repo. **A re-run asks only for what the contract lacks**: the script
-keeps every existing knob value, reads back the recorded type, and reads each in-zone fill back
-from the fill markers it wrote around it (`--help`, under `stamp`, "Fill markers"); its stops name
-anything still owed.
+measured nor answered is never written. A reply that hands the choice back ("use your proposed
+defaults", "your call", "you decide") answers a value question — the proposal is the answer — and
+the run report records each such value as handed back; a question that carried no proposal has
+nothing to hand back, so it stays unanswered and is asked again. A
+`~/.claude/skills/<skill>/scripts/…` path inside a knob value resolves on one host and silently
+misses on the other, so the owner replaces it with a host-neutral entry point in the repo. **A
+re-run asks only for what the contract lacks**: the script keeps every existing knob value, reads
+back the recorded type, and reads each in-zone fill back from the fill markers it wrote around it
+(`--help`, under `stamp`, "Fill markers"); its stops name anything still owed.
 
 **2. Stamp.** `"$E" stamp --target . --answers "$A"`. A `STOP` wrote nothing: answer what it names
 in `A` and stamp again. `NOTE`, `KNOB`, `ZONE`, `SETTINGS` and `held:` lines go to the run report.
@@ -201,7 +209,7 @@ exit 0. List first, then create only what is missing:
    fails. **A failing list is a stop naming what `gh` printed** — on a re-run, which ran no stage
    2, this is where auth or network trouble surfaces.
 2. **The missing subset** of the table below, by name.
-3. **One approval for the batch** — a minted label stays minted (above): the names to create, each with its colour and description, and
+3. **One approval for the batch**, asked here and never earlier, not even at the interview — a minted label stays minted (above): the names to create, each with its colour and description, and
    beside them the names skipped because they exist. Never per label.
 4. **On a yes**, for the missing only: `gh label create <name> -c <color> -d "<description>"`.
    **Never `--force` / `-f`**: it rewrites an existing label's colour and description, silently
@@ -261,28 +269,39 @@ to answer — step 1's backstop: ask it as step 1 says, and go back to step 2. T
   Template's shape; bump it only when that shape changes, never per project.
 
 **Then run the project's gate, the `verify-gate` Chunk**, which the script does not (`VERIFY-GATE:
-NOT RUN by this script`): every step whose value is not `none — …`, in its `dir`. **Two verdicts are
+NOT RUN by this script`). **The init session runs it itself**: the gate-runner seat it just stamped
+may not be in its roster yet, so it reads that seat's body, `.claude/agents/gate-runner.md` in the
+target, and applies it as that seat would. Each step runs in its `dir` and must pass when due. A
+`none — …` value is that body's `DECLARED ABSENT:` reading, and a value handed to a seat (godot's
+`build`, whose `godot-export-verifier` the stamp writes) its `OWNED ELSEWHERE:` reading, green on
+the value's not-due clause — neither is run or reported NOT RUN. **Two verdicts are
 neither pass nor fail**, and both have been read as a pass. A **step that hangs** — no exit, banner
 only — is a **stamp failure**: kill it, report the command and that it did not return, and fix the
 knob rather than record the step green. And on day zero a project has no tests, so the test step
 prints `no tests match` or its equivalent: that is an empty run, not a green one — quote the
 harness's own self-check as the real test verdict and say the suite was empty. **The stamp is done
-once `verify` is clean and every gate step that ran passed**; a step that could not run yet (an
-install not done) is named NOT RUN in the run report; only a clean gate permits a commit (the
-`verify-gate` Chunk), so the adoption commit waits until it runs unless the owner explicitly accepts
-committing with it NOT RUN — the owner's call. The seat running init runs the gate.
+once `verify` is clean and every gate step that ran passed.** A NOT RUN the value itself prescribes
+(that body's `(prescribed)` reading) is the step's verdict and permits the commit, so a gate whose
+every step reads `DECLARED ABSENT:`, `OWNED ELSEWHERE:` or `(prescribed)` is clean. Any other NOT
+RUN — an install not done, a program the machine lacks — is named in the run report; only a clean
+gate permits a commit (the `verify-gate` Chunk), so the adoption commit waits unless the owner
+explicitly accepts committing with it NOT RUN. A reply that hands the choice back, which answers a
+value question at step 1, is not that acceptance here: ask again for a yes or no.
 
 **6. Drift.** `"$E" check --target . --answers "$A"`. On a fresh stamp every zone reads `same`;
 report any `differs` with the `NOTE` that says why.
 
-**7. The adoption commit**, once step 5's gate permits it and before the handoff, on the
-checked-out branch — the adoption is no ticket's work, so no task branch and no issue footer, and a
-fresh repository whose remote has no branches has nothing to pull first. Stage by explicit path the
+**7. The adoption commit**, once step 5's gate permits it and before the handoff, a direct
+commit on the checked-out branch — the adoption is no ticket's work, so no task branch and no issue
+footer. Pull first only where the remote carries the checked-out branch; a fresh repository's
+remote may carry none. Stage by explicit path the
 files `stamp` reported `WROTE` and the files the recipe created or edited — except any path step 8's
 machine-wide excludes cover: a per-clone host file never enters git, whether or not step 8 has run
-yet — and make one commit under the project's own commit rules (its Chunks'). A re-run commits
-only where a line read `WROTE`, `ZONE … refreshed` or a `KNOB` change; with none, there is no
-commit.
+yet — and make one commit, subject `chore(init): adopt init-project stamp`, its body under the
+project's own commit rules (its Chunks'). A re-run commits only where a line read `WROTE`,
+`ZONE … refreshed` or a `KNOB` change, or a recipe step names a file it edited — each staged by
+explicit path; with none, there is no commit. Pushing it is the owner's call; the run report says
+it is unpushed.
 
 **8. Machine-wide setup.** `"$E" host-setup --answers "$A"`, once per machine: the ignore lines for
 the two per-clone host files, `.codex/config.toml` and `.claude/settings.local.json`, go into the

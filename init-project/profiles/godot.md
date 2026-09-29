@@ -381,7 +381,8 @@ reorders cleanly on next save):
    `tests/run_tests.sh` false-FAILs `fixture_pass.gd` with `SCRIPT ERROR` (class cache empty).
    A vendored `addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai
    MCP client entry is user-scope, so a clone on a NEW machine gets it only after the dock's first
-   enable — step 4.4. `.codex/config.toml` is gitignored too, so a clone re-creates it from the
+   enable — step 4.4. `.codex/config.toml` is never committed either — the machine-wide git
+   excludes that engine step 8 (`host-setup`) writes cover it — so a clone re-creates it from the
    Profile Template (`init-project/profiles/godot/templates/codex/config.toml`, wherever the skill
    is installed), or from the block in `docs/godot-mcp-guide.md` § Host adapters where this
    project's guide carries it, with its own absolute root.

@@ -77,9 +77,8 @@ now calls for that the script did not return, at its definition (both read off t
 `FINDINGS: 0` (§ Review).
 
 **Adoption**: `knobs.shape` in `defaults.yaml` does not change to `workflow` until three clean
-scripted runs —
-certifying `OVERALL: PASS` (a project's `(tier)` or `(judgment)` NOT RUN line never moves it) with
-each of the five gates on a `GATE` line or a line below `OVERALL`, and every `OWNED ELSEWHERE:` line
-closed by its seat's verdict or its not-due clause, quoted in the record,
-calls sent reconciled against results returned in `journal.jsonl`, each agent's model read from
-its `agent-<id>.jsonl` — counted from the project's run records.
+scripted runs — certifying `OVERALL: PASS` (a project's `(tier)`, `(judgment)` or `(prescribed)`
+NOT RUN line never moves it) with each of the five gates on a `GATE` line or a line below
+`OVERALL`, and every `OWNED ELSEWHERE:` line closed by its seat's verdict or its not-due clause,
+quoted in the record, calls sent reconciled against results returned in `journal.jsonl`, each
+agent's model read from its `agent-<id>.jsonl` — counted from the project's run records.

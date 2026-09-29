@@ -32,10 +32,12 @@ Spelling on this host is `$name` — `$to-spec`, not `/to-spec`.
 
 ## MCP
 
-- The project-scope MCP config for this host is `.codex/config.toml` — **gitignored, absolute paths,
-  and it may not exist in your checkout yet**. Re-create it per clone, as the other host does its own
-  gitignored settings file. While it is absent this repo's project-scope servers are not
-  connected; say so rather than reporting them failed.
+- The project-scope MCP config for this host is `.codex/config.toml` — **never committed, absolute
+  paths, and it may not exist in your checkout yet**. Re-create it per clone, as the other host does
+  its own settings file. The machine-wide git excludes that `init-project`'s `host-setup` writes keep
+  `.codex/config.toml` and `.claude/settings.local.json` out of git; until that has run on this
+  machine git shows them untracked, so never stage them. While `.codex/config.toml` is absent this
+  repo's project-scope servers are not connected; say so rather than reporting them failed.
 - **Two reasons you may see no project servers, and neither reports an error.** That file is
   missing, or **this repo has no `[projects."<absolute path>"] trust_level = "trusted"` entry in
   `~/.codex/config.toml`** — without it the project file is not loaded at all. Answering the

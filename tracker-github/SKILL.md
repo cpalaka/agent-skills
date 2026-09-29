@@ -26,8 +26,8 @@ lands here.
   `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling` or `wayfinder:task`
   **instead of** an origin.
 
-All thirteen must exist before the first ticket or map; the stamping Profile mints them, skipping
-any present. **A missing one is a stop**: tell the owner; `gh label create <name>` runs on their
+All thirteen must exist before the first ticket or map; `init-project`'s label mint (its step 4)
+mints them, skipping any present. **A missing one is a stop**: tell the owner; `gh label create <name>` runs on their
 go.
 
 ## Parents

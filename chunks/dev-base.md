@@ -2,7 +2,7 @@
 <!-- The four chunks below are the bundle every dev Profile imports. Codex expands no @ line: when
      a Codex AGENTS.md sends you here, read every child listed below completely, resolving
      ~/.claude/chunks/<name> as ~/.codex/chunks/<name>. The tracker chunk stays OUT, imported
-     explicitly by the Profile because @import cannot be undone (`init-project`). -->
+     by the `init-project` engine's tracker step (ADR 0022), because @import cannot be undone. -->
 
 @~/.claude/chunks/git-sync-branch-start.md
 @~/.claude/chunks/git-commit-format.md

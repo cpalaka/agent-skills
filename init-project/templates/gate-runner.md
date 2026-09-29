@@ -81,8 +81,7 @@ no line. A gate's verdict is its case's below; the one Chunk rule that reaches y
 `## Matches`, not a verdict — every warning line a gate prints goes there, since only the
 coordinator knows which ones are new.
 
-Two readings of a gate's value come before the cases below, and each takes the gate off the gate
-lines, so neither moves `OVERALL`:
+Three readings of a gate's value come before the cases below, and none moves `OVERALL`:
 
 - **A value of `none` declares the gate absent** — written `none — <why>`, as a project with no
   running surface writes its `smoke`. Nothing is owed, so nothing is NOT RUN: name it on a
@@ -92,6 +91,13 @@ lines, so neither moves `OVERALL`:
   `~/.claude/agents/<token>.md`, as a godot project's `build` names its export smoke-tester. You
   cannot dispatch a seat, so run nothing for it and name it on an `OWNED ELSEWHERE:` line. A value
   none of whose backticked tokens resolves hands nothing off: read it by the cases.
+- **A value that prescribes its own NOT RUN decides this tree's verdict.** The test is mechanical:
+  the value's own text says `NOT RUN`, or to run nothing, under a condition it names, and that
+  condition holds here — as a godot project's `smoke` does on a tree with no `run/main_scene`. Run
+  nothing and write `GATE <name> (prescribed): NOT RUN — <that branch of the value, quoted>` in its
+  sequence place, and nothing else: no control, no line below `OVERALL`. Where the condition does
+  not hold, read the rest of the value by the cases. A case-3 value never qualifies: it names no
+  condition under which it says NOT RUN.
 
 **Every gate's verdict is exactly one of `PASS`, `FAIL`, `NOT RUN`.** No other token appears on a
 gate line.
@@ -135,14 +141,15 @@ Five cases, read in this order:
 `command not found` for a program the checkout does not hold, quoted on the gate line. Nothing was
 examined, so a FAIL would report a finding about the tree that no instrument made; it is a run
 condition failing, whether or not `env` names it, and the coordinator's to fix. A not-found that
-points into the checkout — npm's `Missing script`, a task runner's `no such task`, a script or path
-the tree lacks — is a fact about the tree: `FAIL`, the message quoted, whatever the case, since
-under case 1 a grep over a missing path would otherwise read zero matches and pass. **Tell the two
-apart by the message and whether what it names is a program or a path, never by the exit code**:
-`sh scripts/build.sh` with the script missing exits 127 too, printing `No such file or directory`
-for a path the tree lacks. A module the interpreter cannot import (`No module named …`) is on the
-program side — a run condition, `NOT RUN` — unless it is the project's own module, which the
-checkout holds, and then it is on the tree side.
+points into the checkout — npm's `Missing script` or its `ENOENT` over a missing `package.json`,
+a task runner's `no such task`, a script or path the tree lacks — is a fact about the tree:
+`FAIL`, the message quoted, whatever the case, since under case 1 a grep over a missing path would
+otherwise read zero matches and pass. **Tell the two apart by the message and whether what it
+names is a program or a path, never by the exit code**: `sh scripts/build.sh` with the script
+missing exits 127 too, printing `No such file or directory` for a path the tree lacks.
+A module the interpreter cannot import (`No module named …`) is on the program side — a run
+condition, `NOT RUN` — unless it is the project's own module, which the checkout holds, and then
+it is on the tree side.
 
 ## The dispatched gate tier
 
@@ -263,7 +270,8 @@ verbatim, with no diagnosis.
 
 **`OVERALL` reads only `GATE <name>:` lines with no parenthesised marker**, so a `(judgment)` line —
 a person's debt, not a gate you could have run — never moves it, nor a `(tier)` line — a gate the
-coordinator left out — nor any line below `OVERALL`.
+coordinator left out — nor a `(prescribed)` line — the value's own verdict for this tree, not a
+gate that failed to run — nor any line below `OVERALL`.
 
 **Below `OVERALL`, the last lines of the report**, in this order, one per gate this run took up,
 none omitted:
@@ -280,7 +288,8 @@ Where there are none, `OVERALL` is the last line.
 carries it, such as the export smoke-tester's per-preset PASS/FAIL line — or the value's own clause
 saying the gate is not due at this close, read as the project wrote it. The coordinator
 quotes whichever it closes on beside `OVERALL` in its record. A `DECLARED ABSENT:` line needs
-neither: the contract, not the run, decided that gate away. A green report covers the gates and
+neither: the contract, not the run, decided that gate away. A `(prescribed)` line needs nothing further:
+the value, not the run, decided it. A green report covers the gates and
 nothing else: the `verify-gate` Chunk's rules other than its five gates are the coordinator's to
 affirm, in the `implement-run` Skill's Close.
 

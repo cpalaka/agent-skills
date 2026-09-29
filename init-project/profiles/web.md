@@ -46,7 +46,9 @@ by default:
   below.
 
 The `verify-gate` literals assume npm script names; where the project's package manager or scripts
-differ, the answers file gives those keys too, read off `package.json` and confirmed.
+differ, the answers file gives those keys too, read off `package.json` and confirmed. With no
+`package.json` to read them off, propose none of them: each is asked, or written `none — <why>` on
+the owner's word, since a value neither measured nor answered is never written (engine step 1).
 
 **Web-specific concerns live as INLINE-LEAF, in the contract's project sections
 (`docs/agents/project-workflow.md`) — not in either adapter, which carry host mechanics only.** They

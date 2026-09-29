@@ -10,8 +10,10 @@ What stays in this file is Claude Code mechanics and nothing else.
 
 ## Claude Code mechanics (this host only)
 
-- **Session baseline:** sandbox on, `permissions.defaultMode: auto`, in gitignored
-  `.claude/settings.local.json`, which no clone or worktree carries; shape and recovery: the
+- **Session baseline:** sandbox on, `permissions.defaultMode: auto`, in
+  `.claude/settings.local.json`, which no clone or worktree carries and is never committed — the
+  machine-wide git excludes that `init-project`'s `host-setup` writes cover it, and until that has
+  run on this machine git shows it untracked, so never stage it; shape and recovery: the
   `sandbox-and-permissions` Skill.
 - **MCP registration:** `.mcp.json` (project) and `~/.claude.json` (user) take effect only on
   **restart**.

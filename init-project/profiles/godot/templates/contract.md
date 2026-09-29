@@ -97,6 +97,6 @@ never `$?`. With no scope on a clean tree it prints `VERDICT: VACUOUS`, which is
 **Fresh-clone rehydrate:** `npm ci --prefix tools/mcp`, then import once
 (`godot --headless --path . --import` or open the editor) so the global class cache exists —
 otherwise `tests/run_tests.sh` false-FAILs `fixture_pass.gd`. A vendored `addons/godot_ai` is
-tracked, so there is no re-vendor step. Your host's project-scope MCP config may be a gitignored
-file you have to re-create as well; your host adapter names it, and the session-start rule above
-then applies.
+tracked, so there is no re-vendor step. On Codex the project-scope MCP config, `.codex/config.toml`,
+is never committed — the machine-wide git excludes cover it — so re-create it as well; your host
+adapter says how, and the session-start rule above then applies.

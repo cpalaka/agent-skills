@@ -33,7 +33,7 @@ knobs:
   parallel-work:
     # parallel-work is a Skill, not an import, and still value-variant: it reads these two knobs by
     # marker out of <!-- knobs:parallel-work --> in the project's contract (ADR 0014).
-    worktree_path_prefix: "<the whole path template `git worktree add` puts each tree at, not a bare prefix, with <proj> filled in and the task's placeholders (<n> where the tracker has an id, and <slug>) left as placeholders, whose last segment names the task — its id where the tracker has one, and its slug — never the branch name, whose <type>/ prefix would add a path segment; e.g. ../<proj>-<n>-<slug> under tracker-github, ../<proj>-<slug> with no tracker>"
+    worktree_path_prefix: "<the whole path template `git worktree add` puts each tree at, not a bare prefix, with <proj> filled in (the target repository's directory name, `basename` of its root) and the task's placeholders (<n> where the tracker has an id, and <slug>) left as placeholders, whose last segment names the task — its id where the tracker has one, and its slug — never the branch name, whose <type>/ prefix would add a path segment; e.g. ../<proj>-<n>-<slug> under tracker-github, ../<proj>-<slug> with no tracker>"
     install: "<the fresh-worktree install command — or `none` where the project needs no install step>"
 ---
 
