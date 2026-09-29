@@ -48,7 +48,8 @@ reads exactly these keys:
 - **`adapters`** — the four fragments, under the same root: `claude`, `codex`, `contract`,
   `gate_runner`, each inserted at its Template's `<!-- profile:… -->` marker as an engine zone.
 - **`settings`** — the `.claude/settings.local.json` delta: `allow` globs and
-  `enabled_mcp_servers`. Destructive and `gh`-write globs stay off it (`git-confirm-destructive`).
+  `enabled_mcp_servers`. Destructive and `gh`-write globs stay off it (the
+  `git-confirm-destructive` Chunk).
 - **`knobs`** — overrides of the engine defaults, by key.
 
 In the body, two markers: the `## Bespoke setup` heading, and `<!-- precondition -->` (below).
@@ -74,7 +75,8 @@ after `## Report`, and `## Project gates` is the project's own section, outside 
 `gate_runner` fragment heading that repeats a starter heading splits the seat's own section in two,
 as the old prefix rule once swallowed it whole: a Profile bug.
 
-**A fill prompt in a Profile Template is this procedure's to ask**, like the engine's, at step 1.
+**A fill prompt in a Profile Template is this procedure's to ask**, like the engine's own: step 1
+says when.
 
 **A `## Bespoke setup` section may declare itself a precondition.** The line `<!-- precondition -->`
 immediately above a `##`/`###` heading makes that section one, and step 0 runs it before anything is
@@ -156,11 +158,17 @@ so sandboxed and unsandboxed shells read the same file, and never committed or s
   a `<…>` inside it, which the script passes through as written;
 - **every other `{{TOKEN}}`** a written file carries (`{{PROJECT_ROOT}}` is derived, never asked);
 - **the fills** — each `*<Fill at init: …>*` prompt's answer. **This is when fills are asked**:
-  every prompt the Profile's recipe names, here, before the stamp, unless a recipe step decides the
-  answer: the recipe names that step, and step 5 asks it. A prompt nothing named surfaces at
-  step 5 as a `fill-prompt` FAIL and is asked then, into `A` the same way. The engine fills
-  `CLAUDE.md`'s fork slot (`/<fork>`); `AGENTS.md` names the fork in its `#Skills` fill, spelled
-  `$<fork>`.
+  every prompt the stamp will write, here, before the stamp — the engine Templates' own (such as the
+  contract's `## Project`, `AGENTS.md`'s `#Skills`, the PR flag in `issue-tracker.md` on a `github`
+  tracker), every Profile Template's, and every one the recipe names. Collect them off the Templates
+  the stamp writes (`templates/`, `templates/tracker/` on a `github` tracker,
+  `profiles/<type>/templates/`), not off the recipe, then set aside each prompt a recipe step
+  decides: the recipe names that step, and step 5 asks it. Step 5's `fill-prompt` FAIL is a
+  **backstop**, and what it names is asked then, into `A` the same way: a prompt in text this run
+  stamped from a Template, other than one set aside, is a text defect, reported in the run report;
+  one in text the stamp kept from the target is a fill still owed there, not a defect. The engine
+  fills `CLAUDE.md`'s fork slot (`/<fork>`); `AGENTS.md` names the fork in its `#Skills` fill,
+  spelled `$<fork>`.
 
 **Never synthesise a knob value**: the values are measured facts about the project, and a guessed
 gate command is worse than none. A value read off the repo — a `package.json` script, a lockfile —
@@ -204,9 +212,9 @@ exit 0. List first, then create only what is missing:
    finds all thirteen, creates nothing and errors on nothing.
 
 **Which gate the approval is.** Init's own interaction gate, over a batch of writes to the owner's
-repository — **not** `git-confirm-destructive`'s: the tracker Chunk's **Gated writes** puts minting a
-label among the writes that need no approval under *that* gate. Both hold, because they are about
-different gates; named so a reader holding both does not report a contradiction.
+repository — **not** the `git-confirm-destructive` Chunk's: the tracker Chunk's **Gated writes**
+puts minting a label among the writes that need no approval under *that* gate. Both hold, because
+they are about different gates; named so a reader holding both does not report a contradiction.
 
 | Label | Colour | Description |
 |---|---|---|
@@ -230,7 +238,7 @@ that has drifted from it is this table's bug (§ Maintaining the label table). B
 restate no label's meaning here, in a stamped file, or in the approval.
 
 **5. Verify.** `"$E" verify --target . --answers "$A"`. A `fill-prompt` FAIL names each prompt still
-to answer: ask it as step 1 says, and go back to step 2. Then read the rest:
+to answer — step 1's backstop: ask it as step 1 says, and go back to step 2. Then read the rest:
 
 - **A `CHECK` counts only beside its `CONTROL`**, which proves the check can see its known-bad.
 - **The byte `GATE`s fail the stamp, per file**, at the caps `--help` gives under `verify`. Over a
@@ -252,17 +260,17 @@ to answer: ask it as step 1 says, and go back to step 2. Then read the rest:
   the one test that tells "read and ignored" from "never arrived". Its `v1` names the adapter
   Template's shape; bump it only when that shape changes, never per project.
 
-**Then run the project's `verify-gate`**, which the script does not (`VERIFY-GATE: NOT RUN by this
-script`): every step whose value is not `none — …`, in its `dir`. **Two verdicts are neither pass nor
-fail**, and both have been read as a pass. A **step that hangs** — no exit, banner only — is a
-**stamp failure**: kill it, report the command and that it did not return, and fix the knob rather
-than record the step green. And on day zero a project has no tests, so the test step prints `no
-tests match` or its equivalent: that is an empty run, not a green one — quote the harness's own
-self-check as the real test verdict and say the suite was empty. **The stamp is done once `verify`
-is clean and every gate step that ran passed**; a step that could not run yet (an install not done)
-is named NOT RUN in the run report; only a clean gate permits a commit (`verify-gate`), so the
-adoption commit waits until it runs unless the owner explicitly accepts committing with it NOT RUN
-— the owner's call. The seat running init runs the gate.
+**Then run the project's gate, the `verify-gate` Chunk**, which the script does not (`VERIFY-GATE:
+NOT RUN by this script`): every step whose value is not `none — …`, in its `dir`. **Two verdicts are
+neither pass nor fail**, and both have been read as a pass. A **step that hangs** — no exit, banner
+only — is a **stamp failure**: kill it, report the command and that it did not return, and fix the
+knob rather than record the step green. And on day zero a project has no tests, so the test step
+prints `no tests match` or its equivalent: that is an empty run, not a green one — quote the
+harness's own self-check as the real test verdict and say the suite was empty. **The stamp is done
+once `verify` is clean and every gate step that ran passed**; a step that could not run yet (an
+install not done) is named NOT RUN in the run report; only a clean gate permits a commit (the
+`verify-gate` Chunk), so the adoption commit waits until it runs unless the owner explicitly accepts
+committing with it NOT RUN — the owner's call. The seat running init runs the gate.
 
 **6. Drift.** `"$E" check --target . --answers "$A"`. On a fresh stamp every zone reads `same`;
 report any `differs` with the `NOTE` that says why.

@@ -107,8 +107,9 @@ knobs:
 
 ## Bespoke setup
 
-The heavy Godot recipe (`SKILL.md` § The run). Step 2 is a precondition, which engine step 0 runs
-before anything is written; the rest run at engine step 3, in order. The engine
+The heavy Godot recipe runs inside the engine's own steps (`SKILL.md` § The run): its step 2 is
+a precondition, which engine step 0 runs before anything is written; the rest run at engine step
+3, in order. The engine
 already owns the uniform work — the contract, the two adapters and the gate seat (the @imports, the
 tagged knob blocks above, and the four `adapters:` fragments), the `.claude/settings.local.json`
 merge, Template stamping, the lockfile-freeze MECHANIC, `verify` with its byte gates, and the

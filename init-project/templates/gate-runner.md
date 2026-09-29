@@ -281,9 +281,8 @@ carries it, such as the export smoke-tester's per-preset PASS/FAIL line — or t
 saying the gate is not due at this close, read as the project wrote it. The coordinator
 quotes whichever it closes on beside `OVERALL` in its record. A `DECLARED ABSENT:` line needs
 neither: the contract, not the run, decided that gate away. A green report covers the gates and
-nothing else: the `verify-gate` Chunk's other items it calls part of the gate — docs synced, a new
-top-level dependency declared, the run from a clean checkout of the commit — are the coordinator's
-to affirm in its own record, beside this report.
+nothing else: the `verify-gate` Chunk's rules other than its five gates are the coordinator's to
+affirm, in the `implement-run` Skill's Close.
 
 **Never run a gate a second time to change its verdict.** A gate your prompt names a subset for may
 run twice by design — the subset and the full run, each its own line — and that is not this. If the

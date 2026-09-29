@@ -28,6 +28,14 @@ also names the batch grant. The body is the spec, and a run never rewrites its o
 `gh issue edit --body` and its equivalents replace it wholesale. Checkboxes are the owner's; every observation, verdict and piece of evidence goes
 in a comment.
 
+**A green gate report covers the gates' own verdicts and nothing else.** Beside it — a gate-runner's
+`OVERALL: PASS`, or your own run where `gate_runner` is `coordinator` — affirm in `Gates` the
+`verify-gate` Chunk's rules other than its five gates. Check its `## Matches` lines against the
+Chunk's clean-output rule, since only you know which warnings are new, and record each `(tier)` line
+with why the dispatched gate tier left that gate out, a derived skip as the Chunk's full-gate rule
+records one. A failed affirmation is a red certifying reading (§ Review): its fix is a round under
+the caps.
+
 **A criterion your run missed is the owner's to re-cost (§ Inside a batch); the ask must not make
 your reading the default.** Produce the alternative as an artifact the owner can diff, not a number you
 describe, and leave the criterion unticked either way.
