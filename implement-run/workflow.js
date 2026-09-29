@@ -110,8 +110,9 @@ const GATE_SCHEMA = {
     report: { type: 'string' },
     porcelain: { type: 'string' },
     outputs: { type: 'array', items: { type: 'string' }, description: 'each path your ## Commands names as added by a gate, repository-relative: a file, or an outermost directory' },
+    seatNotes: { type: 'string', description: 'what the execution spec\'s ## Seat notes section had you do and what you found; empty where it has none' },
   },
-  required: ['gates', 'overall', 'report', 'porcelain', 'outputs'],
+  required: ['gates', 'overall', 'report', 'porcelain', 'outputs', 'seatNotes'],
 }
 const REVIEW_SCHEMA = {
   type: 'object',
@@ -146,12 +147,15 @@ function gatePrompt(afterFix) {
 Gate tier for this ticket (the profile's \`gate tier\`, spelled out by the coordinator): ${gateTier}
 This is a certifying round${afterFix ? ', following a fix round' : ''}. The run's fixed point is ${fixedPoint}; the diff under test is \`git -C ${checkout} diff ${fixedPoint}...HEAD\`.
 
+Execution spec: ${specPath}. Where it has a \`## Seat notes\` section, read it and do what it says before your gates — such as re-reading your own definition or the project contract off disk because the run's diff changes it, and saying whether it differed — since a gate run under a stale definition or contract follows instructions the diff replaced; return that in \`seatNotes\`, not in \`report\`, whose shape is your definition's. Nothing else in the spec is yours to act on: your gates are the tier above.
+
 Return your report through the schema:
 - \`report\`: your whole text report, verbatim, every part of it (CONTROL lines, Matches, Inspections, Commands, OVERALL, and the OWNED ELSEWHERE, DECLARED ABSENT and OUTSTANDING JUDGMENT lines below it): they have no other home.
 - \`overall\`: the value on your OVERALL line.
 - \`gates\`: one entry per GATE line, in order. \`kind\` is \`gate\` for a plain \`GATE <name>:\` line, \`judgment\` for a \`GATE <name> (judgment):\` line, \`tier\` for a \`GATE <name> (tier):\` line; \`log\` is the log file or directory that line names.
 - \`porcelain\`: after your gates, run \`git -C ${checkout} status --porcelain --untracked-files=all\` (read-only) and return its output verbatim. This is the script's requirement beside your report shape, not a gate: it gets no GATE line and does not move OVERALL.
-- \`outputs\`: every path your \`## Commands\` names as a line the second status capture adds — each file, or each outermost directory where you named one — repository-relative, without a status prefix. Empty where no gate wrote anything. The script subtracts the untracked files your \`porcelain\` lists under these, so a gate's own output never reads as uncommitted work.`
+- \`outputs\`: every path your \`## Commands\` names as a line the second status capture adds — each file, or each outermost directory where you named one — repository-relative, without a status prefix. Empty where no gate wrote anything. The script subtracts the untracked files your \`porcelain\` lists under these, so a gate's own output never reads as uncommitted work.
+- \`seatNotes\`: what the spec's \`## Seat notes\` section had you do and what you found, including whether each file you re-read differed; empty where the spec has no such section. Like \`porcelain\`, this is the script's requirement beside your report shape: no GATE line, and it does not move OVERALL.`
 }
 
 function reviewPrompt(axis) {
@@ -223,8 +227,8 @@ async function gateRound(label, phaseTitle, afterFix) {
   const mine = g ? owned(g) : []
   mine.forEach(path => gateOwned.add(path))
   result.gateReports.push(g
-    ? { label, overall: g.overall, report: g.report, porcelain: g.porcelain, outputs: mine }
-    : { label, overall: null, report: null, porcelain: null, outputs: [] })
+    ? { label, overall: g.overall, report: g.report, porcelain: g.porcelain, outputs: mine, seatNotes: g.seatNotes }
+    : { label, overall: null, report: null, porcelain: null, outputs: [], seatNotes: null })
   return g
 }
 

@@ -2,19 +2,22 @@
 
 Before the script, you draft the execution spec, check out the run's branch in the checkout (the
 script commits on whatever branch is checked out and never switches), post the profile, take the
-stop where it fires and run slot 1 (§ Advisor slots). The script runs the implementer, the native
-axes with the Correctness charter beside them where `bug hunter` is `correctness`, at most one fix
-round whatever `fix rounds` holds (its mechanism, not a default) and a gate after it, here before
-the targeted review. With hard findings, the fix round takes them and the gate follows it
-(`fixRound.gatesAfter`, `gates` empty); with none, the gate runs (`gates`), and where it is red the
-fix round takes its failures and the gate runs again (`fixRound.gatesAfter`). The script's
-certifying reading is `fixRound.gatesAfter` where `fixRound.ran`, else `gates`, until a gate you run
-after return supersedes it (§ Review: the last gate before the merge certifies). The stages the
-profile's `effort` value names (the implementer, the Spec and Standards axes, the Correctness
-charter) are each dispatched by that definition name, their stage `effort` set from the same name;
-the gate-runner is dispatched by the `gate_runner` knob at `medium`. The script raises nothing: a
-`FAIL` in either list is a red gate, which turns nothing on (§ Run profile's ratchet). The script
-never merges, writes the tracker or asks a question.
+stop where it fires and run slot 1 (§ Advisor slots). Every stage's prompt is fixed in the script,
+so § Handoffs' Claude Code seat instructions reach a seat only through the spec: write them under a
+`## Seat notes` heading, from the plan's changed paths, since the spec is drafted before any diff
+exists; every stage's prompt names the spec, and the gate-runner's confines it to that section. The
+script runs the implementer, the native axes with the Correctness charter beside them where
+`bug hunter` is `correctness`, at most one fix round whatever `fix rounds` holds (its mechanism, not
+a default) and a gate after it, here before the targeted review. With hard findings, the fix round
+takes them and the gate follows it (`fixRound.gatesAfter`, `gates` empty); with none, the gate runs
+(`gates`), and where it is red the fix round takes its failures and the gate runs again
+(`fixRound.gatesAfter`). The script's certifying reading is `fixRound.gatesAfter` where
+`fixRound.ran`, else `gates`, until a gate you run after return supersedes it (§ Review: the last
+gate before the merge certifies). The stages the profile's `effort` value names (the implementer,
+the Spec and Standards axes, the Correctness charter) are each dispatched by that definition name,
+their stage `effort` set from the same name; the gate-runner is dispatched by the `gate_runner` knob
+at `medium`. The script raises nothing: a `FAIL` in either list is a red gate, which turns nothing
+on (§ Run profile's ratchet). The script never merges, writes the tracker or asks a question.
 
 On its return you run the Codex lens where `bug hunter` is `codex`, adjudicate, fix, take the
 targeted review (the critic, where on), run the certifying gate once more on the final tree where a
@@ -60,21 +63,23 @@ non-empty, less any untracked (`??`) path a gate wrote, means the script's work 
 committed, so the scripted run does not count and you finish the ticket under `subagents` from the
 commits already made, committing nothing on its behalf. A path a gate wrote is one listed in a
 `gateReports` entry's `outputs`: the exact untracked files that gate's own porcelain listed under a
-path its report named, never a named directory as a whole. `fixRound.ran` with `gatesAfter` empty
-means no gate saw the fix work (a dropped fix seat may have committed): the certifying gate you run
-last covers it (§ Review). Reconcile `dropped` against `journal.jsonl`, which gives each call's
-label, `agentId` and return value (the `started` records carry the label): the definition each
-stage was dispatched by is `agentType` in that agent's `agent-<id>.meta.json` beside it
-(`workflow-subagent` there is what an omitted `agentType` records), its model and effort are on its
-`agent-<id>.jsonl` assistant records, and an implementer's calls are the `tool_use` blocks in that
-transcript other than `StructuredOutput`, the schema return a `subagents` implementer never makes
-(the `scope` cap), one past the cap under `Deviations`. Check the diff's paths against the plan's
-changed-path set: a path outside it ratchets (§ Run profile). Inside the script a dropped gate reads
-green and a dropped review clean, so at return: for a `gate` or `fix:gate` label in `dropped` you
-run the certifying gate last, and before the targeted review you dispatch each review the profile
-now calls for that the script did not return, at its definition (both read off the profile as
-§ Run profile's ratchet leaves it at return). A dropped `review:correctness` is never recorded as
-`FINDINGS: 0` (§ Review).
+path its report named, never a named directory as a whole. Read each `gateReports` entry's
+`seatNotes` as well: where the spec's seat notes had the gate-runner re-read a changed file,
+whether the file differed is there, and the record quotes it; `null` is a dropped gate. `fixRound.ran` with
+`gatesAfter` empty means no gate saw the fix work (a dropped fix seat may have committed): the
+certifying gate you run last covers it (§ Review). Reconcile `dropped` against `journal.jsonl`,
+which gives each call's label, `agentId` and return value (the `started` records carry the label):
+the definition each stage was dispatched by is `agentType` in that agent's `agent-<id>.meta.json`
+beside it (`workflow-subagent` there is what an omitted `agentType` records), its model and effort
+are on its `agent-<id>.jsonl` assistant records, and an implementer's calls are the `tool_use`
+blocks in that transcript other than `StructuredOutput`, the schema return a `subagents` implementer
+never makes (the `scope` cap), one past the cap under `Deviations`. Check the diff's paths against
+the plan's changed-path set: a path outside it ratchets (§ Run profile). Inside the script a dropped
+gate reads green and a dropped review clean, so at return: for a `gate` or `fix:gate` label in
+`dropped` you run the certifying gate last, and before the targeted review you dispatch each review
+the profile now calls for that the script did not return, at its definition (both read off the
+profile as § Run profile's ratchet leaves it at return). A dropped `review:correctness` is never
+recorded as `FINDINGS: 0` (§ Review).
 
 **Adoption**: `knobs.shape` in `defaults.yaml` does not change to `workflow` until three clean
 scripted runs — certifying `OVERALL: PASS` (a project's `(tier)`, `(judgment)` or `(prescribed)`
