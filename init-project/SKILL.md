@@ -190,7 +190,9 @@ back the recorded type, and reads each in-zone fill back from the fill markers i
 (`--help`, under `stamp`, "Fill markers"); its stops name anything still owed.
 
 **2. Stamp.** `"$E" stamp --target . --answers "$A"`. A `STOP` wrote nothing: answer what it names
-in `A` and stamp again. `NOTE`, `KNOB`, `ZONE`, `SETTINGS` and `held:` lines go to the run report.
+in `A` and stamp again. `NOTE`, `KNOB`, `ZONE`, `SETTINGS` and `held:` lines go to the run report,
+as does a `SKIPPED <dest> — exists` line for a tracker pointer (`docs/agents/issue-tracker.md`,
+`docs/agents/triage-labels.md`).
 
 **3. The Profile's recipe.** Run its `## Bespoke setup`, minus the precondition sections step 0 ran,
 in the recipe's order. **The lockfile-freeze is a mechanic, not a position**: where a recipe pins
@@ -329,7 +331,13 @@ report; a `differs` is left for the owner.
 **The run report carries the rest**: the `selftest` line; the tracker outcome — for a stage-1 `no`,
 that the project was stamped with no tracker; the lines steps 2 and 8 route to it; `verify`'s
 figures and gate verdicts; the `check` result; any rehydrate command; any recipe run-report items;
-the adoption commit's SHA. For a `held` tracker, one line, filled in from the `held:` line:
+the adoption commit's SHA. Where a tracker pointer was `SKIPPED <dest> — exists`, the report says
+the pointer files are write-once — never refreshed from their Template, written again only where a
+fill answers a prompt outside every zone — so a Template fix reaches only new stamps, and the owner
+who wants it edits the file by hand or deletes it and stamps again. An older `issue-tracker.md`
+still resolves: its "the chunk's § X" citations land in the `tracker-github` core Chunk or, through
+its redirect, in the `tracker-github` Skill, and its own precedence clause keeps a stale restatement
+from winning. For a `held` tracker, one line, filled in from the `held:` line:
 
 ```
 Tracker: this project stays on backlog-core (frozen) — its contract holds a <!-- knobs:backlog-core --> block, so init ran no tracker choice and no tracker setup (<the parts held: names>). Moving it to another tracker is the owner's decision; no init run makes it.

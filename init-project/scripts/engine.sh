@@ -115,10 +115,13 @@ help() {
 '              as on a re-run: a Profile template or pointer already in the target is otherwise left' \
 '              (SKIPPED <dest> — exists), but one whose outside prompt a fill answers is written with' \
 '              only that span replaced (FILLED <dest>#<heading>, printed while staging, before every' \
-'              WROTE line; its WROTE <dest> comes later, among the writes). A fill key for a' \
-'              file already in the target that fills no prompt there is a NOTE where its heading is in' \
-'              that file, its render or its source Template, and a stop where the heading is in none' \
-'              of them (STOP: fill:<key> matches no heading in <dest>, ...), fresh stamp or re-run.' \
+'              WROTE line; its WROTE <dest> comes later, among the writes). The two tracker pointer' \
+'              files are therefore write-once apart from that fill, never refreshed from their' \
+'              Template: a Template fix reaches only new stamps, and an owner who wants it edits the' \
+'              file by hand or deletes it and stamps again. A fill key for a file already in the target' \
+'              that fills no prompt there is a NOTE where its heading is in that file, its render or' \
+'              its source Template, and a stop where the heading is in none of them (STOP: fill:<key>' \
+'              matches no heading in <dest>, ...), fresh stamp or re-run.' \
 '              Tags inside fenced code are prose, never read as tags: a fence opens on three or' \
 '              more ` or ~ and closes only on a run of the same character at least as long, alone on' \
 '              its line (CommonMark), so ~~~ inside a ``` block is content.' \
