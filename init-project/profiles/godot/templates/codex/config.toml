@@ -12,9 +12,3 @@ command = "node"
 args = ["{{PROJECT_ROOT}}/tools/mcp/node_modules/@satelliteoflove/godot-mcp/dist/cli.js"]
 required = false
 startup_timeout_sec = 30
-
-[mcp_servers.godot]
-command = "node"
-args = ["{{PROJECT_ROOT}}/tools/mcp/node_modules/@ryanmazzolini/minimal-godot-mcp/dist/index.js"]
-required = false
-startup_timeout_sec = 30

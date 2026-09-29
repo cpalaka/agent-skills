@@ -15,7 +15,7 @@ imports: []                 # No imports beyond dev-base. The tracker, the fork 
 # `stamp --after-freeze` (engine step 3, after the recipe's step 5 freeze) writes them.
 templates:
   # root
-  - { src: mcp.json,              dest: .mcp.json, after_freeze: true }                    # launches the two npm servers from the frozen tools/mcp tree. No godot-ai entry: see recipe step 4.4
+  - { src: mcp.json,              dest: .mcp.json, after_freeze: true }                    # launches the godot-mcp server from the frozen tools/mcp tree. No godot-ai entry: see recipe step 4.4
   - { src: codex/config.toml,     dest: .codex/config.toml, after_freeze: true }           # the Codex counterpart of .mcp.json; {{PROJECT_ROOT}} is DERIVED from pwd at the repo root, never asked. Gitignored machine-wide by `host-setup` (engine step 8)
   # per-project reference docs (docs/) — one already in the target is kept; the Blender pair only
   # where opt_in blender is taken
@@ -43,7 +43,7 @@ templates:
   # user-level helper (NOT in-repo): written by `host-setup`, engine step 8
   - { src: godot-mcp-clean,       dest: ~/.local/bin/godot-mcp-clean }   # user-level, once per machine
   # lockfile-freeze seed (the engine's freeze mechanic, engine step 3; payload in recipe step 5)
-  - { src: mcp/package.json,      dest: tools/mcp/package.json }   # pins both servers exactly; recipe runs the freeze
+  - { src: mcp/package.json,      dest: tools/mcp/package.json }   # pins the server exactly; recipe runs the freeze
 
 # The four fragments `stamp` inserts into the engine's Templates. The Godot project
 # rules are contract content — host-neutral, "your host adapter says how" — and each adapter
@@ -63,10 +63,6 @@ settings:                 # merged into .claude/settings.local.json by `stamp`
     - "Bash(mkdir -p:*)"
     - "Bash(chmod +x:*)"
     - "Bash(godot-mcp-clean)"
-    - "mcp__godot__get_diagnostics"
-    - "mcp__godot__clear_console_output"
-    - "mcp__godot__get_console_output"
-    - "mcp__godot__scan_workspace_diagnostics"
     - "mcp__godot-mcp__godot_scene"
     - "mcp__godot-mcp__godot_node"
     - "mcp__godot-mcp__godot_scene3d"
@@ -77,7 +73,7 @@ settings:                 # merged into .claude/settings.local.json by `stamp`
     - "mcp__godot-mcp__godot_input"
     - "mcp__godot-mcp__godot_runtime_state"
     - "mcp__godot-ai__*"
-  enabled_mcp_servers: [ godot-mcp, godot ]   # godot-ai is NOT an .mcp.json server since 3.2.x — its dock registers
+  enabled_mcp_servers: [ godot-mcp ]          # godot-ai is NOT an .mcp.json server since 3.2.x — its dock registers
                                             # a user-scope stdio entry in ~/.claude.json itself (recipe step 4.4)
 
 # These knob strings are stamped into a project's docs/agents/project-workflow.md and are read
@@ -154,14 +150,21 @@ under `stamp`. Answer the fragment's `## Blender pipeline` prompt with the branc
 went conditional can hold `docs/asset-pipeline.md` with no Blender source: the engine does not
 remove a project file, so name it in the run report as a leftover for the owner to delete, answer
 the Blender prompt with the no-source branch, and leave the MCP guide's pointer to it conditional as
-it is written.
+it is written. The same holds for a server this Profile has since dropped: a re-run leaves it in an
+already-stamped project — no Profile Template already in the target is refreshed from its Template
+(each reads `SKIPPED`, the two `after_freeze` ones on the `--after-freeze` pass — a fill-answered
+prompt's span is its only write) and the settings merge only adds — while the adapter and contract
+zones refresh, so the project's files disagree. Diff every Profile Template the target holds
+against its render, and the `settings:` delta against the target and name the surplus in the run
+report as a leftover for the owner to remove, the owner re-freezing the lock (recipe step 5) after
+any `tools/mcp/package.json` edit.
 
 Both MCP guides are carried forward as-is and are **due a content-staleness audit** (they
 track live MCP tool reality / Blender API drift).
 
-**The two files that wait for the freeze.** `.mcp.json` (the stamped `mcp.json`) launches the two
-npm servers via `node tools/mcp/node_modules/…` (NOT `npx -y`), and `.codex/config.toml` (the
-stamped `codex/config.toml`) is the same two servers for the other host — so both carry
+**The two files that wait for the freeze.** `.mcp.json` (the stamped `mcp.json`) launches the
+godot-mcp server via `node tools/mcp/node_modules/…` (NOT `npx -y`), and `.codex/config.toml` (the
+stamped `codex/config.toml`) is the same server for the other host — so both carry
 `after_freeze: true`: the plain stamp skips them, and engine step 3's `stamp --after-freeze`, after
 this recipe, writes them once step 5's freeze has built the tree they point into.
 `.codex/config.toml` needs absolute paths (Codex resolves a relative MCP `cwd` against the launch
@@ -178,7 +181,7 @@ out of git machine-wide, never the project's `.gitignore`.
   `export PATH="$HOME/.local/bin:$PATH"` to their shell rc). It encapsulates the single
   legitimate `kill` use case (orphan node MCP servers hogging the editor's single-client
   bridge slot) — which is **why `Bash(kill:*)` stays OFF the allowlist**. **Scope:** it reaps
-  ONLY orphaned `node …godot-mcp` servers (not godot-ai's uv server, not minimal-godot), so it
+  ONLY orphaned `node …godot-mcp` servers (not godot-ai's uv server), so it
   is a break-glass helper, low-frequency by design. If a project ever drops godot-mcp entirely
   (godot-ai-only), drop `godot-mcp-clean` AND its `Bash(godot-mcp-clean)` allowlist line together.
 - **`godot-gdscript-patterns` skill** (global, idempotent):
@@ -251,7 +254,7 @@ stays as the read/test complement. Skip this step only if the project writes thr
    stdio entry into `~/.claude.json` (`uvx --from godot-ai==<plugin.cfg version> godot-ai
    attach --port 8000 --ws-port 9500 --disable-telemetry`) and deletes any project-scope
    `godot-ai` block from `.mcp.json` — which is why the stamped `mcp.json` carries none and
-   the `settings` delta lists only the two npm servers in `enabled_mcp_servers` (the
+   the `settings` delta lists only godot-mcp in `enabled_mcp_servers` (the
    `mcp__godot-ai__*` allow stays; user-scope servers are not gated by
    `enabledMcpjsonServers`). Verify after the first editor launch:
    `python3 -c 'import json;print(json.load(open("$HOME/.claude.json"))["mcpServers"]["godot-ai"])'`.
@@ -263,7 +266,7 @@ stays as the read/test complement. Skip this step only if the project writes thr
    shows godot-ai disconnected in `/mcp`; expected, not a bug. The dock writes the equivalent
    user-scope entry for each host it configures, hardcoding the same ports in each, so a port
    walk strands every host at once — the contract's godot-ai section carries that rule, and
-   `.codex/config.toml` lists the two npm servers only, exactly as `.mcp.json` does.
+   `.codex/config.toml` lists godot-mcp only, exactly as `.mcp.json` does.
 
 **If NOT using godot-ai**, two things, and skipping either leaves the project documenting or
 permitting a server it does not run. (`uv` on PATH is a prerequisite when used — the dock
@@ -290,8 +293,8 @@ auto-starts a uv-managed Python server on `:8000` + `:9500`.)
 The engine's freeze mechanic (install once → commit the lock, not the modules → gitignore the
 tree → the rehydrate command to the run report) runs against THIS payload:
 
-1. `tools/mcp/package.json` is already stamped (pins `@satelliteoflove/godot-mcp@4.1.0` and
-   `@ryanmazzolini/minimal-godot-mcp@0.1.6` exactly — no `^`/`~`).
+1. `tools/mcp/package.json` is already stamped (pins `@satelliteoflove/godot-mcp@4.1.0`
+   exactly — no `^`/`~`).
 2. `npm install --prefix tools/mcp --no-audit --no-fund` → writes `tools/mcp/package-lock.json`
    (lockfileVersion 3, sha512 per package) and materializes `tools/mcp/node_modules/`.
    **Commit the lockfile + package.json, NOT `node_modules/`.**
@@ -308,7 +311,7 @@ tree → the rehydrate command to the run report) runs against THIS payload:
    `.godot/` is the editor's generated cache: the contract states it is gitignored, and this is the
    only step that makes that true.
 
-**WHY freeze:** `.mcp.json` and `.codex/config.toml` launch the two npm servers on *every* session
+**WHY freeze:** `.mcp.json` and `.codex/config.toml` launch the godot-mcp server on *every* session
 on their host.
 `npx -y <pkg>@<ver>` re-resolves the **unpinned transitive tree** from the registry on each
 cold start and runs install lifecycle scripts — a recurring arbitrary-code-execution surface
@@ -367,7 +370,7 @@ reorders cleanly on next save):
    Project → Project Settings → Plugins.
 2. In Claude Code, `/mcp` to (re)connect the servers to the now-running bridge; verify with
    `mcp__godot-mcp__godot_project addon_status` → `connected: true`. In Codex, `codex mcp list`
-   from the repo root must show both npm servers enabled beside the user-scope godot-ai.
+   from the repo root must show godot-mcp enabled beside the user-scope godot-ai.
    **Single-client bridge:** the godot-mcp bridge accepts ONE client, on either host — if they hit
    "Another MCP server connected and replaced this one", or a Codex read reports the bridge already
    held, run `godot-mcp-clean` and reconnect from the one session that should hold it.
@@ -376,7 +379,7 @@ reorders cleanly on next save):
 
 1. **Fresh-clone rehydrate** (the lockfile-freeze clone gap): `node_modules/` and `.godot/`
    are both gitignored, so a clone must (a) `npm ci --prefix tools/mcp` once
-   (integrity-verified against the committed lock) before the godot-mcp/minimal tools load,
+   (integrity-verified against the committed lock) before the godot-mcp tools load,
    (b) import once — open the editor or `godot --headless --path . --import` — or
    `tests/run_tests.sh` false-FAILs `fixture_pass.gd` with `SCRIPT ERROR` (class cache empty).
    A vendored `addons/godot_ai/` is tracked — step 4.1 — so no re-vendor step; but the godot-ai

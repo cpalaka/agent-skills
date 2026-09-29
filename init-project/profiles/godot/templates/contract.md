@@ -10,11 +10,11 @@
   scene/node/script/property creation, `project_run`, `editor_screenshot`, `logs_read`;
   **godot-mcp = READ/TEST complement** (`godot_input`, `godot_runtime_state`, `godot_docs`,
   `godot_editor get_log_messages` — **no `source` arg, it is a phantom and silently stripped**;
-  editor-only filtering is godot-ai `logs_read source="editor"`); **minimal-godot = local
-  diagnostics** (`get_diagnostics`). godot-mcp silently no-ops `Rect2`: with godot-ai vendored, never
-  write through godot-mcp; without it, godot-mcp is the writer and that no-op is a known gap — a
-  `Rect2` is hand-edited in the `.tscn`/`.tres` and re-verified, and the guide's godot-ai-as-writer
-  matrix does not describe this project. **One writer per editor instance**. **Project pins:**
+  editor-only filtering is godot-ai `logs_read source="editor"`). godot-mcp silently no-ops `Rect2`:
+  with godot-ai vendored, never write through godot-mcp; without it, godot-mcp is the writer and that
+  no-op is a known gap — a `Rect2` is hand-edited in the `.tscn`/`.tres` and re-verified, and the
+  guide's godot-ai-as-writer matrix does not describe this project. **One writer per editor
+  instance**. **Project pins:**
   *<Fill at init: the godot-mcp version pinned in `tools/mcp/package.json` — addon and server are
   bumped together — and, where the project vendors godot-ai, its version, which is the tag vendored
   below. A project that skips godot-ai names godot-mcp alone here.>*
