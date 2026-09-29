@@ -192,6 +192,7 @@ out of git machine-wide, never the project's `.gitignore`.
   (godot-ai-only), drop `godot-mcp-clean` AND its `Bash(godot-mcp-clean)` allowlist line together.
 - **`godot-gdscript-patterns` skill** (global, idempotent):
   `{ test -d ~/.claude/skills/godot-gdscript-patterns || test -d ~/.agents/skills/godot-gdscript-patterns; } && echo installed || npx -y skills add wshobson/agents@godot-gdscript-patterns -g -y`
+  — the `npx` runs as `SKILL.md` § The run, *Under a sandbox*, says.
 
 <!-- precondition -->
 ### 2. Verify target is a Godot project
@@ -202,15 +203,28 @@ scratch (ask them to run Godot first).
 
 ### 3. Install the in-engine addon (version-pinned to the server)
 
+**Skip an addon already at the pin.** From the target root:
+
+```
+grep -qx 'version="4.1.0"' addons/godot_mcp/plugin.cfg 2>/dev/null && echo "present at pin" || echo install
+```
+
+`present at pin` skips the install, and the run report says so; `install` runs it:
+
 ```
 npx -y @satelliteoflove/godot-mcp@4.1.0 --install-addon .
 ```
 
-Copies `addons/godot_mcp/` (the WebSocket bridge the servers connect to). **WHY @4.1.0:**
+It runs as `SKILL.md` § The run, *Under a sandbox*, says; a refused install is the stop in that
+paragraph's refusal bullet, and the owner's command is the install line above, prefixed `!`.
+It copies `addons/godot_mcp/` (the WebSocket bridge the servers connect to). **WHY @4.1.0:**
 the addon version must match the server pin in `tools/mcp/package.json` — an addon ↔
 server major-version split risks a bridge-protocol mismatch (connection fails / tools misbehave
-after `/mcp`). Bump one → bump both (the `--install-addon` flag verified present on 4.1.0's CLI). Then **verify both paths step 6 depends on** exist, or the
-autoload registration silently references a missing file:
+after `/mcp`). The pin lives in three places — the install line, the skip test and
+`profiles/godot/templates/mcp/package.json` (the server pin): bump one → bump all three (the
+`--install-addon` flag verified present on 4.1.0's CLI). Then, on either branch — a `plugin.cfg`
+at the pin says nothing about `game_bridge/` — **verify both paths step 6 depends on** exist, or
+the autoload registration silently references a missing file:
 
 ```
 test -f addons/godot_mcp/plugin.cfg && \
@@ -218,7 +232,8 @@ test -f addons/godot_mcp/plugin.cfg && \
 ```
 
 If either is missing, STOP and surface the error (version mismatch, no `node` on PATH, or the
-upstream package restructured the addon layout) — do not proceed to step 6.
+upstream package restructured the addon layout). The stop halts the recipe — steps 4–6 wait — and
+the run resumes at this check once the owner has fixed it.
 
 ### 4. OPTIONAL — godot-ai writer plugin (skippable)
 
@@ -254,7 +269,8 @@ never re-vendor on your own.
    take the baseline `v3.2.4`; where the two hosts print different versions, stop and tell the
    owner — the fleet is already split. A newer upstream tag
    (`git ls-remote --tags https://github.com/hi-godot/godot-ai`) is a run-report line for the
-   owner, never a reason to vendor it here. Then copy the install-ready `addons/godot_ai/` (at
+   owner, never a reason to vendor it here. The clone and the `ls-remote` run as `SKILL.md`
+   § The run, *Under a sandbox*, says. Then copy the install-ready `addons/godot_ai/` (at
    `plugin/addons/godot_ai/`, not the repo root; a `src/godot_ai` copy is NOT the one to vendor)
    into the project's `addons/`.
    **WHY the tag is the pin:** the vendored `plugin.cfg` version drives which Python MCP
@@ -343,8 +359,9 @@ tree → the rehydrate command to the run report) runs against THIS payload:
 1. `tools/mcp/package.json` is already stamped (pins `@satelliteoflove/godot-mcp@4.1.0`
    exactly — no `^`/`~`).
 2. `npm install --prefix tools/mcp --no-audit --no-fund` → writes `tools/mcp/package-lock.json`
-   (lockfileVersion 3, sha512 per package) and materializes `tools/mcp/node_modules/`.
-   **Commit the lockfile + package.json, NOT `node_modules/`.**
+   (lockfileVersion 3, sha512 per package) and materializes `tools/mcp/node_modules/`; it runs as
+   `SKILL.md` § The run, *Under a sandbox*, says. **Commit the lockfile + package.json, NOT
+   `node_modules/`.**
 3. Stop Godot import-scanning the tree: create an **empty** `tools/.gdignore`
    (**NOT** `.godotignore` — the wrong name silently does nothing).
 4. Ignore `tools/mcp/node_modules/` **and `.godot/`**, each line added only where absent:

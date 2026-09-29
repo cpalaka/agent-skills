@@ -104,6 +104,34 @@ A re-run is the same run: the script refreshes only the engine's zones and keeps
 steps below say where a re-run differs — a Profile's recipe says where its own steps differ (the
 `godot` recipe, for one, never re-vendors an `addons/godot_ai/` already present).
 
+**Under a sandbox.** A closed set of calls runs outside the sandbox, one call at a time, at every
+step; a refused escalation is a stop, never a detour.
+
+- **The set**: every `"$E"` subcommand (`--help`'s "Temp space" says why), every `gh` call, and a
+  recipe's `npx`, `npm`, and git network calls (`clone`, `ls-remote`, `fetch`, `pull`, `push`) —
+  nothing else is in the set. It covers every step, not only those after step 2, whose baseline
+  turns the sandbox on for the rest of the stamping session. A call outside the set takes the
+  host's ordinary handling: this rule neither adds it to the set nor forbids an escalation the host
+  requires, and a Profile may name more calls that drop the sandbox (the `godot` Profile's `env`
+  knob, for one). The arms were observed to fail sandboxed after `stamp` on calls that had
+  succeeded before it (#129; inferred from the call sequence, not measured).
+- **Escalating**: a call in the set runs unsandboxed from its first attempt, whatever a harness's
+  default says (such as sandboxed first, escalating only on failure). On Claude Code that is the
+  Bash tool's sandbox dropped on that one call (`dangerouslyDisableSandbox`), never a change to the
+  session's settings or permission profile; on Codex, the escalation its approval policy offers (a
+  per-call `require_escalated` request) — under a policy that never asks, a denial is a refusal
+  (below). Say so at every escalation, the retry included: one line naming the call and this rule.
+  Where a call in the set ran sandboxed anyway and failed (before the session knew a sandbox was
+  on, say), retry it once unsandboxed — the retry is unconditional, so never decide from the error
+  text whether to make it. A stop then names what the unsandboxed call printed, never the sandboxed
+  attempt's output: an x509 or EPERM from inside the sandbox is the text not to quote.
+- **A refusal** — the host's permission check refusing any escalation, the retry included, whatever
+  text it carries — is a stop: hand the owner the exact command as `! <command>`, which runs in
+  their own shell outside the sandbox (on Codex, the command for their shell), and resume at that
+  step once they report it ran. Never route around a refusal — no rewording, no redirected cache,
+  no widened sandbox — unless the owner's reply names that route. Auto mode has refused an
+  unsandboxed `npx` (#136) and may refuse any call in the set.
+
 **0. Preconditions** — all pass before anything is written, because of the three writes above.
 **A re-run** is a target whose `docs/agents/project-workflow.md` exists — the script's own test.
 
@@ -135,11 +163,12 @@ steps below say where a re-run differs — a Profile's recipe says where its own
     remote included — settles `none` in this run, with no offer; the run report says the project was
     stamped with no tracker.
   - **Stage 2, on `yes` — its `owner/repo`**: `gh repo view --json nameWithOwner -q .nameWithOwner`,
-    which resolves both the SSH and the HTTPS remote forms. **A failure is a stop naming what `gh`
-    printed, never `none`**: `gh` exits non-zero when unauthenticated, offline or rate-limited —
-    `HTTP 401: Bad credentials`, exit 1, on a clone whose remote is perfectly good (measured on gh
-    2.101.0) — and reading that as "no GitHub remote" would strip a project of its tracker over an
-    expired token. The remedy is `gh auth login` or a network, then a re-run at no cost.
+    which resolves both the SSH and the HTTPS remote forms. **A failure is a stop naming what the
+    unsandboxed `gh` call printed (§ The run, *Under a sandbox*), never `none`**: `gh` exits
+    non-zero when unauthenticated, offline or rate-limited — `HTTP 401: Bad credentials`, exit 1,
+    on a clone whose remote is perfectly good (measured on gh 2.101.0) — and reading that as "no
+    GitHub remote" would strip a project of its tracker over an expired token. The remedy is
+    `gh auth login` or a network, then a re-run at no cost.
   - **On success the owner picks**: `github`, the default — `REPO` is stage 2's value, confirmed
     with the owner before it is written — or `none`, for a prototype or sketch.
 - **The `tracker-github` Skill**, once the tracker outcome is `github`:
@@ -190,18 +219,20 @@ re-run asks only for what the contract lacks**: the script keeps every existing 
 back the recorded type, and reads each in-zone fill back from the fill markers it wrote around it
 (`--help`, under `stamp`, "Fill markers"); its stops name anything still owed.
 
-**2. Stamp.** `"$E" stamp --target . --answers "$A"`. A `STOP` wrote nothing: answer what it names
-in `A` and stamp again. `NOTE`, `KNOB`, `ZONE`, `SETTINGS` and `held:` lines go to the run report,
-as does a `SKIPPED <dest> — exists` line for a tracker pointer (`docs/agents/issue-tracker.md`,
-`docs/agents/triage-labels.md`).
+**2. Stamp.** `"$E" stamp --target . --answers "$A"`. A `STOP` wrote nothing. The "Temp space"
+`STOP` is the sandbox rule's: re-run unsandboxed (§ The run, *Under a sandbox*); answer every other
+`STOP` in `A` and stamp again. `NOTE`, `KNOB`, `ZONE`, `SETTINGS` and `held:` lines go to the run
+report, as does a `SKIPPED <dest> — exists` line for a tracker pointer
+(`docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`).
 
 **3. The Profile's recipe.** Run its `## Bespoke setup`, minus the precondition sections step 0 ran,
 in the recipe's order. **The lockfile-freeze is a mechanic, not a position**: where a recipe pins
 installs, it installs once into a local tree, **commits the lockfile, not the modules**, and ignores
 the tree by its own command; the payload — which packages, which versions — is the Profile's. Where
 the Profile marks any entry `after_freeze: true`, write those once the recipe is done:
-`"$E" stamp --target . --answers "$A" --after-freeze`. Where the recipe names a fresh-clone
-rehydrate command, it goes to the run report.
+`"$E" stamp --target . --answers "$A" --after-freeze`, unsandboxed
+(§ The run, *Under a sandbox*). Where the recipe names a fresh-clone rehydrate command, it goes to
+the run report.
 
 **4. The label mint — tracker `github` only**, after the recipe and before `verify`. All thirteen
 labels must exist before the first ticket or map, because a missing label lists zero issues at
@@ -209,8 +240,9 @@ exit 0. List first, then create only what is missing:
 
 1. **List**: `gh label list -L 200 --json name,description`. `-L 200` is load-bearing: the default
    is 30, so on a repository with more an existing label reads as missing and its create then
-   fails. **A failing list is a stop naming what `gh` printed** — on a re-run, which ran no stage
-   2, this is where auth or network trouble surfaces.
+   fails. **A failing list is a stop naming what the unsandboxed `gh` call printed** (§ The run,
+   *Under a sandbox*) — on a re-run, which ran no stage 2, this is where auth or network trouble
+   surfaces.
 2. **The missing subset** of the table below, by name.
 3. **One approval for the batch**, asked here and never earlier, not even at the interview — a minted label stays minted (above): the names to create, each with its colour and description, and
    beside them the names skipped because they exist. Never per label.
@@ -248,8 +280,9 @@ passes, not a definition**: the `tracker-github` Skill's § Two label axes is au
 that has drifted from it is this table's bug (§ Maintaining the label table). Beyond the names,
 restate no label's meaning here, in a stamped file, or in the approval.
 
-**5. Verify.** `"$E" verify --target . --answers "$A"`. A `fill-prompt` FAIL names each prompt still
-to answer — step 1's backstop: ask it as step 1 says, and go back to step 2. Then read the rest:
+**5. Verify.** `"$E" verify --target . --answers "$A"`, unsandboxed
+(§ The run, *Under a sandbox*). A `fill-prompt` FAIL names each prompt still to answer — step 1's
+backstop: ask it as step 1 says, and go back to step 2. Then read the rest:
 
 - **A `CHECK` counts only beside its `CONTROL`**, which proves the check can see its known-bad.
 - **The byte `GATE`s fail the stamp, per file**, at the caps `--help` gives under `verify`. Over a
@@ -291,13 +324,14 @@ gate permits a commit (the `verify-gate` Chunk), so the adoption commit waits un
 explicitly accepts committing with it NOT RUN. A reply that hands the choice back, which answers a
 value question at step 1, is not that acceptance here: ask again for a yes or no.
 
-**6. Drift.** `"$E" check --target . --answers "$A"`. On a fresh stamp every zone reads `same`;
-report any `differs` with the `NOTE` that says why.
+**6. Drift.** `"$E" check --target . --answers "$A"`, unsandboxed
+(§ The run, *Under a sandbox*). On a fresh stamp every zone reads `same`; report any `differs`
+with the `NOTE` that says why.
 
 **7. The adoption commit**, once step 5's gate permits it and before the handoff, a direct
 commit on the checked-out branch — the adoption is no ticket's work, so no task branch and no issue
-footer. Pull first only where the remote carries the checked-out branch; a fresh repository's
-remote may carry none. Stage by explicit path the
+footer. Pull first (unsandboxed: § The run, *Under a sandbox*) only where the remote carries the
+checked-out branch; a fresh repository's remote may carry none. Stage by explicit path the
 files `stamp` reported `WROTE` and the files the recipe created or edited — except any path step 8's
 machine-wide excludes cover: a per-clone host file never enters git, whether or not step 8 has run
 yet — and make one commit, subject `chore(init): adopt init-project stamp`, its body under the
@@ -306,11 +340,12 @@ project's own commit rules (its Chunks'). A re-run commits only where a line rea
 explicit path; with none, there is no commit. Pushing it is the owner's call; the run report says
 it is unpushed.
 
-**8. Machine-wide setup.** `"$E" host-setup --answers "$A"`, once per machine: the ignore lines for
-the two per-clone host files, `.codex/config.toml` and `.claude/settings.local.json`, go into the
-machine-wide git excludes — one line each covers every project, where a project's `.gitignore` would
-cover one — and the Profile's `~/` Templates are written. Quote each line with its undo in the run
-report; a `differs` is left for the owner.
+**8. Machine-wide setup.** `"$E" host-setup --answers "$A"`, unsandboxed
+(§ The run, *Under a sandbox*), once per machine: the ignore lines for the two per-clone host
+files, `.codex/config.toml` and `.claude/settings.local.json`, go into the machine-wide git
+excludes — one line each covers every project, where a project's `.gitignore` would cover one — and
+the Profile's `~/` Templates are written. Quote each line with its undo in the run report; a
+`differs` is left for the owner.
 
 **9. The handoff: only what the owner alone can do.**
 
@@ -325,8 +360,9 @@ report; a `differs` is left for the owner.
   does not load at all: `codex mcp list` from the project root shows only the user-scope servers,
   with no error (measured 2026-09-03). A `-c projects."<path>".trust_level="trusted"` override does
   **not** substitute for the entry. The engine never writes `~/.codex/config.toml`.
-- **(c) A new session on both hosts after an MCP or settings change** — nothing re-reads either
-  mid-session.
+- **(c) A new session on both hosts after an MCP or settings change** — a change can take effect
+  partly mid-session (step 2's baseline turned the sandbox on: § The run, *Under a sandbox*), and
+  only a new session is known to apply all of it.
 - **(d) Any owner-only item the Profile's recipe adds.**
 
 **The run report carries the rest**: the `selftest` line; the tracker outcome — for a stage-1 `no`,
