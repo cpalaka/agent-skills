@@ -49,7 +49,9 @@ mechanics, not scope or structure.
 ## Frontier and claim
 
 The **frontier** is the open, unassigned `gate:agent` issues whose blocked-by issues are all
-closed; the next ticket is the lowest-numbered (`--label gate:accept` lists those instead):
+closed; the next ticket is the lowest-numbered (`--label gate:accept` lists those instead). It is
+the **unattended** pick, a batch's or any delegate's, and a batch adds the `gate:accept` variant
+only where its grant takes those (`implement-batch` § Kickoff (b)):
 
 ```sh
 gh issue list --label gate:agent --search "no:assignee" -L 200 --json number,blockedBy \
@@ -60,6 +62,64 @@ Keep `-L 200`; the default 30 drops the oldest. `all` over an empty list is true
 wants that (no blockers means free), and § Parents' test guards it with `length > 0` (no children
 means not done). An empty result is an empty frontier **or** an unminted label, which lists zero at
 exit 0 — `gh label list -L 200` tells them apart; for the second, see § Two label axes.
+
+**The attended pick** is the kickoff an attended session hands on at its close (`implement-run`'s
+Close, a `wrap-session` kickoff no artifact owns), and it keeps the owner on the work in hand. A
+ticket is **pickable** when it is open, unassigned, gated `gate:agent` or `gate:accept`, and every
+issue blocking it is closed. The **track** is the just-worked ticket's `Spec:` or `Map:` parent
+(`gh issue view <n> --json parent`), whose children form it; with no parent, the issues it blocks
+(`--json blocking`), read forward because a pickable ticket's own blockers are closed by
+definition; with neither, there is no track. A track is **exhausted** when no open ticket is left
+on it (a `Map:` track: every child closed). The first rule that names a ticket picks it:
+
+1. **On a track, stay on it**: the lowest-numbered pickable ticket on it — `next on Spec #<p>`, or
+   on a chain `next after #<n>`. A `Map:` track not exhausted hands on
+   `/wayfinder #<map> — next on Map #<map>`, and wayfinder picks from the map's frontier
+   (§ Wayfinder, and boards).
+2. **A pickable open blocker outside the track** comes ahead of rule 3, within this repository
+   only: `unblocks Spec #<p>` (on a chain, `unblocks #<t>`, the chain ticket it blocks). It applies
+   only on a track; with no track, go straight to rule 3 and skip the collection below.
+3. **Earliest open**, where no earlier rule names one: the lowest-numbered pickable ticket.
+
+```sh
+gh issue list --search 'no:assignee label:"gate:agent","gate:accept" SEARCH' -L 200 \
+  --json number,labels,blockedBy --jq '[.[] | select(TRACK)
+  | select([.blockedBy.nodes[].state] | all(. == "CLOSED"))]
+  | min_by(.number) | select(. != null) | {number, labels: [.labels[].name]}'
+```
+
+An empty result prints nothing at exit 0 (the `select(. != null)`). The gate filter is a search
+qualifier (the comma is OR), not a jq test, because `-L 200` applies
+after the search filter, as the unattended query's `--label` does. On a `Spec:` track SEARCH is
+`parent-issue:REPO#<p>` and TRACK `true`; on a chain SEARCH is empty and TRACK
+`.number | IN(<b1>, <b2>)` (the `blocking` numbers, inlined: `--jq` takes no `--argjson`), taken
+only from nodes whose `url` starts with `https://github.com/REPO/` — another repository's #N would
+put this one's #N on the track —
+`gh issue view <n> --json blocking --jq '[.blocking.nodes[] | select(.url | startswith("https://github.com/REPO/")) | .number]'`,
+where an empty list means no chain, so no `IN()` is ever built empty; for
+rule 3 SEARCH is empty and TRACK `true`. For rule 2, collect the open blockers of the track's open
+tickets in this repository, less those on the track, with the same SEARCH and TRACK:
+
+```sh
+gh issue list --search 'SEARCH' -L 200 --json number,blockedBy --jq '[.[] | select(TRACK)]
+  | [.[].number] as $t | [.[].blockedBy.nodes[] | select(.state == "OPEN")
+  | select(.url | startswith("https://github.com/REPO/")) | .number | select(IN($t[]) | not)]
+  | unique'
+```
+
+then run the first query with SEARCH empty and TRACK `.number | IN(<those>)`. Where the collected
+set is empty, rule 2 names nothing: go to rule 3, never run the query with an empty `IN()`, which
+gh's jq rejects with a parse error at exit 1.
+
+The kickoff is the command with its rule after it — `/implement-run 141 — next on Spec #140`,
+`/implement-run 135 — next after #147`, `/implement-run 51 — earliest open; gate:accept, needs the
+owner's acceptance before close` — and a `gate:accept` pick always carries that note. Text after
+the command reaches the invoked Skill as its arguments: the ticket is its first number, what
+follows the rule. **`gate:decide` is never the attended pick**; a Map hand-off is wayfinder's pick,
+which may take a map's grillings. Where rule 3 returns nothing, read it by the label check above
+first; with every label present, say that nothing pickable remains, give the open `gate:decide`
+count (`gh issue list --label gate:decide -L 200 --json number --jq length`), and where it is above
+zero suggest a triage session.
 
 **Read the live issue before the session's first write**; a summary, dispatch or handoff is not
 the issue. Claim with `gh issue edit <n> --add-assignee @me`, which adds rather than sets: re-read
@@ -129,6 +189,18 @@ belongs to the plan doc or ADR that owns it.
 A wayfinder ticket gets its gate in the same create call: `research` → `gate:agent`, `prototype`
 and `grilling` → `gate:decide`, `task` → `gate:accept` unless the owner says otherwise at chart
 time. A board kept alongside is a view: **an agent never writes a board field**.
+
+A map's **frontier** (wayfinder's word) is its open, unassigned children of any gate whose
+blockers are all closed, and wayfinder's next ticket is the lowest-numbered on it, not first in map
+order — so a map takes its own query, not § Frontier and claim's `gate:agent` one:
+
+```sh
+gh issue list --search 'no:assignee parent-issue:REPO#<map>' -L 200 --json number,blockedBy \
+  --jq '[.[] | select([.blockedBy.nodes[].state] | all(. == "CLOSED"))] | min_by(.number)
+  | select(. != null) | .number'
+```
+
+A map with no free child prints nothing at exit 0 (the `select(. != null)`).
 
 ## Commit forms, and clauses deferred here
 

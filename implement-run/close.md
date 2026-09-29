@@ -8,10 +8,14 @@
    the acceptance reading you took and why; act on the single yes. A ticket whose acceptance needs
    the owner's attended run stays open.
 4. **Emit the kickoff** once step 3's actions land, a ticket left open for the owner included, as
-   its own message, unfenced: `/implement-run <n>` for the lowest ticket on the tracker's
-   frontier (on `tracker-github`, the Skill's query). An empty frontier takes the contract's frontier-empty instruction; where it names
-   none, say the frontier is empty — and where the tracker's query cannot tell an empty frontier
-   from an unminted label, run its label check and report which. Nothing else follows (no other
+   its own message, unfenced: the command the tracker's attended pick names, its rule after it
+   (on `tracker-github`, the Skill's § Frontier and claim, the attended pick). The ticket is the
+   invocation's first number, what follows it the rule. **Inside a batch** (§ Inside a batch) the
+   kickoff is the tracker's frontier query under the batch's grant, never the attended pick. An
+   attended pick that finds nothing pickable takes the contract's frontier-empty instruction;
+   where it names none, the tracker's own empty-result rule (on `tracker-github`, the attended
+   pick's) — and where the tracker's query cannot tell an empty result from an unminted label, run
+   its label check and report which. Nothing else follows (no other
    query, grill or wrap): the run record is the tracker write, the kickoff the handoff.
 
 **The run record is the tracker's closing record**: one comment on the ticket (in the file, for a

@@ -49,8 +49,9 @@ prefix and `wayfinder:map`, children carrying `wayfinder:research`/`prototype`/`
 and the gate the Skill gives each (§ Wayfinder, and boards). Link and order them with the flags
 above.
 
-- **Frontier:** the query is the Skill's § Frontier and claim; the next ticket is the
-  lowest-numbered, not first in map order.
+- **Frontier:** the query is the Skill's § Wayfinder, and boards; the next ticket is the
+  lowest-numbered, not first in map order. The kickoff an attended session hands on is the Skill's
+  § Frontier and claim, the attended pick.
 - **Claim:** `gh issue edit <n> --add-assignee @me` — the flag adds rather than sets, and that
   same section has the race and the stand-down.
 - **Resolve:** `gh issue comment <n> --body-file <f>`, then close. That comment, the footer and

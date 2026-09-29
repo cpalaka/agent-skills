@@ -21,11 +21,9 @@ Neither pointer above restates them, and this section adds the frontier-empty in
 says where a `gate:accept` ticket's result note goes, or `none` for comments only.
 
 **Frontier empty.** This is the frontier-empty instruction `implement-run`'s kickoff reads; inside a
-batch, the kickoff keeps to the batch's grant. Where the Skill's frontier query returns nothing, run
-its label check first: a missing label is the Skill's stop, reported to the owner. With every label
-present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
-the kickoff, since a session works a `gate:accept` ticket and the owner accepts it. Where that is
-empty too, say that nothing workable remains.
+batch, the kickoff keeps to the batch's grant. The kickoff's pick is the Skill's attended pick,
+which already spans `gate:agent` and `gate:accept`. Where it returns nothing, report as the
+attended pick says — its label check first, a missing label being the Skill's stop.
 
 **Before you claim something is absent, check the tracker.** `gh issue list --state all -L 200` to
 see what exists, then `gh issue view <n>` on the issue that would own the thing you are about to

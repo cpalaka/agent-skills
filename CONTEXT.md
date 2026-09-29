@@ -429,8 +429,17 @@ _Avoid_: epic, umbrella, tracking issue.
 
 **frontier**:
 The open `gate:agent` issues whose blocked-by issues are all closed and that no one has claimed.
-The next ticket is the lowest-numbered one on it. Wayfinder's word, adopted for every chain.
+The next ticket is the lowest-numbered one on it. Wayfinder's word, adopted for every chain;
+within a map, wayfinder's frontier takes any gate (the `tracker-github` Skill's § Wayfinder, and
+boards). An attended kickoff picks by the **attended pick** instead — its track first,
+`gate:accept` included.
 _Avoid_: backlog, queue, todo column.
+
+**attended pick**:
+The kickoff an attended session hands on at its close: the lowest-numbered **pickable** ticket
+(open, unassigned, `gate:agent` or `gate:accept`, every blocker closed) on its **track** — the
+just-worked ticket's `Spec:`/`Map:` parent, else the chain it blocks — then an off-track blocker,
+then the earliest open. The rules live in the `tracker-github` Skill's § Frontier and claim.
 
 **closing record**:
 The comment a session posts when it closes an issue: each acceptance criterion by number with its

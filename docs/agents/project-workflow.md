@@ -120,8 +120,6 @@ Two pointers sit beside it, hand-written here for the same reason:
   tracker's gate labels.
 
 **Frontier empty.** This is the frontier-empty instruction `implement-run`'s kickoff reads; inside a
-batch, the kickoff keeps to the batch's grant. Where the `tracker-github` Skill's frontier query
-returns nothing, run its label check first: a missing label is the Skill's stop, reported to the
-owner. With every label present, run the same query with `--label gate:accept` in place of `gate:agent`. Its lowest takes
-the kickoff, since a session works a `gate:accept` ticket and the owner accepts it. Where that is
-empty too, say that nothing workable remains.
+batch, the kickoff keeps to the batch's grant. The kickoff's pick is the `tracker-github` Skill's
+attended pick, which already spans `gate:agent` and `gate:accept`. Where it returns nothing,
+report as the attended pick says — its label check first, a missing label being the Skill's stop.

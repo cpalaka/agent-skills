@@ -16,9 +16,9 @@ holds the rest: load it before any `gh issue` or `gh label` write. Read them the
 **What this file restates, and why.** It is a pointer, so it names sections rather than copying
 them — with three deliberate exceptions, each a rule whose *cost of being missed* is higher than the
 cost of it living in two places: where the body file goes, that `--add-assignee` adds rather than
-sets, and that the next ticket is the lowest-numbered. Each is a rule a reader who skips the chunk
-or the Skill gets silently wrong. **Everywhere else they win**, including against these three if
-they ever disagree with them.
+sets, and that wayfinder's next ticket within a map is the lowest-numbered, not first in map
+order. Each is a rule a reader who skips the chunk or the Skill gets silently wrong. **Everywhere
+else they win**, including against these three if they ever disagree with them.
 
 **Multi-line bodies and comments go through a UTF-8 file and `--body-file`**, never `--body` with
 an embedded newline (the chunk's § Task tracking says why).
@@ -73,8 +73,9 @@ Used by `/wayfinder`. The **map** is one issue, its tickets **child** issues: a 
 and `wayfinder:map`, children carrying `wayfinder:research`/`prototype`/`grilling`/`task` and the
 gate the Skill gives each (§ Wayfinder, and boards). Link and order them with the flags above.
 
-- **Frontier:** the query is the Skill's § Frontier and claim; the next ticket is the
-  lowest-numbered, not first in map order.
+- **Frontier:** the query is the Skill's § Wayfinder, and boards; the next ticket is the
+  lowest-numbered, not first in map order. The kickoff an attended session hands on is the Skill's
+  § Frontier and claim, the attended pick.
 - **Claim:** `gh issue edit <n> --add-assignee @me` — the flag adds rather than sets, and that same
   section has the race and the stand-down.
 - **Resolve:** `gh issue comment <n> --body-file <f>`, then close. That comment, the footer and the
