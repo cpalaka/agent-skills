@@ -5,8 +5,9 @@
    before the merge. Nothing fires it from context.
 3. **One approval covers posting the run record, the merge and the close**, given by the owner, or
    by the delegate inside a batch. Offer the diff, the record and the close in one message, naming
-   the acceptance reading you took and why; act on the single yes. A ticket whose acceptance needs
-   the owner's attended run stays open.
+   the acceptance reading you took and why; act on the single yes. For a file ticket, when the
+   record is written is `git-flow-squash` § (a)'s. A ticket whose acceptance needs the owner's
+   attended run stays open.
 4. **Emit the kickoff** once step 3's actions land, a ticket left open for the owner included, as
    its own message, unfenced: the command the tracker's attended pick names, its rule after it
    (on `tracker-github`, the Skill's § Frontier and claim, the attended pick). The ticket is the

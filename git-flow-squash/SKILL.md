@@ -17,7 +17,10 @@ either way.
 
 **(a) Integration = squash-merge: code and Done land as ONE commit on `main`.** Once (d)'s diff
 approval is in, mark the task Done **on the branch** and commit it there (`tracker-github`
-resolves this). Then squash.
+resolves this). Then squash. For a file ticket (one kept as a file in the tree), the closing record
+goes into that same Done commit — by the tracker's own edit verb where a tracker Chunk owns it, by
+direct append in a board-less project — so the squash carries it and nothing touches the ticket
+after the merge.
 
 - **The squash carries only the branch's final tree**, so a file added and then deleted on the
   branch never reaches `main`. Prune heavy or throwaway artifacts (screenshots, fixtures,
