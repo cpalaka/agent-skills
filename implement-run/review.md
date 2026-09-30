@@ -43,14 +43,27 @@ adjudicate each; `FINDINGS: n`, so the record reads a count, not an impression.
 **Codex lens**, dispatched beside the axes once the implementer's diff is committed:
 
 ```
-node "<installPath>/scripts/codex-companion.mjs" adversarial-review --json --base <fixed point> -- "$(cat <focus file>)" < /dev/null
+CLAUDE_PLUGIN_DATA=<dataDir> node "<installPath>/scripts/codex-companion.mjs" adversarial-review --json --base <fixed point> -- "$(cat <focus file>)" < /dev/null
+printf '{"cwd":"%s"}' "<checkout>" | env -u CODEX_COMPANION_SESSION_ID CLAUDE_PLUGIN_DATA=<dataDir> node "<installPath>/scripts/session-lifecycle-hook.mjs" SessionEnd
 ```
 
 `<installPath>` is read at run time, since a version bump moves it: the `user`-scope element, or the
 sole one, of the `plugins["codex@openai-codex"]` list in `~/.claude/plugins/installed_plugins.json`.
-Sandbox off: sandboxed, the companion fails before reaching Codex, on EPERM creating its state
-directory under `$CLAUDE_PLUGIN_DATA`. Focus: the ticket's acceptance criteria verbatim plus the
-execution spec's hard limits, then this line verbatim:
+`<dataDir>` is replaced by
+`"$HOME/.claude/plugins/data/$(printf %s 'codex@openai-codex' | tr -c 'A-Za-z0-9_-' '-')"` as
+written, quotes included, so it is derived at run time rather than copied from one machine;
+`<checkout>` is the review's checkout, whose git toplevel keys the companion's state. The review
+leaves a detached broker recorded in that state. Unpinned, the record lands wherever
+`CLAUDE_PLUGIN_DATA` points, or under `os.tmpdir()`, which differs sandboxed and unsandboxed, and a
+broker recorded anywhere but Codex's own data directory is stopped by nothing. The second line stops
+it: run it as its own call once the first returns, fails or is killed, since a timeout that kills a
+shared call kills it too, and record the first line's exit, not the second's. It shuts the
+checkout's broker down whatever else is using it, so no other companion call runs in that checkout
+meanwhile; `env -u` keeps it from ending the session's companion jobs. Both run sandbox off:
+sandboxed, the companion would fail before reaching Codex, on EPERM creating its state directory
+under `<dataDir>`, outside the sandbox's write set.
+Focus: the ticket's acceptance criteria verbatim plus the execution spec's hard limits, then this
+line verbatim:
 `Also check: does each guard have a test for its rejecting path as well as its accepting path?`
 Stage the focus in a file, since the script takes focus only as positional text and acceptance
 criteria carry backticks and quotes an inline argument would execute or end on — `$(cat …)` output
