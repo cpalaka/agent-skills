@@ -292,10 +292,15 @@ backstop: ask it as step 1 says, and go back to step 2. Then read the rest:
   it with no error (measured 2026-09-04). The contract is never auto-loaded by that mechanism — it
   arrives through an `@` import on one host and a mandatory read-list item on the other — so it can
   grow without limit and pays full context cost in every session either way: its figure is a cost
-  budget, not a truncation guard, and it fails a re-run over a bloated project, which is when it is
-  worth knowing. Measured 2026-09-21 on the project this gate came from: the contract reached
-  **47,873 bytes**, 46% over the *adapter* cap, while every figure the verify step then collected
-  stayed green — the gate was measuring the 6 KB file and ignoring the 48 KB one it pointed at.
+  budget, not a truncation guard, and the stop above is how that budget is enforced. It fires in
+  two places. On a fresh stamp, the owner first shortens any fill or answered knob value longer than
+  one line — both are the owner's text; still over, the overage is a defect in what the stamp
+  writes, filed against the Profile or the engine file that holds the bytes (a Template, or
+  `defaults.md` for a knob value) and fixed there, never as a trim of the stamped output. On a
+  re-run it catches a project that has bloated since its stamp. Measured 2026-09-21 on the project
+  this gate came from: the contract reached **47,873 bytes**, 46% over the *adapter* cap, while
+  every figure the verify step then collected stayed green — the gate was measuring the 6 KB file
+  and ignoring the 48 KB one it pointed at.
 - **The `LOAD` lines are reported, never gated** (ADR 0016 § 4): they go to the run report, so a
   later reader knows what the adapters cost when followed.
 - **The canary is the truncation signal.** `AGENTS.md` ends in its canary zone: the canary is the
