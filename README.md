@@ -79,6 +79,19 @@ moments the description names.
 
 [`SKILL.md`](claude-code-gotchas/SKILL.md)
 
+### domain-modeling
+
+Keeps a project's domain language and decisions written down: `CONTEXT.md` as the glossary, with
+one-sentence what-it-IS definitions and `_Avoid_` lines for real in-repo collisions, and
+`docs/adr/` for decisions that pass the three-gate test (hard to reverse, surprising without
+context, a real trade-off). Refreshes scope the change set from git and exit cleanly when nothing
+changed. Model-invoked: it fires when a term is coined or contested, or a decision is made.
+
+**When to use:** terminology is being settled, `CONTEXT.md` is missing or has drifted behind the
+code, or a decision needs recording.
+
+[`SKILL.md`](domain-modeling/SKILL.md)
+
 ### godot-architecture-review
 
 A convergent, re-runnable architecture review and refactor campaign for Godot projects — *A
@@ -91,17 +104,6 @@ session.
 or you want to set up the review loop.
 
 [`SKILL.md`](godot-architecture-review/SKILL.md)
-
-### refresh-context
-
-Creates or refreshes a project's `CONTEXT.md` domain glossary (and any ADRs) through a
-docs-aware interview. A thin wrapper over `grilling` + `domain-modeling`, adding the four things
-those do not do reliably: scope the change set from git, mine the existing docs, gate every entry
-to glossary-only, and exit cleanly when nothing changed. Slash-only.
-
-**When to use:** a project has no `CONTEXT.md`, or one that has drifted behind the code.
-
-[`SKILL.md`](refresh-context/SKILL.md)
 
 ### unslop
 
@@ -121,8 +123,7 @@ ones you want from their own repos.
 
 | Skill | Named by | Install from |
 |---|---|---|
-| `grilling` | `refresh-context`, `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `domain-modeling` | `refresh-context`, `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `grilling` | `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `codebase-design` | `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `godot-gdscript-patterns` | `godot-architecture-review` | [`wshobson/agents`](https://github.com/wshobson/agents) |
 
@@ -137,8 +138,9 @@ Chunk library of imported dev-process rules, pinned subagent seat definitions, a
 `init-project` engine that stamped projects onto all of it. They were retired in favour of the
 `build` Skill and a brief per project. Four lesson Skills went with them (`verification-discipline`,
 `sandbox-and-permissions`, `git-flow-squash`, `parallel-work`), condensed into the symptom table of
-`claude-code-gotchas`. `git log` before that date has every file, and [`docs/adr/`](docs/adr/) keeps
-the decisions as they were made.
+`claude-code-gotchas`, and `refresh-context` folded into `domain-modeling`, which replaced the
+third-party Skill of that name. `git log` before that date has every file, and
+[`docs/adr/`](docs/adr/) keeps the decisions as they were made.
 
 ## Docs
 
