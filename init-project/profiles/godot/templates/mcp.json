@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "godot-mcp": {
-      "command": "node",
-      "args": ["tools/mcp/node_modules/@satelliteoflove/godot-mcp/dist/cli.js"]
-    }
-  }
-}

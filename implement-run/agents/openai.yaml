@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implement Run"
-  short_description: "Run one ticket under the implementation-run procedure"
-  default_prompt: "Use $implement-run to run one ticket under the implementation-run procedure."
-policy:
-  allow_implicit_invocation: false

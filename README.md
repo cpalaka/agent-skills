@@ -1,15 +1,13 @@
 # agent-skills
 
-Hand-authored Skills for [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) and
-[Codex](https://developers.openai.com/codex), plus the two things that keep them useful across
-many projects: a **Chunk library** of single-source dev-process instructions that projects
-reference rather than copy, and the **`init-project`** engine that scaffolds a project onto it.
+Hand-authored Skills for [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), each
+one a document you can read in one sitting. Most exist because something failed silently once and
+the fix had to be written down. Codex reads them too where its `.agents/skills` root is linked at
+the same directories.
 
-A Skill is a `SKILL.md` (plus supporting files) that an agent host loads — implicitly when the
+A Skill is a `SKILL.md` (plus supporting files) that an agent host loads: implicitly when the
 context matches its `description`, or explicitly as `/skill-name` in Claude Code and
-`$skill-name` in Codex. Nothing here is a framework: each Skill is a document you can read in one
-sitting, and most of them exist because something failed silently once and the fix had to be
-written down.
+`$skill-name` in Codex. Nothing here is a framework.
 
 ## Install
 
@@ -21,8 +19,8 @@ npx skills add cpalaka/agent-skills -s verification-discipline
 
 Repeat `-s` for each Skill you want; it takes several in one invocation.
 
-Or clone once and symlink whichever Skills you want into your host's user skills directory —
-this is what the author's own machines do, so a change in the clone is live in every host with no
+Or clone once and symlink whichever Skills you want into your host's user skills directory. This
+is what the author's own machines do, so a change in the clone is live in every host with no
 reinstall step:
 
 ```sh
@@ -32,45 +30,6 @@ cd agent-skills
 ln -s "$PWD/verification-discipline" ~/.claude/skills/verification-discipline   # Claude Code
 ln -s "$PWD/verification-discipline" ~/.agents/skills/verification-discipline   # Codex
 ```
-
-**Three Skills ship a Codex host adapter** — `godot-architecture-review`, `refresh-context` and
-`tournament`. A host adapter is a thin directory that reads the canonical body and states only
-what its host needs differently (invocation spelling, tool surface, the fan-out surface). For
-those three, point the Codex link at the adapter rather than the root directory:
-
-```sh
-ln -s "$PWD/refresh-context"              ~/.claude/skills/refresh-context
-ln -s "$PWD/codex-skills/refresh-context" ~/.agents/skills/refresh-context
-```
-
-### The Chunk library
-
-Chunks are not Skills and are not installed per-Skill. Run the bootstrap once per machine:
-
-```sh
-./bootstrap.sh          # PowerShell: ./bootstrap.ps1
-```
-
-It creates `~/.claude/chunks` and `~/.codex/chunks`, both pointing at this clone's `chunks/`. The
-clone may live anywhere — the script takes the location from its own path. Claude Code resolves
-`@~/.claude/chunks/<name>.md` imports from there; Codex has no `@import` syntax, so its
-`AGENTS.md` names the files and reads them explicitly ([ADR 0005](docs/adr/0005-codex-chunks-use-explicit-read-directives.md)).
-`tracker-github.md` is only a core: the rest of that convention is the `tracker-github` Skill, which
-is linked like any other Skill, one symlink per host — `bootstrap.sh` does not do it.
-
-Chunk imports are *external includes*: Claude Code asks for approval once per consuming project
-on first launch, and the session must be restarted before they load.
-
-### The seat definitions
-
-A third install surface, and the only one the verifier never sees. `agents/` holds one pinned agent
-definition per seat and effort value, all for Claude Code — `implementer`, `advisor`,
-`code-reviewer` and `coordinator`, plus a `-medium` suffix where a seat reaches another
-value. Codex has no named seats; [`agents/README.md`](agents/README.md) says why. The definitions
-install as one symlink each, exactly like a Skill; that README carries the seat table and the loop.
-
-They matter more than their size suggests: a seat whose definition the host cannot resolve does
-not fail, it dispatches on whoever spawned it. Check with `ls -l ~/.claude/agents`.
 
 ### Setting up a clone
 
@@ -82,9 +41,9 @@ git config core.hooksPath .githooks
 
 That arms two things:
 
-- **`leak-guard`** (`pre-commit`, `commit-msg`, `pre-push`) — blocks content that does not belong
+- **`leak-guard`** (`pre-commit`, `commit-msg`, `pre-push`): blocks content that does not belong
   in a public repository. Run `.githooks/leak-guard.sh scan` by hand to audit the whole tree.
-- **the backstop** (`post-checkout`, `post-merge`) — warns when a checkout or merge leaves the
+- **the backstop** (`post-checkout`, `post-merge`): warns when a checkout or merge leaves the
   working tree behind `main`, because a clone of this repo is usually also a live Skill install:
   the entries under `~/.claude/skills` and `~/.agents/skills` are symlinks into it, so landing on
   an older ref silently changes what your agent reads.
@@ -92,12 +51,19 @@ That arms two things:
 `core.hooksPath` is local config and is not tracked. A fresh clone has no hooks until someone
 sets it.
 
-`skill-updater` is the only Skill here that ships a test suite for its own code. The suite needs
-`pytest`, which a system `python3` usually cannot install into — run it from a virtualenv. The
-exact command lives in [`skill-updater/SKILL.md`](skill-updater/SKILL.md), which is where it is
-maintained; it is not repeated here.
-
 ## The Skills
+
+### build
+
+The one process Skill. Starts a build session from a brief in `docs/`: numbered milestones, each
+with a done check, built in order, each closed by the done check plus the project's verify command
+and committed with the milestone in the subject. Kept repos take a branch per ticket and squash
+locally; throwaways commit on `main`. A wrong brief is fixed in place, never guessed around. It
+replaces a spec → tickets → implement chain with one file the owner already writes. Slash-only.
+
+**When to use:** at the start of any build session, once the brief exists.
+
+[`SKILL.md`](build/SKILL.md)
 
 ### git-flow-squash
 
@@ -129,83 +95,7 @@ session.
 **When to use:** a Godot project needs an architecture review, a refactor or deepening campaign,
 or you want to set up the review loop.
 
-[`SKILL.md`](godot-architecture-review/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/godot-architecture-review/SKILL.md)
-
-### implement-batch
-
-How the owner's delegate works tickets hands-off: the main session stands in for the owner, takes a
-batch grant at kickoff, screens each ticket before it starts, and dispatches one `coordinator` seat
-per ticket to run `implement-run`. The delegate answers a closed set of stops — the plan, the
-Close approval, the caps, a slot-3 need, a false premise satisfied in form — and parks every other
-one for the owner; a permission dialog is never its to answer. A failed landing check, a changed
-instruction file, a dirty checkout and two consecutive parks are among the signals that end a batch.
-Claude Code only; a project where neither the contract nor a host adapter imports the
-`tracker-github` Chunk is out of scope. Slash-only.
-
-**When to use:** working a frontier, or one ticket, hands-off while the owner is away.
-
-[`SKILL.md`](implement-batch/SKILL.md)
-
-### implement-run
-
-How one ticket is actually run: the seats and what each one may not do (the coordinator writes no
-diff, the gate-runner never wrote the diff it re-runs), the advisor's two slots, the review (native
-axes, the bug hunter, the critic seat), and the closing run record under four fixed
-headings. The seat boundaries are the point — a run where the writer also grades its own
-output has no measurement in it, only a claim. Every default value of its knobs and dials lives in
-[`implement-run/defaults.yaml`](implement-run/defaults.yaml); a project overrides a knob by writing
-its key into its contract's `knobs:implement-run` block, read by marker. Named `implement-run` rather than
-`implement` so it sits beside the third-party `/implement` stub instead of shadowing it
-([ADR 0014](docs/adr/0014-floor-is-a-location.md)). Slash-only.
-
-**When to use:** running one ticket end to end — dispatching implementers, consulting the advisor,
-taking the review, writing the run record.
-
-[`SKILL.md`](implement-run/SKILL.md)
-
-### init-project
-
-The single engine that scaffolds a project onto the Chunk library; what a stamp emits is listed
-once, in [`SKILL.md`](init-project/SKILL.md)'s header. Every project type gets
-`docs/agents/project-workflow.md`, the shared contract holding the project's rules and the
-engine-written knob blocks, two thin host adapters over it — `CLAUDE.md` carrying the chunk
-`@import`s and Claude Code mechanics, `AGENTS.md` naming the same chunks for Codex to read ([ADR 0009](docs/adr/0009-init-project-emits-contract-and-two-adapters.md)) — and
-`.claude/agents/gate-runner.md`, the seat that re-runs the verify gate for a coordinator that did
-not write the diff ([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md)). Where the tracker is
-GitHub Issues, it also stamps the tracker's files — the tracker is an engine step, not a Profile
-([ADR 0022](docs/adr/0022-tracker-is-an-engine-step.md)). It also stamps Templates, merges `settings.local.json`, and runs a project-type **Profile**'s bespoke
-recipe. Adding a project type means adding a `profiles/<type>.md`; the engine never changes
-([ADR 0003](docs/adr/0003-single-init-project-engine.md)). Ships `godot` and `web` Profiles,
-and the empty `none` Profile, which runs on the engine defaults alone.
-
-**When to use:** setting up a new project, adopting the Chunk library in an existing one, or
-adding a new project type.
-
-[`SKILL.md`](init-project/SKILL.md)
-
-### multi-agent-policy
-
-Which capability role fills which seat in a multi-agent run. Two roles — **Planner** and
-**Builder** — each defined by a property (does it draw on its own weekly meter?) rather than a
-model name, so a model release does not silently invalidate the routing. Carries the pin rule
-(every seat is a definition; a bare spawn inherits the parent), the meter check, effort by
-definition — Builder-role seats `medium | high` where their definitions reach, which one a run
-starts at being `dials.effort` in `implement-run/defaults.yaml`, the Planner-role advisor `high`
-only, and no `model` on a dispatch of a definition that pins one, since it overrides the pin — and
-the rule that model names live in run artifacts, as family aliases, and never in durable prose
-([ADR 0011](docs/adr/0011-roles-not-cost-tiers.md),
-[ADR 0017](docs/adr/0017-seats-pin-family-aliases.md),
-[ADR 0023](docs/adr/0023-light-default-run-profile.md)). The procedure an implementation run
-follows is not here — it is the `implement-run` Skill, which is slash-only: a run loads it by name.
-
-**When to use:** before a delegated implementation (even a single implementer), a review with
-sub-agents, or any fan-out. Not for a single read-only sub-agent.
-
-Two sibling files nothing loads by default: `WORKFLOWS.md` (Workflow-tool scripts, vendor
-lenses, fan-out → verify discipline) and `COORDINATOR-PANE.md` (run shapes, interactive child
-sessions, heartbeats, peer coordination). Hands-off execution is the `implement-batch` Skill.
-
-[`SKILL.md`](multi-agent-policy/SKILL.md)
+[`SKILL.md`](godot-architecture-review/SKILL.md)
 
 ### parallel-work
 
@@ -233,7 +123,7 @@ to glossary-only, and exit cleanly when nothing changed. Slash-only.
 
 **When to use:** a project has no `CONTEXT.md`, or one that has drifted behind the code.
 
-[`SKILL.md`](refresh-context/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/refresh-context/SKILL.md)
+[`SKILL.md`](refresh-context/SKILL.md)
 
 ### sandbox-and-permissions
 
@@ -247,86 +137,6 @@ session and every subagent.
 half-completes and the next merge aborts, or before adding any permission entry.
 
 [`SKILL.md`](sandbox-and-permissions/SKILL.md)
-
-### codex-sandbox-and-approvals
-
-The Codex sibling of the entry above, and the two disagree where it matters most: under Codex's
-`workspace-write` the whole of `.git/` is read-only, so `git add`, `git commit` and `git checkout`
-all fail 128 on a lock file, where Claude Code's sandbox lets a commit through. Codex has no
-permission allowlist at all — it has an approval policy, and `codex exec` cannot escalate. Carries
-the measured denial catalogue, the four sandbox-widening knobs, the project-trust gate, and a
-side-by-side table of every point where a rule for one host is wrong on the other.
-
-**When to use:** a command under Codex fails "Operation not permitted", a git write fails on
-`index.lock`, the network looks down inside a session, or before widening a sandbox or reaching for
-`--dangerously-bypass-approvals-and-sandbox`.
-
-[`SKILL.md`](codex-sandbox-and-approvals/SKILL.md)
-
-### skill-updater
-
-Checks every installed Skill for upstream updates and installs them, across the two update
-channels on a machine — Claude Code plugins (`claude plugin`) and agent-skills (`npx skills`, under
-`~/.agents`) — and enumerates the third, Codex plugins (`codex plugin`), which has no update
-command. Auto-applies updates from trusted sources and confirms community ones. Hand-authored
-Skills are never touched. The deterministic work is in `scripts/skillsync.py`, which ships with a
-pytest suite.
-
-**When to use:** "check my skills for updates".
-
-[`SKILL.md`](skill-updater/SKILL.md)
-
-### spec-review
-
-Fresh-context adversarial review of a spec before it fans out into tickets. A spec is the source
-of a 1:1 mechanical fan-out, so a hole in it replicates into every ticket and nothing downstream
-catches it. Three parallel subagent charters (blindspot sweep, reuse verification, cold read)
-behind a decision fence, findings triaged as unverified upstream facts. Slash-only.
-
-**When to use:** between writing a spec and breaking it into tickets, on any multi-session build.
-
-[`SKILL.md`](spec-review/SKILL.md)
-
-### stem-split
-
-Splits a song into four production-ready stems (vocals, drums, bass, other) as 24-bit WAV, by
-chaining **Mel-Band Roformer** for the vocal with **htdemucs_ft** for everything else — neither
-tool gives both on its own. Verifies the source decodes before spending GPU on it, checks the
-stems are full-length and non-empty, and writes detected BPM and key alongside them. Needs
-`demucs`, `audio-separator` and `ffmpeg`; see [`TROUBLESHOOTING.md`](stem-split/TROUBLESHOOTING.md).
-
-**When to use:** separating or extracting stems, isolating or removing vocals, producing an
-acapella or an instrumental.
-
-[`SKILL.md`](stem-split/SKILL.md)
-
-### tournament
-
-Turns a recurring "generate a bunch, judge them, pick and refine a winner" job into an editable,
-reusable spec and a self-contained Workflow script. A code generator, not a library: the Workflow
-runtime forbids several JS built-ins, so each run emits a fresh literal script, linted by
-`reference/lint.mjs` before launch.
-
-**When to use:** produce many candidates, screen and rank them, run a judge bracket, stress-test
-the winner, synthesize a final answer.
-
-[`SKILL.md`](tournament/SKILL.md) · Codex adapter: [`codex-skills/`](codex-skills/tournament/SKILL.md)
-(no Workflow runtime there — the fan-out runs on `collaboration.spawn_agent`, and
-`codex-skills/tournament/scripts/tourney.mjs` reconciles every stage's sent-vs-returned)
-
-### tracker-github
-
-The GitHub Issues tracker convention beyond the always-on rules: the gate and origin label axes,
-parents and decomposition, the frontier query and the claim, the footer by gate and the closing
-record, acceptance and re-gating, unplanned tickets, wayfinder and boards, and commit forms. The
-`tracker-github` Chunk keeps the always-on core — single source of progress, the body-file rule,
-the gated set, search first — and names this Skill; every section here keeps the heading it had in
-the Chunk ([ADR 0025](docs/adr/0025-tracker-github-core-and-skill.md)).
-
-**When to use:** before any `gh issue` or `gh label` write, and before picking, claiming or closing
-a ticket, in a project that imports the `tracker-github` Chunk.
-
-[`SKILL.md`](tracker-github/SKILL.md)
 
 ### unslop
 
@@ -351,67 +161,36 @@ absent; before a 1:1 fan-out from a source.
 
 [`SKILL.md`](verification-discipline/SKILL.md)
 
-## The Chunk library
-
-A **Chunk** is a single-source dev-process instruction file in `chunks/`. Projects *reference* it
-rather than copying it, so editing a Chunk here updates every consuming project at its next
-launch ([ADR 0001](docs/adr/0001-import-from-home-chunk-delivery.md),
-[ADR 0005](docs/adr/0005-codex-chunks-use-explicit-read-directives.md)). This is the opposite of a
-**Template** (`init-project/templates/` for the files the engine emits,
-`init-project/profiles/<type>/templates/` for a Profile's own assets), which is *copied* into a
-project at init and thereafter diverges. The discriminator is one question: does the project edit the bytes after
-delivery? No → Chunk. Yes → Template.
-
-| Chunk | Covers |
-|---|---|
-| `dev-base.md` | The bundle every Profile imports; includes the four universal base Chunks below. |
-| `git-sync-branch-start.md` | Sync main, then branch off it, at task start. |
-| `git-commit-format.md` | Commit format and hygiene. |
-| `git-confirm-destructive.md` | Confirm with a human before any hard-to-reverse or outward-facing git/gh action. |
-| `verify-gate.md` | The gate to run before any commit or handoff. |
-| `backlog-core.md` | Frozen: task tracking with backlog.md, kept for its existing importers; stamped by nothing, takes no edits. |
-| `tracker-github.md` | Always-on core of task tracking with GitHub Issues — single source, body-file rule, gated set, search first; the rest of the convention is the `tracker-github` Skill. |
-
-Per-project variation belongs in **knobs** (an engine-written tagged block in the project's
-`CLAUDE.md`) or an **inline-leaf** (hand-authored, project-specific prose) — never in a Chunk.
-`CONTEXT.md` defines all of these terms.
-
 ## Skills these bodies name
 
-Bodies here — Skills, Profiles, Templates and seat definitions — name third-party Skills as
-things an agent runs. They are not bundled; install the ones you want from their own repos. One
-row per third-party Skill, because a body may name some of a repo's Skills and not others.
+Bodies here name third-party Skills as things an agent runs. They are not bundled; install the
+ones you want from their own repos.
 
 | Skill | Named by | Install from |
 |---|---|---|
-| `to-spec` | `spec-review`, `multi-agent-policy`, the `AGENTS.md` Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `to-tickets` | `spec-review`, `multi-agent-policy`, `init-project`'s tracker Templates (the contract fragment and the issue-tracker pointer) | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `implement` | `multi-agent-policy`, `implement-run`, the `implementer` seat | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `code-review` | `spec-review`, `implement-run`, the `code-reviewer` seat, `init-project`'s tracker Templates (the contract fragment and the issue-tracker pointer) | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `grilling` | `refresh-context` (both hosts), `godot-architecture-review`, `tournament`, `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `grill-with-docs` | `multi-agent-policy`, `tournament` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `domain-modeling` | `refresh-context` (both hosts), `godot-architecture-review`, the `godot` Profile's domain Template | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `grilling` | `refresh-context`, `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
+| `domain-modeling` | `refresh-context`, `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
 | `codebase-design` | `godot-architecture-review` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `diagnosing-bugs` | `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `prototype` | `implement-run` | [`mattpocock/skills`](https://github.com/mattpocock/skills) |
-| `godot-gdscript-patterns` | `godot-architecture-review`, the `godot` Profile | [`wshobson/agents`](https://github.com/wshobson/agents) |
+| `godot-gdscript-patterns` | `godot-architecture-review` | [`wshobson/agents`](https://github.com/wshobson/agents) |
 
-Derived, not stored: sweep the shipped bodies for each name, then read every hit — a
-`wayfinder:grilling` label value and a JavaScript `Object.prototype` share a spelling with a Skill
-and are not one.
+Derived, not stored: sweep the shipped bodies for each name. Every one of these is optional; where
+a body calls a Skill that may not be installed, the step skips.
 
-Every one of these is optional. Where a body calls a Skill that may not be installed, the
-reference is existence-gated and the step skips.
+## History
+
+Until October 2026 this repository also shipped a spec-to-tickets-to-implementation pipeline
+(`implement-run`, `implement-batch`, `multi-agent-policy`, `tracker-github`, `spec-review`), a
+Chunk library of imported dev-process rules, pinned subagent seat definitions, and the
+`init-project` engine that stamped projects onto all of it. They were retired in favour of the
+`build` Skill and a brief per project; `git log` before that date has every file, and
+[`docs/adr/`](docs/adr/) keeps the decisions as they were made.
 
 ## Docs
 
-- [`CONTEXT.md`](CONTEXT.md) — the domain glossary (Skill, Chunk, Template, Profile, knob,
-  inline-leaf, …). Read it before renaming anything.
-- [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — operating notes for working *in* this
+- [`CONTEXT.md`](CONTEXT.md): the domain glossary. Read it before renaming anything.
+- [`AGENTS.md`](AGENTS.md): operating notes for working *in* this
   repo.
-- [`agents/README.md`](agents/README.md) — the seat definitions: which seat each file
-  fills, how they install, and why editing one is live.
-- [`docs/adr/`](docs/adr/) — the architecture decisions behind the above.
+- [`docs/adr/`](docs/adr/): the architecture decisions, including the retired ones.
 
 ## License
 

@@ -1,4 +1,0 @@
-# the knob-added-renamed-retired case
-rename verify-gate dir root_dir
-retire verify-gate old_flag
-retire-block stale

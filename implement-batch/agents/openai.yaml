@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implement Batch"
-  short_description: "Work tickets hands-off as the owner's delegate"
-  default_prompt: "Use $implement-batch to work tickets hands-off as the owner's delegate."
-policy:
-  allow_implicit_invocation: false
