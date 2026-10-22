@@ -26,7 +26,7 @@ Created at campaign start. Holds *only* what is project-specific (everything els
 
 ## GLOSSARY.md — domain glossary
 
-Format: `domain-modeling/GLOSSARY-FORMAT.md` (opinionated; 1–2 sentence what-it-IS definitions;
+Format: `domain-modeling/GLOSSARY-FORMAT.md` (opinionated; one-sentence what-it-IS definitions;
 `_Avoid_:` synonym bans; project-specific terms only). Campaign additions that have proven out:
 
 - **Deep-reference pointer**: entries carry a `§N` tag into the project's deeper design doc(s)
@@ -38,13 +38,13 @@ Format: `domain-modeling/GLOSSARY-FORMAT.md` (opinionated; 1–2 sentence what-i
 
 ## ADRs — rejection memory
 
-Format + the 3-gate creation test: `domain-modeling/ADR-FORMAT.md` (lazy; 1–3 sentences;
+Format + the 3-gate creation test: `domain-modeling/ADR-FORMAT.md` (lazy; one paragraph;
 hard-to-reverse **and** surprising-without-context **and** real-trade-off). Campaign conventions on top:
 
 - **Rejections are recorded as accepted decisions-not-to-do-X** ("keep X as-is — no Y wrapper");
   status stays `accepted` — the file's existence + title carries the verdict. No status lifecycle
-  (a deliberate narrowing of ADR-FORMAT.md's optional `deprecated`/`superseded` values — in-place
-  amendment replaces them).
+  (a deliberate override of ADR-FORMAT.md § Reversal, which writes a new ADR and marks the old one
+  superseded — in-place amendment replaces that here).
 - **Anti-re-raise clause** — close each ADR with an italic paragraph addressed to a future
   reviewer: "you will be tempted to re-suggest X; this is why not", plus what *would* justify
   revisiting (the supersede trigger). This clause is what makes re-runs converge.

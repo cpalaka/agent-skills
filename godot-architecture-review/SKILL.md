@@ -23,6 +23,11 @@ session** ([PHASES.md](PHASES.md) has copy-paste kickoff prompts).
   the project's gotchas catalog, and — if the `godot-gotchas` skill is installed (its directory
   exists under `~/.claude/skills` or `~/.agents/skills`) — that skill's catalog too; otherwise skip
   this step and use the project's catalog alone.
+- **Gates for the third-party companions.** `codebase-design`, `grilling` and
+  `godot-gdscript-patterns` are not shipped here (README § Skills these bodies name). Where a step
+  names one, check its directory under `~/.claude/skills` or `~/.agents/skills`; when absent, skip
+  it and work from this file: § Vocabulary for the survey vocabulary and deletion test, the owner
+  directly for grilling, § Godot guardrails for the realization idiom.
 
 This skill adds the three things those lack: **Godot guardrails**, **population pre-labeling**,
 and the **convergence protocol** ([ARTIFACTS.md](ARTIFACTS.md) + [PHASES.md](PHASES.md)).
