@@ -83,13 +83,13 @@ moments the description names.
 
 ### domain-modeling
 
-Keeps a project's domain language and decisions written down: `CONTEXT.md` as the glossary, with
+Keeps a project's domain language and decisions written down: `GLOSSARY.md` as the glossary, with
 one-sentence what-it-IS definitions and `_Avoid_` lines for real in-repo collisions, and
 `docs/adr/` for decisions that pass the three-gate test (hard to reverse, surprising without
 context, a real trade-off). Refreshes scope the change set from git and exit cleanly when nothing
 changed. Model-invoked: it fires when a term is coined or contested, or a decision is made.
 
-**When to use:** terminology is being settled, `CONTEXT.md` is missing or has drifted behind the
+**When to use:** terminology is being settled, `GLOSSARY.md` is missing or has drifted behind the
 code, or a decision needs recording.
 
 [`SKILL.md`](domain-modeling/SKILL.md)
@@ -141,12 +141,13 @@ Chunk library of imported dev-process rules, pinned subagent seat definitions, a
 `build` Skill and a brief per project. Four lesson Skills went with them (`verification-discipline`,
 `sandbox-and-permissions`, `git-flow-squash`, `parallel-work`), condensed into the symptom table of
 `claude-code-gotchas`, and `refresh-context` folded into `domain-modeling`, which replaced the
-third-party Skill of that name. `git log` before that date has every file, and
+third-party Skill of that name. The glossary file was `CONTEXT.md` until 2026-10-23, when it
+took upstream's name `GLOSSARY.md`. `git log` before that date has every file, and
 [`docs/adr/`](docs/adr/) keeps the decisions as they were made.
 
 ## Docs
 
-- [`CONTEXT.md`](CONTEXT.md): the domain glossary. Read it before renaming anything.
+- [`GLOSSARY.md`](GLOSSARY.md): the domain glossary. Read it before renaming anything.
 - [`AGENTS.md`](AGENTS.md): operating notes for working *in* this
   repo.
 - [`docs/adr/`](docs/adr/): the architecture decisions, including the retired ones.

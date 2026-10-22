@@ -17,7 +17,7 @@ session** ([PHASES.md](PHASES.md) has copy-paste kickoff prompts).
   deletion test, and `codebase-design/DEEPENING.md` + `codebase-design/DESIGN-IT-TWICE.md` at dive
   time. Grilling discipline: the `grilling` skill. HTML-report format: vendored here as
   [HTML-REPORT.md](HTML-REPORT.md).
-- **Artifact formats**: the `domain-modeling` skill — `domain-modeling/CONTEXT-FORMAT.md`,
+- **Artifact formats**: the `domain-modeling` skill — `domain-modeling/GLOSSARY-FORMAT.md`,
   `domain-modeling/ADR-FORMAT.md`.
 - **Godot realization idiom** at dive time: the `godot-gdscript-patterns` skill; engine quirks per
   the project's gotchas catalog, and — if the `godot-gotchas` skill is installed (its directory
@@ -90,7 +90,7 @@ Applied naively, the APoSD lens generates **category errors** in Godot. Forbid t
 
 | Phase | What | Mode |
 |---|---|---|
-| 0 | Domain language → `CONTEXT.md` | **Parallel subagent workflow** (exploration) |
+| 0 | Domain language → `GLOSSARY.md` | **Parallel subagent workflow** (exploration) |
 | 1 | Whole-game survey → `system-map.md` + friction report → ranked candidates | **Parallel subagent workflow** (exploration) |
 | 2…M | Deep-dives, one candidate per session | **Solo** — grilling + TDD, surgical |
 | re-run | Verbatim Phase-1 re-run; convergence verdict computed **post-hoc** | **Parallel subagent workflow** + solo verdict |

@@ -1,4 +1,4 @@
-# CONTEXT.md format
+# GLOSSARY.md format
 
 ```md
 # {Project} — domain language
@@ -28,7 +28,7 @@ _Avoid_: bill (what the customer calls it; the code never does).
 
 ## Several contexts
 
-A `CONTEXT-MAP.md` at the repo root lists each context, where its `CONTEXT.md` lives, and how the
+A `GLOSSARY-MAP.md` at the repo root lists each context, where its `GLOSSARY.md` lives, and how the
 contexts relate (which events or shared types cross each boundary). System-wide decisions stay in
 the root `docs/adr/`; a context's own decisions sit beside its glossary. Infer the context from
 the topic at hand; ask when unclear.

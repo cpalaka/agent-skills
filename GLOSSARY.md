@@ -70,7 +70,7 @@ build, smoke, whatever the project has, behind one name. Here it is `.githooks/l
 _Avoid_: gate runner, verify gate, CI (a Verify command runs locally and is the only gate).
 
 **Kept repo**:
-One of the two project kinds the `build` Skill distinguishes; the other is the Throwaway repo. A kept repo carries `CONTEXT.md`, lazy
+One of the two project kinds the `build` Skill distinguishes; the other is the Throwaway repo. A kept repo carries `GLOSSARY.md`, lazy
 `docs/adr/`, one `AGENTS.md`, Tickets, and a branch per Ticket squash-merged locally.
 _Avoid_: production (a kept repo may be a game that never ships).
 

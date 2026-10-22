@@ -12,20 +12,20 @@ The exploration kickoffs retain Claude Code's required `ultracode.` Workflow rou
 kickoff deliberately has no router (solo, write-heavy). On Codex, the
 `codex-skills/godot-architecture-review` adapter says what to do with that token.
 
-## Phase 0 — Domain language → `CONTEXT.md` · WORKFLOW · exploration
+## Phase 0 — Domain language → `GLOSSARY.md` · WORKFLOW · exploration
 
 Fan out parallel readers over the project's subsystems + docs + memory; each returns candidate
 domain terms (`term → 1–2 sentence what-it-IS + _Avoid_ synonyms`); synthesize into one
-opinionated, deduped glossary; write `CONTEXT.md`. This seeds every later phase — and all future
+opinionated, deduped glossary; write `GLOSSARY.md`. This seeds every later phase — and all future
 development — with a pinned vocabulary. Phase 0 produces *vocabulary only*; the whole-game map
 is Phase 1.
 
 ```
 ultracode. Invoke the godot-architecture-review skill and read docs/architecture/campaign.md,
-then execute Phase 0 (domain language → CONTEXT.md). Fan out parallel readers over the
+then execute Phase 0 (domain language → GLOSSARY.md). Fan out parallel readers over the
 subsystems listed in campaign.md plus docs/ and project memory; produce an opinionated, deduped
-glossary (term → what-it-IS + _Avoid_); write CONTEXT.md at repo root per
-domain-modeling/CONTEXT-FORMAT.md (terse, points into <DEEP-DESIGN-DOC>, project-specific terms
+glossary (term → what-it-IS + _Avoid_); write GLOSSARY.md at repo root per
+domain-modeling/GLOSSARY-FORMAT.md (terse, points into <DEEP-DESIGN-DOC>, project-specific terms
 only). Then show me the glossary for review before finalizing.
 ```
 
@@ -45,11 +45,11 @@ though D itself stays out of scope. End by ranking candidate deep-dives, recomme
 (prefer a first dive that **serves both drivers** — sits on an extraction seam *and* has
 anchor-task blast radius), and **offering to record the run's load-bearing refutations as ADRs**
 (rejection memory — candidate-adjacent rejections recorded now become scope-fences for the
-dives). Read `CONTEXT.md` and any `docs/adr/` first; suppress settled items.
+dives). Read `GLOSSARY.md` and any `docs/adr/` first; suppress settled items.
 
 ```
 ultracode. Invoke the godot-architecture-review skill and read docs/architecture/campaign.md and
-CONTEXT.md, then execute Phase 1 (whole-game survey). Use the codebase-design skill for vocabulary
+GLOSSARY.md, then execute Phase 1 (whole-game survey). Use the codebase-design skill for vocabulary
 and this skill's HTML-REPORT.md for the report format, but apply the Godot guardrails and the pre-labeled populations from
 campaign.md, scrutinize scene-node-name coupling, and adversarially verify every shallow-module
 claim. Produce: the populations table, a regenerated docs/architecture/system-map.md, and an
@@ -69,7 +69,7 @@ ranked, recommending one, and offer to record the run's load-bearing refutations
 3. **Run the realization through `godot-gdscript-patterns`** so the idiom is right (signal vs
    setter vs `.tres` vs `NodePath`).
 4. **Implement solo + TDD** — surgical; no opportunistic refactoring. Inline side effects as
-   decisions crystallize: new domain term → `CONTEXT.md`; load-bearing rejection → offer an ADR.
+   decisions crystallize: new domain term → `GLOSSARY.md`; load-bearing rejection → offer an ADR.
 5. **Before committing cross-module changes**, dispatch a read-only **adversarial review
    subagent** that traces every consumed value to its producer and checks the convention matches
    (units, sign, coordinate handedness, angle wrapping, facing-relative vs world). Solo
@@ -80,11 +80,11 @@ ranked, recommending one, and offer to record the run's load-bearing refutations
    anchor task for gate 5).
 
 ```
-Invoke the godot-architecture-review skill and read docs/architecture/campaign.md, CONTEXT.md,
+Invoke the godot-architecture-review skill and read docs/architecture/campaign.md, GLOSSARY.md,
 and docs/adr/ (ADRs are scope-fences — surface any conflict for an amend/supersede decision
 before locking it). Deep-dive on <CANDIDATE>. Use the grilling skill to walk the seam and the
 deepened-module shape; run the Godot realization through godot-gdscript-patterns; implement
-solo + TDD, surgical only. Update CONTEXT.md for any new term and offer an ADR for any
+solo + TDD, surgical only. Update GLOSSARY.md for any new term and offer an ADR for any
 load-bearing rejection. Dispatch the adversarial cross-module review before committing. Verify
 against the gate (hard gates 4 + 5).
 ```

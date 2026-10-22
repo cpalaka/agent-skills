@@ -12,7 +12,7 @@ You are starting a build session. The brief is the spec and the task list. Nothi
 
 A file in `docs/` (the grill's output, or a plan the owner wrote). It holds the problem, the
 solution, the decisions, what is out of scope, and **numbered milestones, each with a done
-check**. Read it whole before touching code, along with `CONTEXT.md` and the repo's `AGENTS.md`.
+check**. Read it whole before touching code, along with `GLOSSARY.md` and the repo's `AGENTS.md`.
 
 Kept repos may hold tickets instead: one file each in `docs/tickets/NN-slug.md`, with a
 `Status:` line. Treat a ticket exactly like a milestone.

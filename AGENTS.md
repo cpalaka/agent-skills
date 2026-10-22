@@ -1,7 +1,7 @@
 # agent-skills
 
 Operating notes for working in this repo. What each Skill is and how to install one: `README.md`.
-The vocabulary: `CONTEXT.md`. Settled decisions, including the retired ones: `docs/adr/`.
+The vocabulary: `GLOSSARY.md`. Settled decisions, including the retired ones: `docs/adr/`.
 
 ## The checkout is the install
 
@@ -46,7 +46,7 @@ entry is a per-line owner decision, never a way to turn a red scan green.
 - A Skill that names another Skill which may not be installed gates the step on that Skill's
   directory existing under `~/.claude/skills` or `~/.agents/skills`, and skips when it does not.
 - Renaming or retiring a Skill means updating every live reference (other Skills, `README.md`,
-  `CONTEXT.md`) and re-pointing its symlinks. Leave ADRs alone; they record what was decided when.
+  `GLOSSARY.md`) and re-pointing its symlinks. Leave ADRs alone; they record what was decided when.
 - `README.md`'s Skill roster is derived from the directories present. Re-derive it rather than
   editing a line.
 - A Skill is prose an agent executes, so a change to one is verified by a fresh session following
