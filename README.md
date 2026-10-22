@@ -14,7 +14,7 @@ context matches its `description`, or explicitly as `/skill-name` in Claude Code
 Per Skill, through the [`skills` CLI](https://github.com/vercel-labs/skills):
 
 ```sh
-npx skills add cpalaka/agent-skills -s verification-discipline
+npx skills add cpalaka/agent-skills -s claude-code-gotchas
 ```
 
 Repeat `-s` for each Skill you want; it takes several in one invocation.
@@ -27,8 +27,8 @@ reinstall step:
 git clone https://github.com/cpalaka/agent-skills.git
 cd agent-skills
 
-ln -s "$PWD/verification-discipline" ~/.claude/skills/verification-discipline   # Claude Code
-ln -s "$PWD/verification-discipline" ~/.agents/skills/verification-discipline   # Codex
+ln -s "$PWD/claude-code-gotchas" ~/.claude/skills/claude-code-gotchas   # Claude Code
+ln -s "$PWD/claude-code-gotchas" ~/.agents/skills/claude-code-gotchas   # Codex
 ```
 
 ### Setting up a clone
@@ -65,24 +65,19 @@ replaces a spec → tickets → implement chain with one file the owner already 
 
 [`SKILL.md`](build/SKILL.md)
 
-### git-flow-squash
+### claude-code-gotchas
 
-The default git-flow fork: integration is a local **squash-merge** to `main`, no PRs, no merge
-commit. That last part is why the rest of it exists — with no merge commit to inspect afterwards,
-the pause at the staged squash is the only review surface the change will ever get, so the Skill
-spells out what has to be true at that moment. The three rules that ride the fork together —
-squash-merge, the typed `<type>/<task id>` branch prefix, no commit SHA in the tracker notes — are
-coupled by [ADR 0002](docs/adr/0002-git-flow-structural-fork.md) and must not be taken apart; a
-fourth covers local review and the `main` push gate. Around them sit the measured footguns: the
-squash carries the branch's final tree and nothing else, a sign-off approves a tree rather than a
-branch name, a second writer can spill into `git status` between approval and merge, and `main`
-held by another worktree is merged into without taking it. Other bodies cite the four as § (a) to
-§ (d).
+Claude Code failures that report success, one symptom per row: the sandbox's two `$TMPDIR`s and
+denied heredocs, the harness `grep`, squash-merges that drop a peer's commit, subagents that
+inherit the parent's model, oracles that say success while nothing happened, permission rules
+that match a `grep` pattern. Each row carries its cause and fix; the ten fixes longer than a line
+have recipes in `RECIPES.md`. Model-invoked: it fires before a squash-merge, a subagent dispatch, an
+absence claim, or trusting a clean reading from a sandboxed command.
 
-**When to use:** at task start when naming a branch, and at integration — before any squash-merge
-to `main`, any push of `main`, any PR, or deleting a merged branch.
+**When to use:** a command behaves unexpectedly under Claude Code, or before any of the four
+moments the description names.
 
-[`SKILL.md`](git-flow-squash/SKILL.md)
+[`SKILL.md`](claude-code-gotchas/SKILL.md)
 
 ### godot-architecture-review
 
@@ -97,23 +92,6 @@ or you want to set up the review loop.
 
 [`SKILL.md`](godot-architecture-review/SKILL.md)
 
-### parallel-work
-
-What to do when more than one writer touches a repository. Two sessions sharing a checkout is the
-failure the Skill exists to avoid, so it carries the tell and the git commands that silently
-destroy a peer's uncommitted work. Beyond that, a decision rule picks between two modes, both
-entered on an explicit signal only — **waves** (a dependency-free fan-out to background subagents)
-and **attended worktrees** (a human driving two or more tasks hands-on). It also carries what a
-worktree does *not* buy you: git writes in one fail under the sandbox, filesystem isolation is not
-tool-state isolation, and a fresh interactive worktree inherits none of the gitignored host
-config. Merge and Done are delegated to `git-flow-squash`.
-
-**When to use:** when a checkout turns out to have a second writer, on an explicit parallel-work
-signal — running 2+ tasks concurrently, fanning background subagents out over dependency-free
-work — and before any `git worktree` setup.
-
-[`SKILL.md`](parallel-work/SKILL.md)
-
 ### refresh-context
 
 Creates or refreshes a project's `CONTEXT.md` domain glossary (and any ADRs) through a
@@ -125,19 +103,6 @@ to glossary-only, and exit cleanly when nothing changed. Slash-only.
 
 [`SKILL.md`](refresh-context/SKILL.md)
 
-### sandbox-and-permissions
-
-Claude Code sandbox denials and permission-allowlist safety. The session-init baseline is a
-one-line bullet in each project's Claude adapter; this Skill carries its shape, and what you need
-once a denial actually fires, or you
-are about to edit `permissions.allow` — where a broad glob silently disables a gate in every
-session and every subagent.
-
-**When to use:** a Bash or git command fails "Operation not permitted", a branch switch
-half-completes and the next merge aborts, or before adding any permission entry.
-
-[`SKILL.md`](sandbox-and-permissions/SKILL.md)
-
 ### unslop
 
 Cuts AI tells from prose and rewrites it in a human voice — docs, READMEs, essays, release notes,
@@ -148,18 +113,6 @@ local edits, and [`unslop/LICENSE`](unslop/LICENSE) for the notice that governs 
 **When to use:** "this reads like AI".
 
 [`SKILL.md`](unslop/SKILL.md)
-
-### verification-discipline
-
-How to trust a measurement, and how to file a negative claim. Two failure families, both silent: a
-bad instrument reports success, and a negative claim is false the moment anything outside your
-review scope contradicts it. Neither produces an error signal, so both need a procedure.
-
-**When to use:** before believing any post-fix number, benchmark or pass/fail verdict; before
-writing a check, gate or eval harness; before claiming anything is dead, unused, untested or
-absent; before a 1:1 fan-out from a source.
-
-[`SKILL.md`](verification-discipline/SKILL.md)
 
 ## Skills these bodies name
 
@@ -182,8 +135,10 @@ Until October 2026 this repository also shipped a spec-to-tickets-to-implementat
 (`implement-run`, `implement-batch`, `multi-agent-policy`, `tracker-github`, `spec-review`), a
 Chunk library of imported dev-process rules, pinned subagent seat definitions, and the
 `init-project` engine that stamped projects onto all of it. They were retired in favour of the
-`build` Skill and a brief per project; `git log` before that date has every file, and
-[`docs/adr/`](docs/adr/) keeps the decisions as they were made.
+`build` Skill and a brief per project. Four lesson Skills went with them (`verification-discipline`,
+`sandbox-and-permissions`, `git-flow-squash`, `parallel-work`), condensed into the symptom table of
+`claude-code-gotchas`. `git log` before that date has every file, and [`docs/adr/`](docs/adr/) keeps
+the decisions as they were made.
 
 ## Docs
 
