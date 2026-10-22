@@ -33,10 +33,12 @@ For each milestone, in order:
    check's owner play is step 5; everything else in it is green here.
 3. Commit, with the milestone in the subject. Throwaway repos commit on `main`; kept repos
    work on a branch per ticket.
-4. Update the "where the work stands" section of `AGENTS.md`, naming any milestone left partly
-   built and the part to resume at.
+4. Update the "where the work stands" section of `AGENTS.md` (and the ticket's `Status:` line),
+   naming any milestone left partly built and the part to resume at.
 5. Where feel matters, stop and hand it to the owner at F5. Their verdict decides whether the
-   milestone is done, and it goes into the brief under that milestone.
+   milestone is done, and it goes into the brief under that milestone. A rejected milestone goes
+   back to step 1 with the verdict as its requirement; an accepted one gets its step 4 record
+   updated to done.
 6. Kept repos: squash-merge the branch locally once the milestone is done (load
    `claude-code-gotchas` first). Where step 5 applies, that is after the owner's verdict, never
    before, with the verdict and the updated `AGENTS.md` committed on the branch first.

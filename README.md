@@ -59,8 +59,9 @@ The one process Skill. Starts a build session from a brief in `docs/`: numbered 
 with a done check, built in order from wherever `AGENTS.md` says the work stands, each closed by
 the done check plus the project's verify command and committed with the milestone in the subject.
 Kept repos take a branch per ticket and squash locally once the milestone is done, after the
-owner's play where feel matters; throwaways commit on `main`. A wrong brief is fixed in place, never guessed around. It
-replaces a spec → tickets → implement chain with one file the owner already writes. Slash-only.
+owner's play where feel matters; throwaways commit on `main`. A wrong brief is fixed in place,
+never guessed around. It replaces a spec → tickets → implement chain with one file the owner
+already writes. Slash-only.
 
 **When to use:** at the start of any build session, once the brief exists.
 
