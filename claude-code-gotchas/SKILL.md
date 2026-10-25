@@ -1,6 +1,6 @@
 ---
 name: claude-code-gotchas
-description: Claude Code failures that report success, by symptom: sandbox, shell, git, subagents, reading a result, Codex, permissions. Consult before trusting a clean reading from a sandboxed command, before any squash-merge or push of main, before dispatching a subagent, before filing an absence claim ("not in the repo", "dead code", "no regression"), when a command fails `Operation not permitted`, and when a gate passes on a tree you expected red.
+description: Claude Code failures that report success, by symptom: sandbox, shell, git, subagents, reading a result, Codex, permissions. Consult before trusting a clean reading from a sandboxed command, before any squash-merge or push of main, before dispatching a subagent, before filing an absence claim ("not in the repo", "dead code", "no regression"), when a command fails `Operation not permitted`, when a gate passes on a tree you expected red, and when a settings key has no effect in a desktop-app session.
 ---
 
 # Claude Code gotchas
@@ -113,3 +113,5 @@ A check that cannot go red proves nothing (E1).
 | G3 | A settings edit clobbers `model`, `hooks`, `theme` | Wholesale overwrite | Read, union, write back; dedup `permissions.allow` by exact string |
 | G4 | A rule you expected to fire did not | `deny > ask > allow`; a hook's `ask` outranks an allow; `timeout nice nohup env` are stripped before matching, `npx docker exec find -exec` are not | Match against the stripped command |
 | G5 | A `PostToolUse` hook never sees a failed Bash call | A non-zero exit fires `PostToolUseFailure` | Register both |
+| G6 | `deniedMcpServers` names a claude.ai connector (`"claude.ai Gmail"`), yet a desktop-app session has it connected with every tool | The desktop app delivers connectors in-process as `sdk` servers; no MCP setting or `managed-mcp.json` reaches them. The key acts only where Claude Code fetches connectors itself (terminal) | Desktop: the composer's + menu connector switch, or `set_session_connector_enabled`, which also sets the default for new sessions; or disconnect at claude.ai/customize/connectors (measured 2026-10-25) |
+| G7 | `skillOverrides` sets `docs: off`, `pdf: off`; the skills listing still carries `anthropic-skills:docs` with its full description | `anthropic-skills:*` are claude.ai-synced skills, delivered to the desktop app as a plugin; `skillOverrides` matches local skill names and skips plugin skills | Turn the skill off at claude.ai > Settings > Skills; `pdf` and `xlsx` always sync. `/doctor` prices the listing |
