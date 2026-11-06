@@ -24,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 HOME = Path.home()
 PLUGINS_INSTALLED = HOME / ".claude/plugins/installed_plugins.json"
@@ -50,7 +51,7 @@ def is_trusted_marketplace(marketplace, trusted_marketplaces):
 
 
 def is_trusted_repo(repo, trusted_repos):
-    return any(fnmatch.fnmatch(repo, pat) for pat in trusted_repos)
+    return repo is not None and any(fnmatch.fnmatch(repo, pat) for pat in trusted_repos)
 
 
 # ---------- plugin update decision ----------
@@ -129,6 +130,25 @@ def repo_from_url(source_url):
         s = s[:-4]
     parts = s.split("/")
     return "/".join(parts[-2:]) if len(parts) >= 2 else s
+
+
+def github_repo(source_url):
+    """'owner/repo' for a plain https://github.com URL, else None.
+
+    The trust decision reads this rather than repo_from_url, which keeps the last two
+    path segments of any URL and so would pass https://evil.example/anthropics/skills.
+    Anything unrecognised is None, and None is untrusted: it asks rather than auto-applies.
+    """
+    try:
+        parts = urlsplit(source_url)
+        host = parts.hostname
+    except ValueError:
+        return None
+    if parts.scheme != "https" or host != "github.com" or parts.username or parts.password:
+        return None
+    path = parts.path.strip("/")
+    segments = (path[:-4] if path.endswith(".git") else path).split("/")
+    return "/".join(segments) if len(segments) == 2 and all(segments) else None
 
 
 def group_skills_by_repo(lock_skills):
@@ -277,12 +297,31 @@ def merge_note(existing, extra):
 
 
 # ---------- diffing ----------
+def escaping_links(root):
+    """Paths under `root`, relative to it, of symlinks that resolve outside it."""
+    root = Path(root).resolve()
+    found = []
+    for folder, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d != ".git" or Path(folder) != root]
+        for entry in (*dirs, *files):
+            path = Path(folder) / entry
+            if path.is_symlink() and not path.resolve().is_relative_to(root):
+                found.append(str(path.relative_to(root)))
+    return sorted(found)
+
+
 def diff_dirs(upstream_dir, local_dir):
     """Return (changed: bool, diffstat: str, full_diff: str).
 
     `diff` exit codes: 0 = same, 1 = differences, 2 = trouble (e.g. missing dir).
-    Raises RuntimeError on exit code 2.
+    Raises RuntimeError on exit code 2, and before running at all when either side holds
+    a link out of its folder: `diff` follows links, so an upstream `notes.md -> ~/.ssh/key`
+    would print that file into the diff, and from there into the transcript.
     """
+    for side in (upstream_dir, local_dir):
+        links = escaping_links(side)
+        if links:
+            raise RuntimeError(f"refusing to diff, links leave the folder: {', '.join(links)}")
     excludes = ["--exclude=.git", *junk_diff_excludes()]
     brief = subprocess.run(
         ["diff", "-rq", *excludes, str(local_dir), str(upstream_dir)],
@@ -521,7 +560,7 @@ def detect_skills(report, trusted_repos):
                 "legacy entry (no skillPath) — update manually"))
     for source_url, items in group_skills_by_repo(skills).items():
         repo = repo_from_url(source_url)
-        trusted = is_trusted_repo(repo, trusted_repos)
+        trusted = is_trusted_repo(github_repo(source_url), trusted_repos)
         ref = items[0][2]
         tmp = Path(tempfile.mkdtemp(prefix="skillsync-"))
         try:
@@ -695,7 +734,11 @@ def diff_skill(name, config_path=DEFAULT_CONFIG):
     tmp = Path(tempfile.mkdtemp(prefix="skillsync-diff-"))
     try:
         clone_skill_folders(entry["sourceUrl"], [folder], entry.get("ref"), tmp)
-        _changed, _stat, full = diff_dirs(tmp / folder, AGENT_SKILLS_DIR / name)
+        try:
+            _changed, _stat, full = diff_dirs(tmp / folder, AGENT_SKILLS_DIR / name)
+        except RuntimeError as e:
+            print(f"{name}: {e}", file=sys.stderr)
+            return 1
         print(full if full.strip() else "(no differences)")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

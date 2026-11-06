@@ -679,3 +679,124 @@ def test_personal_repos_sees_a_remote_that_moved_without_fetching(tmp_path, monk
     skillsync.detect_personal(report)
     assert report["personalRepos"][0]["remoteMoved"] is True
     assert _git(repo, "rev-parse", "origin/main") == before  # read-only: no fetch happened
+
+
+# ---------- trust needs the host, not just the last two path segments ----------
+@pytest.mark.parametrize("url,expected", [
+    ("https://github.com/anthropics/skills.git", "anthropics/skills"),
+    ("https://github.com/anthropics/skills", "anthropics/skills"),
+    ("https://GitHub.com/anthropics/skills/", "anthropics/skills"),
+    ("https://evil.example/anthropics/skills.git", None),
+    ("https://github.com.evil.example/anthropics/skills.git", None),
+    ("https://github.com@evil.example/anthropics/skills.git", None),
+    ("https://evil.example/github.com/anthropics/skills.git", None),
+    ("https://github.com/evil/anthropics/skills.git", None),
+    ("http://github.com/anthropics/skills.git", None),
+    ("git@github.com:anthropics/skills.git", None),
+    ("file:///tmp/anthropics/skills", None),
+    ("", None),
+])
+def test_github_repo_pins_scheme_host_and_shape(url, expected):
+    assert skillsync.github_repo(url) == expected
+
+
+def test_is_trusted_repo_treats_no_repo_as_untrusted():
+    assert not skillsync.is_trusted_repo(None, ["*"])
+
+
+def test_lookalike_host_is_not_trusted_end_to_end(tmp_path, monkeypatch):
+    # Same owner/repo tail as a trusted source, on another host: it must ask, never auto-apply.
+    monkeypatch.setattr(skillsync, "clone_no_checkout", lambda *a, **k: None)
+    monkeypatch.setattr(skillsync, "upstream_skill_folders", lambda dest: {"skills/s"})
+    monkeypatch.setattr(skillsync, "checkout_folders", lambda *a, **k: None)
+    monkeypatch.setattr(skillsync, "diff_dirs", lambda *a: (True, "1 file(s), +1/-0 lines", ""))
+    monkeypatch.setattr(skillsync, "local_edit_status", lambda n, e: ("a" * 40, False, None))
+    lock = tmp_path / "lock.json"
+    lock.write_text(json.dumps({"skills": {"s": {
+        "sourceUrl": "https://evil.example/anthropics/skills.git",
+        "skillPath": "skills/s/SKILL.md"}}}))
+    monkeypatch.setattr(skillsync, "SKILL_LOCK", lock)
+    report = {"plugins": [], "skills": [], "newSkills": [], "previouslyRemoved": [], "errors": []}
+    skillsync.detect_skills(report, ["anthropics/*"])
+    assert report["skills"][0]["trusted"] is False
+    assert report["skills"][0]["action"] == "confirm"
+
+
+# ---------- diff never follows a link out of the folder ----------
+def _dirs_with_secret(tmp_path):
+    secret = tmp_path / "secret.txt"
+    secret.write_text("TOP-SECRET-BYTES\n")
+    up = tmp_path / "up"; local = tmp_path / "local"
+    up.mkdir(); local.mkdir()
+    (up / "SKILL.md").write_text("same\n")
+    (local / "SKILL.md").write_text("same\n")
+    return secret, up, local
+
+
+def test_diff_dirs_refuses_a_link_out_of_upstream(tmp_path):
+    secret, up, local = _dirs_with_secret(tmp_path)
+    (up / "notes.md").symlink_to(secret)
+    with pytest.raises(RuntimeError) as e:
+        skillsync.diff_dirs(up, local)
+    assert "notes.md" in str(e.value) and "TOP-SECRET-BYTES" not in str(e.value)
+
+
+def test_diff_dirs_refuses_a_link_out_of_the_local_folder(tmp_path):
+    secret, up, local = _dirs_with_secret(tmp_path)
+    (local / "notes.md").symlink_to(secret)
+    with pytest.raises(RuntimeError):
+        skillsync.diff_dirs(up, local)
+
+
+def test_diff_dirs_refuses_a_directory_link_and_a_nested_one(tmp_path):
+    _secret, up, local = _dirs_with_secret(tmp_path)
+    (up / "refs").mkdir()
+    (up / "refs/home").symlink_to(tmp_path)
+    with pytest.raises(RuntimeError):
+        skillsync.diff_dirs(up, local)
+
+
+def test_diff_dirs_allows_a_link_that_stays_inside(tmp_path):
+    _secret, up, local = _dirs_with_secret(tmp_path)
+    (up / "alias.md").symlink_to("SKILL.md")
+    changed, _stat, _full = skillsync.diff_dirs(up, local)
+    assert changed is True
+
+
+def test_detect_reports_an_escaping_link_as_an_error_and_applies_nothing(tmp_path, monkeypatch):
+    remote = tmp_path / "remote"
+    (remote / "skills/s").mkdir(parents=True)
+    (remote / "skills/s/SKILL.md").write_text("v1\n")
+    (remote / "skills/s/notes.md").symlink_to("/etc/hosts")
+    _git(remote, "init", "-q"); _git(remote, "add", "-A"); _git(remote, "commit", "-qm", "v1")
+    agents = tmp_path / "agents"
+    (agents / "s").mkdir(parents=True)
+    (agents / "s/SKILL.md").write_text("v1\n")
+    lock = tmp_path / "lock.json"
+    lock.write_text(json.dumps({"skills": {"s": {
+        "sourceUrl": f"file://{remote}", "skillPath": "skills/s/SKILL.md",
+        "skillFolderHash": "a" * 40}}}))
+    monkeypatch.setattr(skillsync, "SKILL_LOCK", lock)
+    monkeypatch.setattr(skillsync, "AGENT_SKILLS_DIR", agents)
+    report = {"plugins": [], "skills": [], "newSkills": [], "previouslyRemoved": [], "errors": []}
+    skillsync.detect_skills(report, ["*"])
+    assert report["skills"] == []
+    assert len(report["errors"]) == 1 and "notes.md" in report["errors"][0]
+
+
+def test_diff_skill_prints_no_linked_content(tmp_path, monkeypatch, capsys):
+    secret, up, local = _dirs_with_secret(tmp_path)
+    (up / "notes.md").symlink_to(secret)
+    monkeypatch.setattr(skillsync, "clone_skill_folders", lambda *a, **k: None)
+    monkeypatch.setattr(skillsync, "diff_dirs", skillsync.diff_dirs)
+    lock = tmp_path / "lock.json"
+    lock.write_text(json.dumps({"skills": {"local": {
+        "sourceUrl": "https://github.com/x/y.git", "skillPath": "skills/s/SKILL.md"}}}))
+    monkeypatch.setattr(skillsync, "SKILL_LOCK", lock)
+    monkeypatch.setattr(skillsync, "AGENT_SKILLS_DIR", tmp_path)
+    real = skillsync.diff_dirs
+    monkeypatch.setattr(skillsync, "diff_dirs", lambda u, l: real(up, local))
+    assert skillsync.main(["diff-skill", "local"]) == 1
+    captured = capsys.readouterr()
+    assert "TOP-SECRET-BYTES" not in captured.out + captured.err
+    assert "notes.md" in captured.err
