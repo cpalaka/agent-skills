@@ -55,5 +55,6 @@ entry is a per-line owner decision, never a way to turn a red scan green.
 
 ## Working here
 
-Verify command: `.githooks/leak-guard.sh scan`. There is no test suite. Work runs under the `build`
-Skill from a brief in `docs/`; this repo keeps no tracker. Codex reviews here and does not build.
+Verify command: `.githooks/leak-guard.sh scan`. The one test suite is `skill-updater`'s, run as its
+`SKILL.md` says. Work runs under the `build` Skill from a brief in `docs/`; this repo keeps no
+tracker. Codex reviews here and does not build.

@@ -107,6 +107,14 @@ or you want to set up the review loop.
 
 [`SKILL.md`](godot-architecture-review/SKILL.md)
 
+### skill-updater
+
+Checks installed skills and plugins for upstream updates and applies them. The installer deletes
+and recopies a skill folder and reports success either way, so the engine refuses to update over a
+hand edit, tells an edit from a folder the installer merely left behind, and reads every result
+back from disk. Trusted sources apply unprompted and community sources ask first. Personal
+checkouts are reported and never changed.
+
 ### unslop
 
 Cuts AI tells from prose and rewrites it in a human voice — docs, READMEs, essays, release notes,
