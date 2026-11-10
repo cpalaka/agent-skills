@@ -53,6 +53,15 @@ entry is a per-line owner decision, never a way to turn a red scan green.
   it against a throwaway target, never by re-reading the diff.
 - Run `.githooks/leak-guard.sh scan` before any push.
 
+## Maintenance mode (since 2026-11-10)
+
+This repo is not under development. It changes for two reasons: a rule found during other work is
+written in at discovery, and something here that broke a session is fixed in that session. No
+backlog is kept (the tracker's open issues were closed on 2026-11-10), and no audit, restructure
+or new Skill starts from inside this repo. An idea for one goes as a single line in the owner's
+notes file outside this repo, read when the owner chooses to. This is a convention, not a gate: a
+session the owner asks for more does it.
+
 ## Working here
 
 Verify command: `.githooks/leak-guard.sh scan`. The one test suite is `skill-updater`'s, run as its

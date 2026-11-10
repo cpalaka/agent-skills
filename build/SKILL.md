@@ -22,7 +22,8 @@ Kept repos may hold tickets instead: one file each in `docs/tickets/NN-slug.md`,
 Read the "where the work stands" section of `AGENTS.md` (with tickets, their `Status:` lines).
 Start at the first milestone it does not record as done. If it records that milestone as
 partly built, resume at the first unfinished part it names, and never rebuild a part it records
-as done. With no such record, start at milestone 1.
+as done. A milestone recorded as built and awaiting the owner's verdict resumes at step 5 and is
+not rebuilt. With no such record, start at milestone 1.
 
 ## The loop
 
@@ -35,7 +36,8 @@ For each milestone, in order:
    work on a branch per ticket.
 4. Update the "where the work stands" section of `AGENTS.md` (and the ticket's `Status:` line),
    naming any milestone left partly built and the part to resume at.
-5. Where feel matters, stop and hand it to the owner at F5. Their verdict decides whether the
+5. Where feel matters, stop and hand it to the owner at F5, naming the numbers they can change
+   and where those live. Their verdict decides whether the
    milestone is done, and it goes into the brief under that milestone. A rejected milestone goes
    back to step 1 with the verdict as its requirement; an accepted one gets its step 4 record
    updated to done.
@@ -48,13 +50,32 @@ For each milestone, in order:
 trim the thing a milestone exists to test. A superseded decision is rewritten where it stands,
 not appended below.
 
+## Unattended runs
+
+When the owner says to run several milestones unattended, the run is one unit on one branch (a
+kept repo names the branch for the run, not for a ticket).
+
+- For each milestone in order, do steps 1 to 4, then compact. Commit the `AGENTS.md` update with
+  the milestone. Skip steps 5 and 6.
+- Step 4 records a milestone with no owner play as done, and one with an owner play as **built,
+  awaiting verdict**.
+- At the end, hand over one list: each play that is waiting, by milestone, with the numbers worth
+  changing. That list is the session's closing line.
+- A rejected milestone is fixed on the same branch, with the verdict as its requirement. Then
+  re-run the done check of every later milestone, and the verify command, because they were built
+  on top of it; one that goes red is reopened.
+- Squash-merge the branch once every waiting verdict is accepted, with the milestones it covers
+  in the subject. A run with no play waiting is squash-merged at its end.
+
 ## Ending a session
 
-Write a dated note in `docs/` saying what landed, what is open, and the next milestone. End
-with one line the owner can paste to start the next session.
+Make the "where the work stands" section of `AGENTS.md` true: what landed, what is open, the next
+milestone. Write no dated note; a measured number or a verdict goes in the brief under its
+milestone. End with one line the owner can paste to start the next session.
 
 ## Not here
 
 No tracker, no reviewer seats, no gates beyond the verify command and the owner's play, no closing
-records. When milestones are independent and you want them built in parallel, ask the owner for a
+records. A small change the owner asks for directly, once a milestone is accepted, is not a
+milestone: build it, run the verify command, commit. When milestones are independent and you want them built in parallel, ask the owner for a
 Workflow rather than coordinating subagents yourself.
