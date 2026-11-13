@@ -64,6 +64,12 @@ line, a thing the owner can see at F5. Written into the Brief before the Milesto
 _Avoid_: acceptance criterion (the old pipeline's term; a Done check is one line, not a list),
 gate (that word belongs to the Verify command).
 
+**First look**:
+The least of a Milestone that shows its picture, built and handed to the owner for a yes before
+the rest of the Milestone is built.
+_Avoid_: play (the owner's play is of a finished Milestone and decides whether it is done; a
+First look decides only whether the rest is built).
+
 **Verify command**:
 The one command a project exposes that runs before anything is called done: typecheck, tests,
 build, smoke, whatever the project has, behind one name. Here it is `.githooks/leak-guard.sh scan`.

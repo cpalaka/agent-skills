@@ -56,8 +56,10 @@ sets it.
 ### build
 
 The one process Skill. Starts a build session from a brief in `docs/`: numbered milestones, each
-with a done check, built in order from wherever `AGENTS.md` says the work stands, each closed by
-the done check plus the project's verify command and committed with the milestone in the subject.
+with a done check, built in order from wherever `AGENTS.md` says the work stands. Where the owner's
+play decides a milestone, it opens with a first look: the least that shows its picture, which the
+owner accepts before the rest is built. Each is closed by the done check plus the project's verify
+command, committed at each green line of the done check with the milestone in the subject.
 Kept repos take a branch per ticket and squash locally once the milestone is done, after the
 owner's play where feel matters; throwaways commit on `main`. A wrong brief is fixed in place,
 never guessed around. It replaces a spec → tickets → implement chain with one file the owner
